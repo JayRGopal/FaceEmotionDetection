@@ -64,20 +64,20 @@ def detect_extract_faces(ims, face_shape=(224, 224, 3)):
 
 """
 
-from me-graphau.model.MEFL import MEFARG
-from me-graphau.OpenGraphAU.model.ANFL import MEFARG as MEFARG_OpenGraphAU
-from me-graphau.collections import OrderedDict
+from megraphau.model.MEFL import MEFARG
+from megraphau.OpenGraphAU.model.ANFL import MEFARG as MEFARG_OpenGraphAU
+from collections import OrderedDict
 
 
 def load_network(model_type, backbone):
   if model_type == 'BP4D':
     net = MEFARG(num_classes=12, backbone=backbone)
-    path = 'me-graphau/checkpoints/MEFARG_resnet50_BP4D_fold3.pth'
+    path = 'megraphau/checkpoints/MEFARG_resnet50_BP4D_fold3.pth'
     net.load_state_dict(torch.load(path).get('state_dict'))
   elif model_type == 'OpenGraphAU':
     net = MEFARG_OpenGraphAU(num_main_classes=27, num_sub_classes=14, backbone=backbone, neighbor_num=4)
 
-    path = 'me-graphau/checkpoints/OpenGprahAU-ResNet50_first_stage.pth'
+    path = 'megraphau/checkpoints/OpenGprahAU-ResNet50_first_stage.pth'
     oau_state_dict = torch.load(path).get('state_dict')
     oau_keys = oau_state_dict.keys()
 
