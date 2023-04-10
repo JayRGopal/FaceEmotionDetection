@@ -1,7 +1,7 @@
 import os
 
 os.system("git clone https://github.com/cvi-szu/me-graphau")
-os.system("pip install -r requirements.txt")
+os.system("pip install --user -r requirements.txt")
 os.rename('me-graphau', 'megraphau')
 
 
