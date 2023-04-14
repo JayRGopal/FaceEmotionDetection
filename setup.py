@@ -38,8 +38,8 @@ def download_file(link: str, output_dir: str) -> None:
         print("An error occurred while downloading the file.")
     return
 
-down_now("me-graphau/checkpoints/OpenGprahAU-ResNet50_first_stage.pth", '1wnJzvZ8bTR1yc4BhAiNaqU3HH10YX_cf')
-down_now("me-graphau/checkpoints/MEFARG_resnet50_BP4D_fold3.pth", '178lhLCfPKOKlBLj2QgbqQDFEfoXMHEoD')
+down_now("megraphau/checkpoints/OpenGprahAU-ResNet50_first_stage.pth", '1wnJzvZ8bTR1yc4BhAiNaqU3HH10YX_cf')
+down_now("megraphau/checkpoints/MEFARG_resnet50_BP4D_fold3.pth", '178lhLCfPKOKlBLj2QgbqQDFEfoXMHEoD')
 download_file("https://download.pytorch.org/models/resnet50-19c8e357.pth", "megraphau/checkpoints/resnet50-19c8e357.pth")
 
 
