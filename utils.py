@@ -74,12 +74,12 @@ def load_network(model_type, backbone):
   if model_type == 'BP4D':
     net = MEFARG(num_classes=12, backbone=backbone)
     path = 'megraphau/checkpoints/MEFARG_resnet50_BP4D_fold3.pth'
-    net.load_state_dict(torch.load(path).get('state_dict'))
+    net.load_state_dict(torch.load(path, map_location=torch.device('cpu')).get('state_dict'))
   elif model_type == 'OpenGraphAU':
     net = MEFARG_OpenGraphAU(num_main_classes=27, num_sub_classes=14, backbone=backbone, neighbor_num=4)
 
     path = 'megraphau/checkpoints/OpenGprahAU-ResNet50_first_stage.pth'
-    oau_state_dict = torch.load(path).get('state_dict')
+    oau_state_dict = torch.load(path, map_location=torch.device('cpu')).get('state_dict')
     oau_keys = oau_state_dict.keys()
 
     # filter out module.
