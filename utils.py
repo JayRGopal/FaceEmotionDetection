@@ -45,6 +45,7 @@ def detect_extract_faces(ims, face_shape=(224, 224, 3)):
   NUM_TO_EXTRACT = ims.shape[0]
   faces = torch.empty((NUM_TO_EXTRACT, face_shape[0], face_shape[1], face_shape[2]), dtype=torch.float32)
   for i in range(NUM_TO_EXTRACT):
+    print(f'Extracting Face {i+1} / {NUM_TO_EXTRACT}')
     one_face = RetinaFace.extract_faces(ims[i])
     if len(one_face) > 0:
       one_face = np.array(one_face[0])
