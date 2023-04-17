@@ -9,7 +9,7 @@ Full Pipeline - OpenGraphAU
 
 # Set the parameters
 START_FRAME = 500
-NUM_TO_EXTRACT = 300
+NUM_TO_EXTRACT = 30
 MODEL_TYPE = 'OpenGraphAU'
 MODEL_BACKBONE = 'resnet50'
 POST_PROCESSING_METHOD = 'KF'
