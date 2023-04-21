@@ -2,6 +2,13 @@ import numpy as np
 import tensorflow as tf
 import torch
 import cv2
+import os
+import csv
+
+# Hyperparameters - Post-Processing
+EMA_ALPHA = 0.9
+SMA_WINDOW_SIZE = 10
+
 
 
 """
@@ -43,6 +50,7 @@ from retinaface import RetinaFace
 
 def detect_extract_faces(ims, face_shape=(224, 224, 3)):
   NUM_TO_EXTRACT = ims.shape[0]
+  is_null = torch.zeros(ims.shape[0])
   faces = torch.empty((NUM_TO_EXTRACT, face_shape[0], face_shape[1], face_shape[2]), dtype=torch.float32)
   for i in range(NUM_TO_EXTRACT):
     print(f'Extracting Face {i+1} / {NUM_TO_EXTRACT}')
@@ -54,9 +62,9 @@ def detect_extract_faces(ims, face_shape=(224, 224, 3)):
       faces[i] = torch_one.float()
     else:
       faces[i] = torch.zeros(face_shape[0], face_shape[1], face_shape[2]).float()
+      is_null[i] = 1
   faces = torch.swapaxes(faces, 1, 3) / 255
-  return faces
-
+  return faces, is_null
 
 
 """
@@ -220,13 +228,52 @@ def postprocess_outs(preds, method='RNN'):
       'DTW': dtw_smoothing,
       'TD': temporal_difference,
       'KF': kalman_filter,
-      'EMA': exponential_moving_average,
-      'SMA': simple_moving_average
+      'EMA': lambda x: exponential_moving_average(x, EMA_ALPHA),
+      'SMA': lambda x: simple_moving_average(x, SMA_WINDOW_SIZE)
   }
 
   postproc_func = method_dictionary.get(method)
   return postproc_func(preds)
 
+
+"""
+
+# CSV Saving
+
+"""
+
+def csv_save(labels, is_null, frames, save_path, fps):
+    if labels.shape[1] == 12: # BP4D
+        AU_ids = ['1', '2', '4', '6', '7', '10', '12', '14', '15', '17', '23', '24']
+    elif labels.shape[1] == 41: # OpenGraphAU
+        AU_ids = ['1', '2', '4', '5', '6', '7', '9', '10', '11', '12', '13', '14', '15', 
+                  '16', '17', '18', '19', '20', '22', '23', '24', '25', '26', '27', '32', 
+                  '38', '39', 'L1', 'R1', 'L2', 'R2', 'L4', 'R4', 'L6', 'R6', 'L10', 'R10', 
+                  'L12', 'R12', 'L14', 'R14']
+    else: 
+        print(f'Unexpected shape of labels! {labels.shape}') 
+        return
+    if not(os.path.exists(save_path)): # Make a new file with the correct first rows
+        with open(save_path, 'w', newline='') as file:
+            writer = csv.writer(file)
+            row1 = ['frame', 'timestamp', 'success'] + ['AU' + i for i in AU_ids]
+            writer.writerow(row1)
+    
+    # Make a modified array with (frame, timestamp, success) before AUs
+    success_array = 1 - is_null
+    modified_arr = np.concatenate((np.array(success_array).reshape(-1, 1), labels), axis=1)
+    frame_nums = frames
+    timestamps = [frame / fps for frame in frame_nums]
+    modified_arr = np.concatenate((frames, np.array(timestamps), modified_arr), axis=1)
+    
+    # Save the data to the CSV file, making sure to append and not write over!
+    with open(save_path, 'a') as file:
+        np.savetxt(file, modified_arr, delimiter=',', header='', footer='', comments='')
+
+def get_fps(path): 
+  capture = cv2.VideoCapture(path)
+  fps = capture.get(cv2.CAP_PROP_FPS)
+  return fps
 
 
 
