@@ -66,6 +66,46 @@ def detect_extract_faces(ims, face_shape=(224, 224, 3)):
   faces = torch.swapaxes(faces, 1, 3) / 255
   return faces, is_null
 
+def detect_extract_one_face(one_im):
+    face_shape=(224, 224, 3) 
+    is_null = torch.zeros(1)
+    faces = torch.empty((1, face_shape[0], face_shape[1], face_shape[2]), dtype=torch.float32)
+    one_face = RetinaFace.extract_faces(one_im)
+    if len(one_face) > 0:
+        one_face = np.array(one_face[0])
+        dims_fixed = tf.image.resize_with_crop_or_pad(one_face, face_shape[0], face_shape[1])
+        torch_one = torch.tensor(dims_fixed.numpy())
+        faces[0] = torch_one.float()
+    else:
+        faces[0] = torch.zeros(face_shape[0], face_shape[1], face_shape[2]).float()
+        is_null[0] = 1
+    faces = torch.swapaxes(faces, 1, 3) / 255
+    return faces, is_null 
+   
+
+import multiprocessing
+import concurrent.futures
+
+def multi_extract_faces(ims, face_shape=(224, 224, 3)):
+   
+    # Define the number of processes to use
+    num_processes = multiprocessing.cpu_count()
+
+    # Define the items to be processed
+    items = ims
+
+    with concurrent.futures.ProcessPoolExecutor(max_workers=num_processes) as executor:
+        # Map the items to the worker processes in parallel
+        results = list(executor.map(process_item, items))
+
+    # Map the items to the worker processes in parallel
+    results = pool.map(detect_extract_one_face, items)
+    faces = [i for (i, j) in results]
+    is_null = [j for (i, j) in results]
+
+
+    return faces, is_null
+
 
 """
 

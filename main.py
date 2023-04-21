@@ -14,20 +14,24 @@ MODEL_TYPE = 'OpenGraphAU'
 MODEL_BACKBONE = 'resnet50'
 POST_PROCESSING_METHOD = 'EMA'
 VIDEO_DIRECTORY = os.path.abspath('inputs/')
-SAVE_PATH = lambda video_name, starter_frame: os.path.join('outputs', f'{video_name}', f'{starter_frame}.csv')
+
+SAVE_PATH_FOLDER = lambda video_name: os.path.join(os.path.abspath('outputs'), f'{video_name}')
+SAVE_PATH = lambda save_path_folder, starter_frame: os.path.join(save_path_folder, f'{starter_frame}.csv')
 
 # Get the list of all videos in the given directory
 all_videos = [vid for vid in os.listdir(VIDEO_DIRECTORY) if vid[0:1] != '.']
 
 # Loop through all videos
 for i in all_videos:
-
   # Process the entirety of each video via a while loop!
   video_path = os.path.join(VIDEO_DIRECTORY, i)
   frame_now = START_FRAME
   im_test = torch.zeros(2) # placeholder
   fps = get_fps(path=video_path)
-  save_path_now = SAVE_PATH(i, START_FRAME)
+  save_path_folder = SAVE_PATH_FOLDER(i)
+  if not(os.path.exists(save_path_folder)):
+    os.mkdir(save_path_folder)
+  save_path_now = SAVE_PATH(save_path_folder, START_FRAME)
 
   while im_test.size()[0] != 0:
     # Extract video frames
