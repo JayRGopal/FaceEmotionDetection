@@ -35,6 +35,8 @@ def extract_images(path, start_frame, num_to_extract, method='torch'):
     capture.release()
 
     ims = np.array(ims)
+    if ims.shape[0] == 0: # if we're out of images
+        return (ims, ims)
     if method == 'torch':
         im_test = torch.tensor(np.resize(ims[0:ims.shape[0]], (ims.shape[0], 3, 244, 244))).type(torch.float32)
     elif method == 'tensorflow':
