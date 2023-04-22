@@ -33,7 +33,7 @@ for i in all_videos:
     os.mkdir(save_path_folder)
   save_path_now = SAVE_PATH(save_path_folder, START_FRAME)
 
-  while im_test.size()[0] != 0:
+  while im_test.shape[0] != 0:
     # Extract video frames
     (ims, im_test) = extract_images(path=video_path, start_frame=frame_now, num_to_extract=BATCH_SIZE)
     BATCH_NOW = im_test.shape[0]

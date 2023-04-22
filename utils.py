@@ -17,27 +17,34 @@ SMA_WINDOW_SIZE = 10
 
 """
 
-def extract_images(path, start_frame, num_to_extract): 
-  capture = cv2.VideoCapture(path)
+def extract_images(path, start_frame, num_to_extract, method='torch'): 
+    capture = cv2.VideoCapture(path)
 
-  ims = []
-  frameNr = 0
+    ims = []
+    frameNr = 0
 
-  while frameNr < (start_frame + num_to_extract):
-      success, frame = capture.read()
-      if success:
-          if frameNr >= start_frame:
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            ims.append(frame)
-      else:
-          break
-      frameNr = frameNr+1
-  capture.release()
+    while frameNr < (start_frame + num_to_extract):
+        success, frame = capture.read()
+        if success:
+            if frameNr >= start_frame:
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                ims.append(frame)
+        else:
+            break
+        frameNr = frameNr+1
+    capture.release()
 
-  ims = np.array(ims)
+    ims = np.array(ims)
+    if method == 'torch':
+        im_test = torch.tensor(np.resize(ims[0:ims.shape[0]], (ims.shape[0], 3, 244, 244))).type(torch.float32)
+    elif method == 'tensorflow':
+        im_test = tf.constant(ims[0:ims.shape[0]], dtype=tf.float32)
+        im_test = tf.image.resize(im_test, [224, 224])
+    else:
+       print('ERROR! Method is not torch or tensorflow!')
+       return
 
-  im_test = torch.tensor(np.resize(ims[0:ims.shape[0]], (ims.shape[0], 3, 244, 244))).type(torch.float32)
-  return (ims, im_test)
+    return (ims, im_test)
 
 
 
