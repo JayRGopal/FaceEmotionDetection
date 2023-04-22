@@ -15,7 +15,7 @@ MODEL_BACKBONE = 'resnet50'
 POST_PROCESSING_METHOD = 'EMA'
 VIDEO_DIRECTORY = os.path.abspath('inputs/')
 
-SAVE_PATH_FOLDER = lambda video_name: os.path.join(os.path.abspath('outputs'), f'{video_name}')
+SAVE_PATH_FOLDER = lambda video_name: os.path.join(os.path.abspath('outputs_OpenGraphAU'), f'{video_name}')
 SAVE_PATH = lambda save_path_folder, starter_frame: os.path.join(save_path_folder, f'{starter_frame}.csv')
 
 # Get the list of all videos in the given directory
