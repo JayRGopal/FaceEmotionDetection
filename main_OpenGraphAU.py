@@ -37,6 +37,8 @@ for i in all_videos:
     # Extract video frames
     (ims, im_test) = extract_images(path=video_path, start_frame=frame_now, num_to_extract=BATCH_SIZE)
     BATCH_NOW = im_test.shape[0]
+    if BATCH_NOW == 0:
+      break
     print(f"Extracted Ims, Frames {frame_now} to {frame_now+BATCH_NOW} in {i}")
 
     # Detect a face in each frame

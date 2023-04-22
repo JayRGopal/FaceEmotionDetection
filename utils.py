@@ -27,6 +27,7 @@ def extract_images(path, start_frame, num_to_extract):
       success, frame = capture.read()
       if success:
           if frameNr >= start_frame:
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             ims.append(frame)
       else:
           break
