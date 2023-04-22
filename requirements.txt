@@ -12,5 +12,6 @@ tslearn>=0.5.3.2
 protobuf>=4.22.1
 requests>=2.28.1
 gdown
-
+grad-cam
+matplotlib
 
