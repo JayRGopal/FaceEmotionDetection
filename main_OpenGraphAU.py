@@ -19,6 +19,7 @@ VIDEO_DIRECTORY = os.path.abspath('inputs/')
 
 SAVE_PATH_FOLDER = lambda video_name: os.path.join(os.path.abspath('outputs_OpenGraphAU'), f'{video_name}')
 SAVE_PATH = lambda save_path_folder, starter_frame: os.path.join(save_path_folder, f'{starter_frame}.csv')
+SAVE_PATH_POST = lambda save_path_folder, starter_frame: os.path.join(save_path_folder, f'{starter_frame}_post.csv')
 
 # Get the list of all videos in the given directory
 all_videos = [vid for vid in os.listdir(VIDEO_DIRECTORY) if vid[0:1] != '.']
@@ -34,6 +35,7 @@ for i in all_videos:
   if not(os.path.exists(save_path_folder)):
     os.mkdir(save_path_folder)
   save_path_now = SAVE_PATH(save_path_folder, START_FRAME)
+  save_path_now_post = SAVE_PATH_POST(save_path_folder, START_FRAME) 
 
   while im_test.shape[0] != 0:
     # Extract video frames
@@ -62,8 +64,10 @@ for i in all_videos:
 
     # Save outputs to a CSV
     frames = np.arange(frame_now, frame_now + BATCH_NOW).reshape(BATCH_NOW, 1)
-    csv_save(labels=preds_post, is_null=is_null, frames=frames, save_path=save_path_now, fps=fps)
-    print(f"Saved CSV to {save_path_now}!")
+    csv_save(labels=predictions, is_null=is_null, frames=frames, save_path=save_path_now, fps=fps)
+    print(f"Saved Raw Predictions to {save_path_now}!")
+    csv_save(labels=preds_post, is_null=is_null, frames=frames, save_path=save_path_now_post, fps=fps)
+    print(f"Saved Post-Processed to {save_path_now_post}!")
 
     frame_now = frame_now + BATCH_NOW
 
