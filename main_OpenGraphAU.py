@@ -9,7 +9,7 @@ Full Pipeline - OpenGraphAU
 
 # Set the parameters
 START_FRAME = 0
-BATCH_SIZE = 500
+BATCH_SIZE = 100
 MODEL_TYPE = 'OpenGraphAU'
 MODEL_BACKBONE = 'resnet50'
 POST_PROCESSING_METHOD = 'EMA'
