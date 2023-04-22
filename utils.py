@@ -49,6 +49,20 @@ def extract_images(path, start_frame, num_to_extract, method='torch'):
     return (ims, im_test)
 
 
+"""
+
+# Face Detection (MTCNN)
+
+"""
+
+# See utilsHSE.py for the mtcnn detector. This is a helper function
+
+def mtcnn_to_torch(faces):
+    faces_real = torch.tensor(faces).float()
+    faces_real = torch.swapaxes(faces_real, 1, 3) / 255
+    return faces_real
+
+
 
 """
 

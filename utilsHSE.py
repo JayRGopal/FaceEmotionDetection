@@ -28,12 +28,6 @@ def mobilenet_preprocess_input(x,**kwargs):
     x[..., 2] -= 123.68
     return x
 
-
-def fpath_to_var(fpath):
-  frame_bgr=cv2.imread(fpath)
-  frame = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
-  return frame
-
 def extract_faces_mtcnn(frames, INPUT_SIZE):
     imgProcessing=FacialImageProcessing(False)
     is_null = np.zeros(frames.shape[0])

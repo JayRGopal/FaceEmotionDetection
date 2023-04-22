@@ -1,3 +1,4 @@
+from utilsHSE import *
 from utils import *
 import os
 """
@@ -12,6 +13,7 @@ START_FRAME = 0
 BATCH_SIZE = 100
 MODEL_TYPE = 'OpenGraphAU'
 MODEL_BACKBONE = 'resnet50'
+INPUT_SIZE = (224, 224)
 POST_PROCESSING_METHOD = 'EMA'
 VIDEO_DIRECTORY = os.path.abspath('inputs/')
 
@@ -42,7 +44,9 @@ for i in all_videos:
     print(f"Extracted Ims, Frames {frame_now} to {frame_now+BATCH_NOW} in {i}")
 
     # Detect a face in each frame
-    faces, is_null = detect_extract_faces(ims)
+    #faces, is_null = detect_extract_faces(ims)
+    faces, is_null = extract_faces_mtcnn(ims, INPUT_SIZE)
+    faces = mtcnn_to_torch(faces)
     print(f"Detected Faces")
 
     # Load the relevant network and get its predictions
