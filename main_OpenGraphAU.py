@@ -8,7 +8,7 @@ Full Pipeline - OpenGraphAU
 
 
 # Set the parameters
-START_FRAME = 200
+START_FRAME = 0
 BATCH_SIZE = 500
 MODEL_TYPE = 'OpenGraphAU'
 MODEL_BACKBONE = 'resnet50'
@@ -36,7 +36,8 @@ for i in all_videos:
   while im_test.size()[0] != 0:
     # Extract video frames
     (ims, im_test) = extract_images(path=video_path, start_frame=frame_now, num_to_extract=BATCH_SIZE)
-    print(f"Extracted Ims, Frames {frame_now} to {frame_now+BATCH_SIZE} in {i}")
+    BATCH_NOW = im_test.shape[0]
+    print(f"Extracted Ims, Frames {frame_now} to {frame_now+BATCH_NOW} in {i}")
 
     # Detect a face in each frame
     faces, is_null = detect_extract_faces(ims)
@@ -54,11 +55,11 @@ for i in all_videos:
     print("Post Processing Complete")
 
     # Save outputs to a CSV
-    frames = np.arange(frame_now, frame_now + BATCH_SIZE).reshape(BATCH_SIZE, 1)
+    frames = np.arange(frame_now, frame_now + BATCH_NOW).reshape(BATCH_NOW, 1)
     csv_save(labels=preds_post, is_null=is_null, frames=frames, save_path=save_path_now, fps=fps)
     print(f"Saved CSV to {save_path_now}!")
 
-    frame_now = frame_now + BATCH_SIZE
+    frame_now = frame_now + BATCH_NOW
 
     # Skipping the annotated video for speed!
     # # Create and download an output video
