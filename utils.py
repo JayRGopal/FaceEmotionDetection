@@ -4,6 +4,7 @@ import torch
 import cv2
 import os
 import csv
+import math
 
 # Hyperparameters - Post-Processing
 EMA_ALPHA = 0.9
@@ -17,18 +18,20 @@ SMA_WINDOW_SIZE = 10
 
 """
 
-def extract_images(path, start_frame, num_to_extract, method='torch'): 
+def extract_images(path, start_frame, num_to_extract, method='torch', fps=5): 
     capture = cv2.VideoCapture(path)
 
     ims = []
     frameNr = 0
-
+    real_fps = math.ceil(capture.get(cv2.CAP_PROP_FPS))
+    frame_division = real_fps // fps
     while frameNr < (start_frame + num_to_extract):
         success, frame = capture.read()
         if success:
             if frameNr >= start_frame:
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                ims.append(frame)
+                if frameNr % frame_division == 0:
+                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    ims.append(frame)
         else:
             break
         frameNr = frameNr+1
@@ -334,10 +337,16 @@ def csv_save(labels, is_null, frames, save_path, fps):
     with open(save_path, 'a') as file:
         np.savetxt(file, modified_arr, delimiter=',', header='', footer='', comments='')
 
-def get_fps(path): 
+def get_fps(path, extracting_fps=5):
+  # image fps 
   capture = cv2.VideoCapture(path)
-  fps = capture.get(cv2.CAP_PROP_FPS)
-  return fps
+  fps = math.ceil(capture.get(cv2.CAP_PROP_FPS))
+
+  # we want 5 fps. What did we get?
+  frame_division = fps // extracting_fps
+  actual_fps = fps / frame_division
+
+  return actual_fps
 
 
 

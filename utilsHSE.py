@@ -34,7 +34,7 @@ def extract_faces_mtcnn(frames, INPUT_SIZE):
     faces = np.zeros([frames.shape[0], INPUT_SIZE[0], INPUT_SIZE[1], 3])
     for enum, frame in enumerate(frames):
       bounding_boxes, points = imgProcessing.detect_faces(frame)
-      if bounding_boxes.shape[0] > 0:
+      if bounding_boxes.shape[0] == 1: # take only frames w one face!
           box = bounding_boxes[0].astype(np.int) # take only first face
           x1,y1,x2,y2=box[0:4]    
           face_img=frame[y1:y2,x1:x2,:]

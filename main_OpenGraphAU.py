@@ -16,6 +16,7 @@ MODEL_BACKBONE = 'resnet50'
 INPUT_SIZE = (224, 224)
 POST_PROCESSING_METHOD = 'EMA'
 VIDEO_DIRECTORY = os.path.abspath('inputs/')
+FPS_EXTRACTING = 5 # we'll extract 5 fps
 
 SAVE_PATH_FOLDER = lambda video_name: os.path.join(os.path.abspath('outputs_OpenGraphAU'), f'{video_name}')
 SAVE_PATH = lambda save_path_folder, starter_frame: os.path.join(save_path_folder, f'{starter_frame}.csv')
@@ -28,9 +29,10 @@ all_videos = [vid for vid in os.listdir(VIDEO_DIRECTORY) if vid[0:1] != '.']
 for i in all_videos:
   # Process the entirety of each video via a while loop!
   video_path = os.path.join(VIDEO_DIRECTORY, i)
-  frame_now = START_FRAME
+  frame_now = START_FRAME # this is what we save in outputs file
+  frame_printing = START_FRAME # this is the "real" frame we are at
   im_test = torch.zeros(2) # placeholder
-  fps = get_fps(path=video_path)
+  fps = get_fps(path=video_path, extracting_fps=FPS_EXTRACTING)
   save_path_folder = SAVE_PATH_FOLDER(i)
   if not(os.path.exists(save_path_folder)):
     os.mkdir(save_path_folder)
@@ -39,11 +41,11 @@ for i in all_videos:
 
   while im_test.shape[0] != 0:
     # Extract video frames
-    (ims, im_test) = extract_images(path=video_path, start_frame=frame_now, num_to_extract=BATCH_SIZE)
+    (ims, im_test) = extract_images(path=video_path, start_frame=frame_printing, num_to_extract=BATCH_SIZE, fps = FPS_EXTRACTING)
     BATCH_NOW = im_test.shape[0]
     if BATCH_NOW == 0:
       break
-    print(f"Extracted Ims, Frames {frame_now} to {frame_now+BATCH_NOW} in {i}")
+    print(f"Extracted Ims, Frames {frame_printing} to {frame_printing+BATCH_SIZE} in {i}")
 
     # Detect a face in each frame
     #faces, is_null = detect_extract_faces(ims)
@@ -70,6 +72,7 @@ for i in all_videos:
     print(f"Saved Post-Processed to {save_path_now_post}!")
 
     frame_now = frame_now + BATCH_NOW
+    frame_printing = frame_printing + BATCH_SIZE
 
     # Skipping the annotated video for speed!
     # # Create and download an output video
