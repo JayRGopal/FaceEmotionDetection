@@ -28,30 +28,74 @@ def mobilenet_preprocess_input(x,**kwargs):
     x[..., 2] -= 123.68
     return x
 
+
+import concurrent.futures
+
+def process_frame(frame, imgProcessing, INPUT_SIZE):
+    bounding_boxes, points = imgProcessing.detect_faces(frame)
+    if bounding_boxes.shape[0] == 1: # take only frames w one face!
+        box = bounding_boxes[0].astype(np.int) # take only first face
+        x1,y1,x2,y2=box[0:4]    
+        face_img=frame[y1:y2,x1:x2,:]
+        face_img=cv2.resize(face_img, INPUT_SIZE)
+        inp=face_img.astype(np.float32)
+        return inp, False
+    else:
+        return None, True
+
 def extract_faces_mtcnn(frames, INPUT_SIZE):
     imgProcessing=FacialImageProcessing(False)
     is_null = np.zeros(frames.shape[0])
     faces = np.zeros([frames.shape[0], INPUT_SIZE[0], INPUT_SIZE[1], 3])
-    for enum, frame in enumerate(frames):
-      bounding_boxes, points = imgProcessing.detect_faces(frame)
-      if bounding_boxes.shape[0] == 1: # take only frames w one face!
-          box = bounding_boxes[0].astype(np.int) # take only first face
-          x1,y1,x2,y2=box[0:4]    
-          face_img=frame[y1:y2,x1:x2,:]
-          face_img=cv2.resize(face_img, INPUT_SIZE)
-          inp=face_img.astype(np.float32)
-          faces[enum, :, :, :] = inp
-      else:
-          is_null[enum] = 1
+    with concurrent.futures.ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
+        futures = []
+        for frame in frames:
+            future = executor.submit(process_frame, frame, imgProcessing, INPUT_SIZE)
+            futures.append(future)
+        for enum, future in enumerate(concurrent.futures.as_completed(futures)):
+            inp, null = future.result()
+            if not null:
+                faces[enum, :, :, :] = inp
+            else:
+                is_null[enum] = 1
 
     return faces, is_null
 
+# def extract_faces_mtcnn(frames, INPUT_SIZE):
+#     imgProcessing=FacialImageProcessing(False)
+#     is_null = np.zeros(frames.shape[0])
+#     faces = np.zeros([frames.shape[0], INPUT_SIZE[0], INPUT_SIZE[1], 3])
+#     for enum, frame in enumerate(frames):
+#       bounding_boxes, points = imgProcessing.detect_faces(frame)
+#       if bounding_boxes.shape[0] == 1: # take only frames w one face!
+#           box = bounding_boxes[0].astype(np.int) # take only first face
+#           x1,y1,x2,y2=box[0:4]    
+#           face_img=frame[y1:y2,x1:x2,:]
+#           face_img=cv2.resize(face_img, INPUT_SIZE)
+#           inp=face_img.astype(np.float32)
+#           faces[enum, :, :, :] = inp
+#       else:
+#           is_null[enum] = 1
+
+#     return faces, is_null
+
 def hse_preds(faces, model, model_type='mobilenet_7.h5'):
-  if model_type == 'mobilenet_7.h5':
-      preprocessing_function=mobilenet_preprocess_input
-  faces = preprocessing_function(faces)
-  scores=model.predict(faces)
-  return scores
+    if model_type == 'mobilenet_7.h5':
+        preprocessing_function=mobilenet_preprocess_input
+    faces = preprocessing_function(faces)
+    scores=model.predict(faces)
+
+    # # Check if a GPU is available and use it if possible
+    # device_name = tf.test.gpu_device_name()
+    # if device_name != '' and '/device:GPU' in device_name:
+    #     with tf.device('/device:GPU:0'):
+    #         faces = preprocessing_function(faces)
+    #         scores = model.predict(faces)
+    # else:
+    #     faces = preprocessing_function(faces)
+    #     scores = model.predict(faces)
+
+    return scores
 
 def csv_save_HSE(labels, is_null, frames, save_path, fps):
     if labels.shape[1] == 7: # 7 emotions - mobilenet

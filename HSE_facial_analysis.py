@@ -204,7 +204,7 @@ class FacialImageProcessing:
         bboxA[:,1] = bboxA[:,1]+h*0.5-l*0.5
         bboxA[:,2:4] = bboxA[:,0:2] + np.transpose(np.tile(l,(2,1)))
         return bboxA
-
+    
     def detect_faces(self,img):
         # im: input image
         # threshold: threshold=[th1 th2 th3], th1-3 are three steps's threshold

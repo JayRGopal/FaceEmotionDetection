@@ -10,7 +10,7 @@ Full Pipeline - HSEmotion
 
 # Set the parameters
 START_FRAME = 0
-BATCH_SIZE = 300
+BATCH_SIZE = 900
 MODEL_TYPE = 'mobilenet_7.h5'
 INPUT_SIZE = (224, 224)
 VIDEO_DIRECTORY = os.path.abspath('inputs/')
