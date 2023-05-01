@@ -10,6 +10,29 @@ import math
 EMA_ALPHA = 0.9
 SMA_WINDOW_SIZE = 10
 
+"""
+
+# Video Downsampling (NOT USING)
+
+"""
+
+from moviepy.editor import VideoFileClip
+
+def downsample_vid(input_path, output_path, new_fps):
+    # Load the original video file
+    clip = VideoFileClip(input_path)
+
+    # Set the desired frame rate for the subsampled video
+    frame_rate = new_fps
+
+    # Subsample the video to the desired frame rate
+    subsampled_clip = clip.set_fps(frame_rate)
+
+    # Save the subsampled video to a new file with optimized compression settings
+    subsampled_clip.write_videofile(output_path)
+
+    return
+
 
 
 """
