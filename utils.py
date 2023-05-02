@@ -177,7 +177,9 @@ def load_network(model_type, backbone):
     net = MEFARG_OpenGraphAU(num_main_classes=27, num_sub_classes=14, backbone=backbone, neighbor_num=4)
 
     path = 'megraphau/checkpoints/OpenGprahAU-ResNet50_first_stage.pth'
-    oau_state_dict = torch.load(path, map_location=torch.device('cpu')).get('state_dict')
+    #oau_state_dict = torch.load(path, map_location=torch.device('cpu')).get('state_dict')
+    oau_state_dict = torch.load(path).get('state_dict')
+    
     oau_keys = oau_state_dict.keys()
 
     # filter out module.
@@ -191,6 +193,7 @@ def load_network(model_type, backbone):
 
 def get_model_preds(faces, net, model_type):
   if torch.cuda.is_available():
+      print('Using GPU?')
       faces = faces.cuda()
       net = net.cuda()
 
