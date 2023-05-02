@@ -6,8 +6,14 @@ def initial_setup():
     os.rename('me-graphau', 'megraphau')
     return
 
-# initial_setup()
+initial_setup()
 
+def gpu_setup():
+    os.system("pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117")
+    return
+
+# Uncomment for GPU
+# gpu_setup()
 
 import requests
 
