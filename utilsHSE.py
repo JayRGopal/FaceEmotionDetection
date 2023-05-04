@@ -37,6 +37,10 @@ def process_frame(frame, imgProcessing, INPUT_SIZE):
         box = bounding_boxes[0].astype(np.int) # take only first face
         x1,y1,x2,y2=box[0:4]    
         face_img=frame[y1:y2,x1:x2,:]
+        
+        if not face_img.size: # check if face_img is empty
+            return None, True
+        
         face_img=cv2.resize(face_img, INPUT_SIZE)
         inp=face_img.astype(np.float32)
         return inp, False
