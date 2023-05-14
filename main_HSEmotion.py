@@ -1,6 +1,9 @@
 from utils import *
 from utilsHSE import *
 import os
+import time
+import datetime
+
 """
 
 Full Pipeline - HSEmotion
@@ -22,6 +25,13 @@ SAVE_PATH = lambda save_path_folder, starter_frame: os.path.join(save_path_folde
 
 # Get the list of all videos in the given directory
 all_videos = [vid for vid in os.listdir(VIDEO_DIRECTORY) if vid[0:1] != '.']
+
+# For timing estimation
+valid_videos = [vid for vid in all_videos if os.path.isfile(os.path.join(VIDEO_DIRECTORY, vid))]
+unprocessed_videos = [vid for vid in valid_videos if not(os.path.exists(SAVE_PATH_FOLDER(vid)))]
+num_vids = len(unprocessed_videos)
+start_time = time.time()
+
 
 # Loop through all videos
 for i in all_videos:
@@ -74,6 +84,16 @@ for i in all_videos:
         # # Create and download an output video
         # labels = extract_labels(ims, preds_post, model_type=MODEL_TYPE)
         # save_video_from_images(labels, video_name=SAVE_PATH, fps=30)
+
+      # Time estimation
+      elapsed_time = time.time() - start_time
+      iterations_left = num_vids - unprocessed_videos.index(i) - 1
+      time_per_iteration = elapsed_time / (unprocessed_videos.index(i) + 1)
+      time_left = time_per_iteration * iterations_left
+      time_left_formatted = str(datetime.timedelta(seconds=int(time_left)))
+      
+      # print an update on the progress
+      print("Approximately", time_left_formatted, "left to complete the operation")
 
   
 
