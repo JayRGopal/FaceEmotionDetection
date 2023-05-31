@@ -6,6 +6,7 @@ from PIL import Image
 import tensorflow as tf
 from tensorflow.keras.models import Model,Sequential, load_model,model_from_json
 import csv
+import torch
 
 # config = tf.compat.v1.ConfigProto()
 # config.gpu_options.allow_growth = True
@@ -13,6 +14,7 @@ import csv
 # set_session(sess)
 
 from HSE_facial_analysis import FacialImageProcessing
+from facenet_pytorch import MTCNN
 
 
 def get_emotion_predictor(MODEL_NOW):
@@ -22,12 +24,21 @@ def get_emotion_predictor(MODEL_NOW):
     return model
 
 
+# from HSE display_emotions.ipynb
 def mobilenet_preprocess_input(x,**kwargs):
+    # takes in (224, 224, 3) image
     x[..., 0] -= 103.939
     x[..., 1] -= 116.779
     x[..., 2] -= 123.68
     return x
 
+# modified version
+def mobilenet_preprocess_input_mod(x,**kwargs):
+    # takes in (batch_size, 3, 224, 224) image batch
+    x[:, 0, :, :] -= 103.939
+    x[:, 1, :, :] -= 116.779
+    x[:, 2, :, :] -= 123.68
+    return x
 
 import concurrent.futures
 
@@ -46,6 +57,28 @@ def process_frame(frame, imgProcessing, INPUT_SIZE):
         return inp, False
     else:
         return None, True
+
+def new_extract_faces_mtcnn(frames, INPUT_SIZE):
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    mtcnn = MTCNN(image_size=INPUT_SIZE[0], margin=20, keep_all=True, post_process=False, device=device)
+    faces_real = np.zeros([frames.shape[0], INPUT_SIZE[0], INPUT_SIZE[1], 3])
+    
+    # Detect faces in batch
+    is_null = np.zeros(frames.shape[0])
+    faces = mtcnn(frames)
+
+    for i, frame_faces in enumerate(faces):
+        if frame_faces is None:
+           is_null[i] = 1  # no face detected
+        elif len(frame_faces) == 1:
+            face = frame_faces[0]  # Extract the single face
+            # Preprocess the face and store it in faces_real
+            faces_real[i, :, :, :] = np.transpose(face.squeeze(0).numpy(), (1, 2, 0))
+        else:
+            is_null[i] = 1  # Multiple faces or no faces detected 
+    
+    return faces_real, is_null
+
 
 def extract_faces_mtcnn(frames, INPUT_SIZE):
     imgProcessing=FacialImageProcessing(False)
@@ -86,6 +119,7 @@ def extract_faces_mtcnn(frames, INPUT_SIZE):
 def hse_preds(faces, model, model_type='mobilenet_7.h5'):
     if model_type == 'mobilenet_7.h5':
         preprocessing_function=mobilenet_preprocess_input
+    #import pdb; pdb.set_trace()
     faces = preprocessing_function(faces)
     scores=model.predict(faces)
 

@@ -13,7 +13,7 @@ Full Pipeline - HSEmotion
 
 # Set the parameters
 START_FRAME = 0
-BATCH_SIZE = 900
+BATCH_SIZE = 50000
 MODEL_TYPE = 'mobilenet_7.h5'
 INPUT_SIZE = (224, 224)
 VIDEO_DIRECTORY = os.path.abspath('inputs/')
@@ -31,6 +31,10 @@ valid_videos = [vid for vid in all_videos if os.path.isfile(os.path.join(VIDEO_D
 unprocessed_videos = [vid for vid in valid_videos if not(os.path.exists(SAVE_PATH_FOLDER(vid)))]
 num_vids = len(unprocessed_videos)
 start_time = time.time()
+
+TIMING_VERBOSE = True # yes/no do we print times for sub-processes within videos?
+
+
 
 
 # Loop through all videos
@@ -52,22 +56,33 @@ for i in all_videos:
       save_path_now = SAVE_PATH(save_path_folder, START_FRAME)
 
       while im_test.shape[0] != 0:
+        if TIMING_VERBOSE: 
+          time1 = time.time()
         # Extract video frames
         (ims, im_test) = extract_images(path=video_path, start_frame=frame_printing, num_to_extract=BATCH_SIZE, method='tensorflow', fps = FPS_EXTRACTING)
         BATCH_NOW = im_test.shape[0]
         if BATCH_NOW == 0:
           break
         print(f"Extracted Ims, Frames {frame_printing} to {frame_printing+BATCH_SIZE} in {i}")
+        if TIMING_VERBOSE:
+          time2 = time.time()
+          print('Time: ', time2 - time1)
 
         # Detect a face in each frame
         faces, is_null = extract_faces_mtcnn(ims, INPUT_SIZE)
         print(f"Detected Faces")
+        if TIMING_VERBOSE:
+          time3 = time.time()
+          print('Time: ', time3 - time2) 
 
         # Load the relevant network and get its predictions
         model = get_emotion_predictor(MODEL_TYPE)
         scores_real = hse_preds(faces, model, model_type=MODEL_TYPE)
         scores_real[is_null == 1] = 0 # clear the predictions from frames w/o faces!
         print("Got Network Predictions")
+        if TIMING_VERBOSE:
+          time4 = time.time()
+          print('Time: ', time4 - time3)
 
         # TODO: Add some post-processing
         # print("Post Processing Complete")

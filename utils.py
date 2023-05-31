@@ -94,6 +94,9 @@ def mtcnn_to_torch(faces):
 
 # Face Detection (RetinaFace)
 
+# We are NOT currently using this. 
+# See utilsHSE.py for the MTCNN face extraction we are using.
+
 """
 
 from retinaface import RetinaFace
