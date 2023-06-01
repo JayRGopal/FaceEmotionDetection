@@ -206,7 +206,7 @@ def load_network(model_type, backbone):
 
 def get_model_preds(faces, net, model_type):
   if torch.cuda.is_available():
-      print('Using GPU?')
+      print('Using GPU for Model Inference!')
       faces = faces.cuda()
       net = net.cuda()
 
