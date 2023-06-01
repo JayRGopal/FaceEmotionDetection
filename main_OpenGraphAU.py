@@ -3,6 +3,8 @@ from utils import *
 import os
 import time
 import datetime
+import cv2
+
 """
 
 Full Pipeline - OpenGraphAU
@@ -11,7 +13,6 @@ Full Pipeline - OpenGraphAU
 
 
 # Set the parameters
-START_FRAME = 0
 BATCH_SIZE = 50000
 MODEL_TYPE = 'OpenGraphAU'
 MODEL_BACKBONE = 'resnet50'
@@ -37,77 +38,158 @@ TIMING_VERBOSE = True # yes/no do we print times for sub-processes within videos
 
 
 
-
 # Loop through all videos
 for i in all_videos:
   # Process the entirety of each video via a while loop!
+
   video_path = os.path.join(VIDEO_DIRECTORY, i)
+
   if not(os.path.isfile(video_path)):
+    # Case: Path isn't a file (usually happens if it's a folder)
     print(f'Not a valid path: {video_path}')
   else:
-    frame_now = START_FRAME # this is what we save in outputs file
-    frame_printing = START_FRAME # this is the "real" frame we are at
-    im_test = torch.zeros(2) # placeholder
-    fps = get_fps(path=video_path, extracting_fps=FPS_EXTRACTING)
+    # We know the path is to a file
+
+    frame_now = 0 # this is what we save in outputs file
+    frame_printing = 0 # this is the "real" frame we are at
+
+    fps = get_fps(path=video_path, extracting_fps=FPS_EXTRACTING) # FPS at which we're extracting
+
     save_path_folder = SAVE_PATH_FOLDER(i)
+
     if os.path.exists(save_path_folder):
+      # Case: output folder already exists
       print(f'Skipping Video {i}: Output Folder Already Exists!')
     else:
+      # We know the output folder does NOT exist already
+
       os.mkdir(save_path_folder)
-      save_path_now = SAVE_PATH(save_path_folder, START_FRAME)
-      save_path_now_post = SAVE_PATH_POST(save_path_folder, START_FRAME) 
+      save_path_now = SAVE_PATH(save_path_folder, 0)
+      save_path_now_post = SAVE_PATH_POST(save_path_folder, 0) 
 
-      while im_test.shape[0] != 0:
-        if TIMING_VERBOSE: 
-          time1 = time.time()
-        # Extract video frames
-        (ims, im_test) = extract_images(path=video_path, start_frame=frame_printing, num_to_extract=BATCH_SIZE, fps = FPS_EXTRACTING)
-        BATCH_NOW = im_test.shape[0]
-        if BATCH_NOW == 0:
-          break
-        print(f"Extracted Ims, Frames {frame_printing} to {frame_printing+BATCH_SIZE} in {i}")
-        if TIMING_VERBOSE:
-          time2 = time.time()
-          print('Time: ', time2 - time1)
+      if TIMING_VERBOSE: 
+        time1 = time.time()
 
-        # Detect a face in each frame
-        #faces, is_null = detect_extract_faces(ims)
-        faces, is_null = extract_faces_mtcnn(ims, INPUT_SIZE)
-        faces = mtcnn_to_torch(faces)
-        print(f"Detected Faces")
-        if TIMING_VERBOSE:
-          time3 = time.time()
-          print('Time: ', time3 - time2) 
+      # Extract video frames
+      capture = cv2.VideoCapture(video_path)
+      ims = []
+      real_fps = math.ceil(capture.get(cv2.CAP_PROP_FPS)) # real FPS of the video
+      frame_division = real_fps // FPS_EXTRACTING # Helps us only analyze 5 fps (or close to it)
+      running = True
+      frameNr = 0 # Track frame number
+      while running:
+          # Extract frames continuously
+          success, frame = capture.read()
+          if success:
+              if frameNr % frame_division == 0:
+                  # We are only saving SOME frames (e.g. extracting 5 fps)
+                  frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                  ims.append(frame)
+              if (frameNr % BATCH_SIZE == 0) and (frameNr > 0):
+                  # Let's do analysis, save results, and reset ims!
+                  ims = np.array(ims)
+                  print(f"Extracted Ims, Frames {frame_printing} to {frame_printing+BATCH_SIZE} in {i}") 
+                  if TIMING_VERBOSE:
+                    time2 = time.time()
+                    print('Time: ', time2 - time1)
+                  
+                  # Batch now -- number of frames actually extracted (useful at end of video)
+                  BATCH_NOW = ims.shape[0]
 
-        # Load the relevant network and get its predictions
-        net = load_network(model_type=MODEL_TYPE, backbone=MODEL_BACKBONE)
-        predictions = get_model_preds(faces, net, model_type=MODEL_TYPE)
-        predictions[is_null == 1] = 0 # clear the predictions from frames w/o faces!
-        print("Got Network Predictions")
-        if TIMING_VERBOSE:
-          time4 = time.time()
-          print('Time: ', time4 - time3)
+                  # Face detection
+                  faces, is_null = extract_faces_mtcnn(ims, INPUT_SIZE)
+                  faces = mtcnn_to_torch(faces)
+                  print(f"Detected Faces")
+                  if TIMING_VERBOSE:
+                    time3 = time.time()
+                    print('Time: ', time3 - time2) 
+                  
+                  # Get model predictions (OpenGraphAU)
+                  net = load_network(model_type=MODEL_TYPE, backbone=MODEL_BACKBONE)
+                  predictions = get_model_preds(faces, net, model_type=MODEL_TYPE)
+                  predictions[is_null == 1] = 0 # clear the predictions from frames w/o faces!
+                  print("Got Network Predictions")
+                  if TIMING_VERBOSE:
+                    time4 = time.time()
+                    print('Time: ', time4 - time3)
 
-        # Post-processing
-        preds_post = postprocess_outs(predictions, method=POST_PROCESSING_METHOD)
-        # TODO: How do we deal will null frames in post-processing?
-        print("Post Processing Complete")
+                  # Post-processing
+                  preds_post = postprocess_outs(predictions, method=POST_PROCESSING_METHOD)
+                  # TODO: How do we deal will null frames in post-processing?
+                  print("Post Processing Complete")
 
-        # Save outputs to a CSV
-        frames = np.arange(frame_now, frame_now + BATCH_NOW).reshape(BATCH_NOW, 1)
-        csv_save(labels=predictions, is_null=is_null, frames=frames, save_path=save_path_now, fps=fps)
-        print(f"Saved Raw Predictions to {save_path_now}!")
-        csv_save(labels=preds_post, is_null=is_null, frames=frames, save_path=save_path_now_post, fps=fps)
-        print(f"Saved Post-Processed to {save_path_now_post}!")
+                  # Save outputs to a CSV
+                  frames = np.arange(frame_now, frame_now + BATCH_NOW).reshape(BATCH_NOW, 1)
+                  csv_save(labels=predictions, is_null=is_null, frames=frames, save_path=save_path_now, fps=fps)
+                  print(f"Saved Raw Predictions to {save_path_now}!")
+                  csv_save(labels=preds_post, is_null=is_null, frames=frames, save_path=save_path_now_post, fps=fps)
+                  print(f"Saved Post-Processed to {save_path_now_post}!")
 
-        frame_now = frame_now + BATCH_NOW
-        frame_printing = frame_printing + BATCH_SIZE
+                  frame_now = frame_now + BATCH_NOW
+                  frame_printing = frame_printing + BATCH_SIZE 
 
-        # Skipping the annotated video for speed!
-        # # Create and download an output video
-        # labels = extract_labels(ims, preds_post, model_type=MODEL_TYPE)
-        # save_video_from_images(labels, video_name=SAVE_PATH, fps=30)
-      
+                  # Reset ims for the next batch!
+                  ims = []
+
+                  # Reset timing
+                  if TIMING_VERBOSE: 
+                    time1 = time.time()
+          else:
+              # We're out of frames!
+              running = False
+
+              # Let's do analysis, save results, and reset ims!
+              ims = np.array(ims)
+              print(f"Extracted Ims, Frames {frame_printing} to {frame_printing+BATCH_SIZE} in {i}") 
+              if TIMING_VERBOSE:
+                time2 = time.time()
+                print('Time: ', time2 - time1)
+              
+              # Batch now -- number of frames actually extracted (useful at end of video)
+              BATCH_NOW = ims.shape[0]
+
+              # Face detection
+              faces, is_null = extract_faces_mtcnn(ims, INPUT_SIZE)
+              faces = mtcnn_to_torch(faces)
+              print(f"Detected Faces")
+              if TIMING_VERBOSE:
+                time3 = time.time()
+                print('Time: ', time3 - time2) 
+              
+              # Get model predictions (OpenGraphAU)
+              net = load_network(model_type=MODEL_TYPE, backbone=MODEL_BACKBONE)
+              predictions = get_model_preds(faces, net, model_type=MODEL_TYPE)
+              predictions[is_null == 1] = 0 # clear the predictions from frames w/o faces!
+              print("Got Network Predictions")
+              if TIMING_VERBOSE:
+                time4 = time.time()
+                print('Time: ', time4 - time3)
+
+              # Post-processing
+              preds_post = postprocess_outs(predictions, method=POST_PROCESSING_METHOD)
+              # TODO: How do we deal will null frames in post-processing?
+              print("Post Processing Complete")
+
+              # Save outputs to a CSV
+              frames = np.arange(frame_now, frame_now + BATCH_NOW).reshape(BATCH_NOW, 1)
+              csv_save(labels=predictions, is_null=is_null, frames=frames, save_path=save_path_now, fps=fps)
+              print(f"Saved Raw Predictions to {save_path_now}!")
+              csv_save(labels=preds_post, is_null=is_null, frames=frames, save_path=save_path_now_post, fps=fps)
+              print(f"Saved Post-Processed to {save_path_now_post}!")
+
+              frame_now = frame_now + BATCH_NOW
+              frame_printing = frame_printing + BATCH_SIZE 
+
+              # Reset ims to save room!
+              ims = []
+
+              # Reset timing
+              if TIMING_VERBOSE: 
+                time1 = time.time()
+
+          frameNr = frameNr + 1
+      capture.release()
+
       # Time estimation
       elapsed_time = time.time() - start_time
       iterations_left = num_vids - unprocessed_videos.index(i) - 1
@@ -116,7 +198,6 @@ for i in all_videos:
       time_left_formatted = str(datetime.timedelta(seconds=int(time_left)))
       
       # print an update on the progress
-      print("Approximately", time_left_formatted, "left to complete the operation")
+      print("Approximately ", time_left_formatted, " left to complete analyzing all videos")
 
-  
-
+ 

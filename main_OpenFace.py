@@ -30,7 +30,7 @@ for i in all_videos:
   elif os.path.isfile(video_path):
     cmd = f'C:\\Users\\DannyHuang\\Desktop\\OpenFace_2.2.0_win_x64\\OpenFace_2.2.0_win_x64\\FeatureExtraction.exe -f "{video_path}" -out_dir "{OUTPUT_DIRECTORY}" -aus' 
     subprocess.run(cmd, shell=True)
-    
+     
     # Time estimation
     elapsed_time = time.time() - start_time
     iterations_left = num_vids - unprocessed_videos.index(i) - 1

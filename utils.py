@@ -75,6 +75,9 @@ def extract_images(path, start_frame, num_to_extract, method='torch', fps=5):
     return (ims, im_test)
 
 
+
+
+
 """
 
 # Face Detection (MTCNN)
