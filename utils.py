@@ -6,7 +6,7 @@ import os
 import csv
 import math
 
-# Hyperparameters - Post-Processing
+# Hyperparameters - Post-Processing for OpenGraphAU
 EMA_ALPHA = 0.9
 SMA_WINDOW_SIZE = 10
 

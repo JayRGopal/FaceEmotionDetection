@@ -15,4 +15,3 @@ gdown
 grad-cam
 matplotlib
 moviepy
-facenet-pytorch

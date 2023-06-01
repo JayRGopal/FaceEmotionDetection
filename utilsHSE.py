@@ -14,7 +14,6 @@ import torch
 # set_session(sess)
 
 from HSE_facial_analysis import FacialImageProcessing
-from facenet_pytorch import MTCNN
 
 
 def get_emotion_predictor(MODEL_NOW):
@@ -30,14 +29,6 @@ def mobilenet_preprocess_input(x,**kwargs):
     x[..., 0] -= 103.939
     x[..., 1] -= 116.779
     x[..., 2] -= 123.68
-    return x
-
-# modified version
-def mobilenet_preprocess_input_mod(x,**kwargs):
-    # takes in (batch_size, 3, 224, 224) image batch
-    x[:, 0, :, :] -= 103.939
-    x[:, 1, :, :] -= 116.779
-    x[:, 2, :, :] -= 123.68
     return x
 
 import concurrent.futures
@@ -58,27 +49,6 @@ def process_frame(frame, imgProcessing, INPUT_SIZE):
     else:
         return None, True
 
-def new_extract_faces_mtcnn(frames, INPUT_SIZE):
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    mtcnn = MTCNN(image_size=INPUT_SIZE[0], margin=20, keep_all=True, post_process=False, device=device)
-    faces_real = np.zeros([frames.shape[0], INPUT_SIZE[0], INPUT_SIZE[1], 3])
-    
-    # Detect faces in batch
-    is_null = np.zeros(frames.shape[0])
-    faces = mtcnn(frames)
-
-    for i, frame_faces in enumerate(faces):
-        if frame_faces is None:
-           is_null[i] = 1  # no face detected
-        elif len(frame_faces) == 1:
-            face = frame_faces[0]  # Extract the single face
-            # Preprocess the face and store it in faces_real
-            faces_real[i, :, :, :] = np.transpose(face.squeeze(0).numpy(), (1, 2, 0))
-        else:
-            is_null[i] = 1  # Multiple faces or no faces detected 
-    
-    return faces_real, is_null
-
 
 def extract_faces_mtcnn(frames, INPUT_SIZE):
     imgProcessing=FacialImageProcessing(False)
@@ -98,40 +68,23 @@ def extract_faces_mtcnn(frames, INPUT_SIZE):
 
     return faces, is_null
 
-# def extract_faces_mtcnn(frames, INPUT_SIZE):
-#     imgProcessing=FacialImageProcessing(False)
-#     is_null = np.zeros(frames.shape[0])
-#     faces = np.zeros([frames.shape[0], INPUT_SIZE[0], INPUT_SIZE[1], 3])
-#     for enum, frame in enumerate(frames):
-#       bounding_boxes, points = imgProcessing.detect_faces(frame)
-#       if bounding_boxes.shape[0] == 1: # take only frames w one face!
-#           box = bounding_boxes[0].astype(np.int) # take only first face
-#           x1,y1,x2,y2=box[0:4]    
-#           face_img=frame[y1:y2,x1:x2,:]
-#           face_img=cv2.resize(face_img, INPUT_SIZE)
-#           inp=face_img.astype(np.float32)
-#           faces[enum, :, :, :] = inp
-#       else:
-#           is_null[enum] = 1
-
-#     return faces, is_null
-
 def hse_preds(faces, model, model_type='mobilenet_7.h5'):
     if model_type == 'mobilenet_7.h5':
         preprocessing_function=mobilenet_preprocess_input
     #import pdb; pdb.set_trace()
-    faces = preprocessing_function(faces)
-    scores=model.predict(faces)
+    # faces = preprocessing_function(faces)
+    # scores=model.predict(faces)
 
-    # # Check if a GPU is available and use it if possible
-    # device_name = tf.test.gpu_device_name()
-    # if device_name != '' and '/device:GPU' in device_name:
-    #     with tf.device('/device:GPU:0'):
-    #         faces = preprocessing_function(faces)
-    #         scores = model.predict(faces)
-    # else:
-    #     faces = preprocessing_function(faces)
-    #     scores = model.predict(faces)
+    # Check if a GPU is available and use it if possible
+    device_name = tf.test.gpu_device_name()
+    if device_name != '' and '/device:GPU' in device_name:
+        with tf.device('/device:GPU:0'):
+            faces = preprocessing_function(faces)
+            scores = model.predict(faces)
+            scores = scores.cpu()
+    else:
+        faces = preprocessing_function(faces)
+        scores = model.predict(faces)
 
     return scores
 
