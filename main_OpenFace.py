@@ -28,7 +28,7 @@ for i in all_videos:
   if os.path.exists(save_file):
     print(f'Skipping Video {i}: Output File Already Exists!')
   elif os.path.isfile(video_path):
-    cmd = f'C:\\Users\\DannyHuang\\Desktop\\OpenFace_2.2.0_win_x64\\OpenFace_2.2.0_win_x64\\FeatureExtraction.exe -f "{video_path}" -out_dir "{OUTPUT_DIRECTORY}" -aus' 
+    cmd = f'C:\\Users\\DannyHuang\\Desktop\\OpenFace_2.2.0_win_x64\\OpenFace_2.2.0_win_x64\\FeatureExtraction.exe -f "{video_path}" -out_dir "{OUTPUT_DIRECTORY}" -aus -2Dfp -3Dfp -pdmparams -pose -gaze -hogalign' 
     subprocess.run(cmd, shell=True)
      
     # Time estimation
