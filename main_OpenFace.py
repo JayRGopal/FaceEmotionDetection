@@ -6,6 +6,9 @@ import datetime
 
 Full Pipeline - OpenFace
 
+NOTE: Before running this, you need to have already installed OpenFace and put the binary at the appropriate path.
+If you're on Windows, use this link: https://github.com/TadasBaltrusaitis/OpenFace/wiki/Windows-Installation
+
 """
 
 # Set the parameters
