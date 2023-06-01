@@ -50,7 +50,6 @@ def download_file(link: str, output_dir: str) -> None:
 
 import gdown
 
-# Replace 'url' with the URL of your Google Drive file, and 'destination' with the path and filename where you want to save the file.
 def gdownload(fid, dest):
     url = f'https://drive.google.com/uc?id={fid}'
     destination = dest
@@ -58,8 +57,6 @@ def gdownload(fid, dest):
     return
 
 
-#down_now("megraphau/checkpoints/OpenGprahAU-ResNet50_first_stage.pth", '1wnJzvZ8bTR1yc4BhAiNaqU3HH10YX_cf')
-#down_now("megraphau/checkpoints/MEFARG_resnet50_BP4D_fold3.pth", '178lhLCfPKOKlBLj2QgbqQDFEfoXMHEoD')
 gdownload('1wnJzvZ8bTR1yc4BhAiNaqU3HH10YX_cf', 'megraphau/checkpoints/OpenGprahAU-ResNet50_first_stage.pth')
 gdownload('178lhLCfPKOKlBLj2QgbqQDFEfoXMHEoD', 'megraphau/checkpoints/MEFARG_resnet50_BP4D_fold3.pth')
 download_file("https://download.pytorch.org/models/resnet50-19c8e357.pth", "megraphau/checkpoints/resnet50-19c8e357.pth")
