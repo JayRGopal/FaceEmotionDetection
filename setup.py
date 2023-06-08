@@ -1,14 +1,30 @@
 import os
 
 def initial_setup():
-    os.system("git clone https://github.com/JayRGopal/ME-GraphAU")
-    os.system("pip install --user -r requirements.txt")
-    os.rename('me-graphau', 'megraphau')
+
+    # requirements
+    #os.system("pip install --user -r requirements.txt")
+
+    # ME-GraphAU Install
+    if not(os.path.exists('megraphau')):
+        os.system("git clone https://github.com/JayRGopal/ME-GraphAU")
+        os.rename('me-graphau', 'megraphau')
+
+    # NEMO Install
+    if not os.path.exists("scripts/transcribe_speech.py"):
+        os.system("wget -P scripts_nemo_asr/ https://raw.githubusercontent.com/NVIDIA/NeMo/stable/examples/asr/transcribe_speech.py")
+
+    if not os.path.exists("scripts/speech_to_text_eval.py"):
+        os.system("wget -P scripts_nemo_asr/ https://raw.githubusercontent.com/NVIDIA/NeMo/stable/examples/asr/speech_to_text_eval.py")
+
     return
+
 
 initial_setup()
 
+
 def gpu_setup():
+    # May need to adjust this based on workstation
     os.system("pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117")
     return
 
@@ -56,10 +72,14 @@ def gdownload(fid, dest):
     gdown.download(url, destination, quiet=False)
     return
 
+if not(os.path.exists('megraphau/checkpoints/OpenGprahAU-ResNet50_first_stage.pth')):
+    gdownload('1wnJzvZ8bTR1yc4BhAiNaqU3HH10YX_cf', 'megraphau/checkpoints/OpenGprahAU-ResNet50_first_stage.pth')
 
-gdownload('1wnJzvZ8bTR1yc4BhAiNaqU3HH10YX_cf', 'megraphau/checkpoints/OpenGprahAU-ResNet50_first_stage.pth')
-gdownload('178lhLCfPKOKlBLj2QgbqQDFEfoXMHEoD', 'megraphau/checkpoints/MEFARG_resnet50_BP4D_fold3.pth')
-download_file("https://download.pytorch.org/models/resnet50-19c8e357.pth", "megraphau/checkpoints/resnet50-19c8e357.pth")
+if not(os.path.exists('megraphau/checkpoints/MEFARG_resnet50_BP4D_fold3.pth')): 
+    gdownload('178lhLCfPKOKlBLj2QgbqQDFEfoXMHEoD', 'megraphau/checkpoints/MEFARG_resnet50_BP4D_fold3.pth')
+
+if not(os.path.exists("megraphau/checkpoints/resnet50-19c8e357.pth")): 
+    download_file("https://download.pytorch.org/models/resnet50-19c8e357.pth", "megraphau/checkpoints/resnet50-19c8e357.pth")
 
 
 
