@@ -3,7 +3,7 @@ import os
 def initial_setup():
 
     # requirements
-    #os.system("pip install --user -r requirements.txt")
+    os.system("pip install --user -r requirements.txt")
 
     # ME-GraphAU Install
     if not(os.path.exists('megraphau')):
