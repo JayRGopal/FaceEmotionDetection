@@ -1,7 +1,8 @@
 me-graphau
 megraphau
 Demo_Video_Nottingham.mp4
-outputs_HSEmotion
-outputs_OpenGraphAU
-outputs_OpenFace
+outputs_HSEmotion/*
+outputs_OpenGraphAU/*
+outputs_OpenFace/*
+outputs_NeMo_ASR/*
 inputs_speech/*

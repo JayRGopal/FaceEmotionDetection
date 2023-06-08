@@ -4,7 +4,7 @@ import math
 import json
 import noisereduce
 
-def extract_audio_from_mp4(mp4_path, output_folder, reduce_noise=False):
+def extract_audio_from_mp4(mp4_path, output_folder, reduce_noise=False, verbose=False):
     audio = AudioSegment.from_file(mp4_path)
 
     duration = audio.duration_seconds
@@ -55,14 +55,14 @@ def extract_audio_from_mp4(mp4_path, output_folder, reduce_noise=False):
             "duration": chunk_duration
         }
         chunks_metadata.append(chunk_metadata)
-
-        print("Chunk", i+1, "extracted and saved as:", wav_path)
+        if verbose:
+          print("Chunk", i+1, "extracted and saved as:", wav_path)
 
     json_filename = "metadata.json"
     json_path = os.path.join(output_folder, json_filename)
     with open(json_path, "w") as json_file:
         for metadata in chunks_metadata:
             json_file.write(json.dumps(metadata) + '\n')
-
-    print("Metadata saved as:", json_path)
+    if verbose:
+      print("Metadata saved as:", json_path)
 
