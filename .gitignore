@@ -1,8 +1,11 @@
 me-graphau
 megraphau
+mmpose
 Demo_Video_Nottingham.mp4
 outputs_HSEmotion/*
 outputs_OpenGraphAU/*
 outputs_OpenFace/*
 outputs_NeMo_ASR/*
+outputs_MMPose/*
 inputs_speech/*
+MMPose_models/*
