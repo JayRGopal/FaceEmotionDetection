@@ -21,9 +21,11 @@ def initial_setup():
     os.system("mim install mmengine")
     os.system('mim install "mmcv>=2.0.0"')
     os.system('mim install "mmdet>=3.0.0"')
-    os.system('mim install "mmpose>=1.0.0"')
     if not(os.path.exists('mmpose')):
         os.system("git clone https://github.com/JayRGopal/mmpose")
+    os.system('cd mmpose')
+    os.system('pip install -e .')
+    os.system('cd ..')
     os.system('pip install numpy --upgrade')
 
     return
@@ -90,5 +92,8 @@ if not(os.path.exists('megraphau/checkpoints/MEFARG_resnet50_BP4D_fold3.pth')):
 if not(os.path.exists("megraphau/checkpoints/resnet50-19c8e357.pth")): 
     download_file("https://download.pytorch.org/models/resnet50-19c8e357.pth", "megraphau/checkpoints/resnet50-19c8e357.pth")
 
+
+if not(os.path.exists("MMPose_models/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth")): 
+    download_file('https://download.openmmlab.com/mmdetection/v2.0/faster_rcnn/faster_rcnn_r50_fpn_1x_coco/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth', "MMPose_models/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth")
 
 
