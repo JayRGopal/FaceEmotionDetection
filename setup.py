@@ -3,7 +3,7 @@ import os
 def initial_setup():
 
     # requirements
-    #os.system("pip install --user -r requirements.txt")
+    os.system("pip install --user -r requirements.txt")
 
     # ME-GraphAU Install
     if not(os.path.exists('megraphau')):
@@ -18,6 +18,7 @@ def initial_setup():
         os.system("wget -P scripts_nemo_asr/ https://raw.githubusercontent.com/NVIDIA/NeMo/stable/examples/asr/speech_to_text_eval.py")
 
     # MMPose Install
+    os.system("pip install -U openmim")
     os.system("mim install mmengine")
     os.system('mim install "mmcv>=2.0.0"')
     os.system('mim install "mmdet>=3.0.0"')
@@ -25,7 +26,8 @@ def initial_setup():
     if not(os.path.exists('mmpose')):
         os.system("git clone --branch dev-1.x https://github.com/JayRGopal/mmpose")
     os.system('cd mmpose')
-    os.system('pip install -e .')
+    os.system('pip install -r requirements.txt')
+    os.system('pip install -v -e .')
     os.system('cd ..')
     os.system('pip install numpy --upgrade')
 
