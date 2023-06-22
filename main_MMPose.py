@@ -14,7 +14,7 @@ Full Pipeline - MMPose
 """
 
 # Set the parameters
-VIDEO_DIRECTORY = os.path.abspath('testing_images/')
+VIDEO_DIRECTORY = os.path.abspath('inputs/')
 OUTPUT_DIRECTORY = os.path.abspath('outputs_MMPose/')
 TOP_DOWN = True
 DOWNLOAD_DIRECTORY = os.path.abspath('MMPose_models/')

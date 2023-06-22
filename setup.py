@@ -23,7 +23,7 @@ def initial_setup():
     os.system('mim install "mmdet>=3.0.0"')
     os.system('mim install "mmcls>=1.0.0rc5"')
     if not(os.path.exists('mmpose')):
-        os.system("git clone https://github.com/JayRGopal/mmpose")
+        os.system("git clone --branch dev-1.x https://github.com/JayRGopal/mmpose")
     os.system('cd mmpose')
     os.system('pip install -e .')
     os.system('cd ..')
