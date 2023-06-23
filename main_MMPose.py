@@ -46,19 +46,20 @@ for (config_file, model_download, model_path) in model_setup_list:
   if not(os.path.exists(model_path)): 
     download_file(model_download, model_path)
   
-  model_base = model_path.split('/')[-1]
+  model_base = os.path.split(model_path)[-1]
   os.makedirs(os.path.join(OUTPUT_DIRECTORY, model_base), exist_ok=True)
 
   df_list = []
 
   # Loop through all videos
   for i in all_videos:
-    save_file = os.path.join(OUTPUT_DIRECTORY, f'{model_base}/results_' + i[:-4] + '.json') 
+    save_file = os.path.join(OUTPUT_DIRECTORY, f'{model_base}', 'results_' + i[:-4] + '.json') 
     video_path = os.path.join(VIDEO_DIRECTORY, i)
     if os.path.exists(save_file):
       print(f'Skipping Video {i}: Output File Already Exists!')
     elif os.path.isfile(video_path):
       if TOP_DOWN:
+        
         cmd = f'python mmpose/JayGopal/run_topdown.py mmpose/demo/mmdetection_cfg/faster_rcnn_r50_fpn_coco.py \
           MMPose_models/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth \
           {config_file} \

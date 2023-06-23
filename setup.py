@@ -41,7 +41,8 @@ def initial_setup():
     return
 
 
-initial_setup()
+if __name__ == '__main__':
+    initial_setup()
 
 
 def gpu_setup():
@@ -93,17 +94,20 @@ def gdownload(fid, dest):
     gdown.download(url, destination, quiet=False)
     return
 
-if not(os.path.exists('megraphau/checkpoints/OpenGprahAU-ResNet50_first_stage.pth')):
-    gdownload('1wnJzvZ8bTR1yc4BhAiNaqU3HH10YX_cf', 'megraphau/checkpoints/OpenGprahAU-ResNet50_first_stage.pth')
-
-if not(os.path.exists('megraphau/checkpoints/MEFARG_resnet50_BP4D_fold3.pth')): 
-    gdownload('178lhLCfPKOKlBLj2QgbqQDFEfoXMHEoD', 'megraphau/checkpoints/MEFARG_resnet50_BP4D_fold3.pth')
-
-if not(os.path.exists("megraphau/checkpoints/resnet50-19c8e357.pth")): 
-    download_file("https://download.pytorch.org/models/resnet50-19c8e357.pth", "megraphau/checkpoints/resnet50-19c8e357.pth")
 
 
-if not(os.path.exists("MMPose_models/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth")): 
-    download_file('https://download.openmmlab.com/mmdetection/v2.0/faster_rcnn/faster_rcnn_r50_fpn_1x_coco/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth', "MMPose_models/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth")
+if __name__ == '__main__':
+    if not(os.path.exists('megraphau/checkpoints/OpenGprahAU-ResNet50_first_stage.pth')):
+        gdownload('1wnJzvZ8bTR1yc4BhAiNaqU3HH10YX_cf', 'megraphau/checkpoints/OpenGprahAU-ResNet50_first_stage.pth')
+
+    if not(os.path.exists('megraphau/checkpoints/MEFARG_resnet50_BP4D_fold3.pth')): 
+        gdownload('178lhLCfPKOKlBLj2QgbqQDFEfoXMHEoD', 'megraphau/checkpoints/MEFARG_resnet50_BP4D_fold3.pth')
+
+    if not(os.path.exists("megraphau/checkpoints/resnet50-19c8e357.pth")): 
+        download_file("https://download.pytorch.org/models/resnet50-19c8e357.pth", "megraphau/checkpoints/resnet50-19c8e357.pth")
+
+
+    if not(os.path.exists("MMPose_models/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth")): 
+        download_file('https://download.openmmlab.com/mmdetection/v2.0/faster_rcnn/faster_rcnn_r50_fpn_1x_coco/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth', "MMPose_models/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth")
 
 
