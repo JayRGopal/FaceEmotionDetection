@@ -22,6 +22,7 @@ def initial_setup():
     os.system('python -m pip install git+https://github.com/NVIDIA/NeMo.git@r1.18.0#egg=nemo_toolkit')
 
     # Note: You may also need visualstudio.microsoft.com/visual-cpp-build-tools/
+    # Note: We also had to clone the nemo repo and pip install requirements on the CPU workstation
 
     # MMPose Install
     os.system("pip install -U openmim")

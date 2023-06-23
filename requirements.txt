@@ -62,5 +62,3 @@ transformers>=4.0.1
 wandb
 webdataset>=0.1.48,<=0.1.62
 openmim
-fairseq
-tensorboardX
