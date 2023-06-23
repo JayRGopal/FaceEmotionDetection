@@ -17,7 +17,9 @@ def initial_setup():
     if not os.path.exists("scripts_nemo_asr/speech_to_text_eval.py"):
         os.system("wget -P scripts_nemo_asr/ https://raw.githubusercontent.com/NVIDIA/NeMo/stable/examples/asr/speech_to_text_eval.py")
     
-    os.system('python -m pip install git+https://github.com/NVIDIA/NeMo.git@r1.18.0#egg=nemo_toolkit[all]')
+    os.system('pip3 install Cython')
+ 
+    os.system('python -m pip install git+https://github.com/NVIDIA/NeMo.git@r1.18.0#egg=nemo_toolkit')
 
     # MMPose Install
     os.system("pip install -U openmim")
