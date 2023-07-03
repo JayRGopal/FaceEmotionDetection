@@ -22,10 +22,18 @@ CONFIGS_BASE = os.path.abspath('mmpose/configs/body_2d_keypoint')
 
 
 # Model setup list
-# (config_path, model_download, model_path)
+# (config_file, model_download, model_path, detector_setting)
 model_setup_list = [
-  (f'{CONFIGS_BASE}/topdown_heatmap/coco/td-hm_hrnet-w32_8xb64-210e_coco-256x192.py', 'https://download.openmmlab.com/mmpose/top_down/hrnet/hrnet_w32_coco_256x192-c78dce93_20200708.pth', 'MMPose_models/hrnet_w32_coco_256x192-c78dce93_20200708.pth'),
+  (f'{CONFIGS_BASE}/topdown_heatmap/coco/td-hm_hrnet-w32_8xb64-210e_coco-256x192.py', 'https://download.openmmlab.com/mmpose/top_down/hrnet/hrnet_w32_coco_256x192-c78dce93_20200708.pth', 'MMPose_models/hrnet_w32_coco_256x192-c78dce93_20200708.pth', 'MM'),
 ]
+
+# Detector mapping
+# {detector_setting: (det_config_file, det_model_download, det_model_path)}
+detector_mapping = {
+  'RTM': ('mmpose/projects/rtmpose/rtmdet/person/rtmdet_nano_320-8xb32_coco-person.py', 'https://download.openmmlab.com/mmpose/v1/projects/rtmpose/rtmdet_nano_8xb32-100e_coco-obj365-person-05d8511e.pth', 'MMPose_models/rtmdet_nano_8xb32-100e_coco-obj365-person-05d8511e.pth'),
+  'MM': ('mmpose/demo/mmdetection_cfg/faster_rcnn_r50_fpn_coco.py', 'https://download.openmmlab.com/mmdetection/v2.0/faster_rcnn/faster_rcnn_r50_fpn_1x_coco/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth', 'MMPose_models/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth')
+}
+
 
 # Get the list of all videos in the given directory
 all_videos = [vid for vid in os.listdir(VIDEO_DIRECTORY) if vid[0:1] != '.']
@@ -40,11 +48,18 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 
 # Loop through all model setups
-for (config_file, model_download, model_path) in model_setup_list:
+for (config_file, model_download, model_path, det_setting) in model_setup_list:
 
   # Download model if not already there
   if not(os.path.exists(model_path)): 
     download_file(model_download, model_path)
+
+  det_config_file, det_model_download, det_model_path = detector_mapping[det_setting]
+
+  # Download detector model if not already there
+  if not(os.path.exists(det_model_path)): 
+    download_file(det_model_download, det_model_path) 
+
   
   model_base = os.path.split(model_path)[-1]
   os.makedirs(os.path.join(OUTPUT_DIRECTORY, model_base), exist_ok=True)
@@ -60,8 +75,9 @@ for (config_file, model_download, model_path) in model_setup_list:
     elif os.path.isfile(video_path):
       if TOP_DOWN:
         
-        cmd = f'python mmpose/JayGopal/run_topdown.py mmpose/demo/mmdetection_cfg/faster_rcnn_r50_fpn_coco.py \
-          MMPose_models/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth \
+        cmd = f'python mmpose/JayGopal/run_topdown.py \
+          "{os.path.abspath(det_config_file)}" \
+          "{os.path.abspath(det_model_path)}" \
           "{os.path.abspath(config_file)}" \
           "{os.path.abspath(model_path)}" \
           --input "{video_path}" \
@@ -90,8 +106,8 @@ for (config_file, model_download, model_path) in model_setup_list:
     df_combined.to_csv(os.path.join(OUTPUT_DIRECTORY, f'{model_base}/combined.csv'), index=False)
   # Time estimation
   elapsed_time = time.time() - start_time
-  iterations_left = len(model_setup_list) - model_setup_list.index( (config_file, model_download, model_path) ) - 1
-  time_per_iteration = elapsed_time / (model_setup_list.index( (config_file, model_download, model_path) ) + 1)
+  iterations_left = len(model_setup_list) - model_setup_list.index( (config_file, model_download, model_path, det_setting) ) - 1
+  time_per_iteration = elapsed_time / (model_setup_list.index( (config_file, model_download, model_path, det_setting) ) + 1)
   time_left = time_per_iteration * iterations_left
   time_left_formatted = str(datetime.timedelta(seconds=int(time_left)))
   
