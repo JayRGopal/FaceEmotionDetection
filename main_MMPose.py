@@ -62,19 +62,19 @@ for (config_file, model_download, model_path) in model_setup_list:
         
         cmd = f'python mmpose/JayGopal/run_topdown.py mmpose/demo/mmdetection_cfg/faster_rcnn_r50_fpn_coco.py \
           MMPose_models/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth \
-          {config_file} \
-          {model_path} \
-          --input {video_path} \
+          "{os.path.abspath(config_file)}" \
+          "{os.path.abspath(model_path)}" \
+          --input "{video_path}" \
           --draw-heatmap \
           --save-predictions \
-          --output-root {OUTPUT_DIRECTORY}/{model_base}/ \
+          --output-root "{os.path.abspath(f"{OUTPUT_DIRECTORY}/{model_base}/")}" \
           --device {device}' 
       else:
         cmd = f'python mmpose/JayGopal/run_bottomup.py \
-          {config_file} \
-          {model_path} \
-          --input {video_path} \
-          --output-root {OUTPUT_DIRECTORY}/ \
+          "{os.path.abspath(config_file)}" \
+          "{os.path.abspath(model_path)}" \
+          --input "{video_path}" \
+          --output-root "{os.path.abspath(f"{OUTPUT_DIRECTORY}/{model_base}/")}" \
           --save-predictions --draw-heatmap \
           --device {device}'
 

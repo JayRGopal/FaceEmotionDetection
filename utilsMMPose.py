@@ -9,11 +9,12 @@ VIDEO PROCESSING
 
 """
 
+
 def create_dataframe_vid(label_dict, instance_info):
     # Initialize an empty dictionary to store the column data
     columns_data = {}
 
-    columns_data_all = [] 
+    columns_data_all = []
     frame_ids = []
     # loop through each frame
     for enum, i in enumerate(instance_info):
@@ -37,8 +38,8 @@ def create_dataframe_vid(label_dict, instance_info):
 
           # Create a pandas DataFrame from the column data dictionary
           temp_df = pd.DataFrame(columns_data)
-          columns_data_all.append(temp_df) 
-    
+          columns_data_all.append(temp_df)
+
     # combine into one df and insert frame number
     dataframe = pd.concat(columns_data_all, ignore_index=True)
     dataframe.insert(0, 'Frame Number', frame_ids)
@@ -60,7 +61,6 @@ def convert_to_df_vid(json_file_path):
   our_df = create_dataframe_vid(meta_data, instance_info)
 
   return our_df
-
 
 """
 
