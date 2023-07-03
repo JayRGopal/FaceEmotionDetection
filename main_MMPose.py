@@ -79,13 +79,14 @@ for (config_file, model_download, model_path) in model_setup_list:
           --device {device}'
 
       subprocess.run(cmd, shell=True)
-      df_list.append(convert_to_df(save_file)) 
+      df_temp = convert_to_df(save_file)
+      df_temp.insert(0, 'Filename', [i]*len(df_temp))
+      df_list.append(df_temp) 
       
     else:
       print(f'WARNING: Got path {video_path}, which is not a valid video file!')
   if len(df_list) > 0:
     df_combined = pd.concat(df_list, ignore_index=True)
-    df_combined.insert(0, 'Filename', valid_videos)
     df_combined.to_csv(os.path.join(OUTPUT_DIRECTORY, f'{model_base}/combined.csv'), index=False)
   # Time estimation
   elapsed_time = time.time() - start_time

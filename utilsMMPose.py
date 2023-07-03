@@ -68,32 +68,6 @@ IMAGE PROCESSING
 
 """
 
-# def create_dataframe(label_dict, instance_info):
-#     # Initialize an empty dictionary to store the column data
-#     columns_data = {}
-
-#     num_people = len(instance_info)
-#     print(num_people) 
-#     if num_people == 1:
-#       coordinates = instance_info[0]['keypoints']
-    
-#     # Iterate over the label dictionary and coordinates list
-#     for index, label in label_dict.items():
-#         # Get the x and y coordinates for the current label index
-#         x, y = coordinates[int(index)]
-
-#         # Create the column names
-#         column_x = f'{label} x'
-#         column_y = f'{label} y'
-
-#         # Store the x and y coordinates in the column data dictionary
-#         columns_data[column_x] = [x]
-#         columns_data[column_y] = [y]
-
-#     # Create a pandas DataFrame from the column data dictionary
-#     dataframe = pd.DataFrame(columns_data)
-
-#     return dataframe
 
 def create_dataframe(label_dict, coordinates):
     # Initialize an empty dictionary to store the column data
@@ -118,15 +92,21 @@ def create_dataframe(label_dict, coordinates):
     return dataframe
 
 def convert_to_df(json_file_path):
-  # Assumes the JSON has results from ONE IMAGE
+    # Assumes the JSON has results from ONE IMAGE
 
-  # Open the JSON file and load its contents
-  with open(json_file_path, 'r') as file:
-      json_data = json.load(file)
-  meta_data = json_data['meta_info']['keypoint_id2name']
-  instance_info = json_data['instance_info']
+    # Open the JSON file and load its contents
+    with open(json_file_path, 'r') as file:
+        json_data = json.load(file)
+    meta_data = json_data['meta_info']['keypoint_id2name']
+    instance_info = json_data['instance_info']
+    
+    df_list = []
+    for i in instance_info:
+        df_now = create_dataframe(meta_data, i['keypoints'])
+        df_list.append(df_now)
 
-  our_df = create_dataframe(meta_data, instance_info)
 
-  return our_df
+    df_combined = pd.concat(df_list)
+
+    return df_combined
 
