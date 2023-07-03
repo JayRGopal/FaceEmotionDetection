@@ -83,9 +83,10 @@ for (config_file, model_download, model_path) in model_setup_list:
       
     else:
       print(f'WARNING: Got path {video_path}, which is not a valid video file!')
-  df_combined = pd.concat(df_list, ignore_index=True)
-  df_combined.insert(0, 'Filename', valid_videos)
-  df_combined.to_csv(os.path.join(OUTPUT_DIRECTORY, f'{model_base}/combined.csv'), index=False)
+  if len(df_list) > 0:
+    df_combined = pd.concat(df_list, ignore_index=True)
+    df_combined.insert(0, 'Filename', valid_videos)
+    df_combined.to_csv(os.path.join(OUTPUT_DIRECTORY, f'{model_base}/combined.csv'), index=False)
   # Time estimation
   elapsed_time = time.time() - start_time
   iterations_left = len(model_setup_list) - model_setup_list.index( (config_file, model_download, model_path) ) - 1

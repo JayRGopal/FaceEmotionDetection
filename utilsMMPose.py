@@ -68,15 +68,37 @@ IMAGE PROCESSING
 
 """
 
-def create_dataframe(label_dict, instance_info):
+# def create_dataframe(label_dict, instance_info):
+#     # Initialize an empty dictionary to store the column data
+#     columns_data = {}
+
+#     num_people = len(instance_info)
+#     print(num_people) 
+#     if num_people == 1:
+#       coordinates = instance_info[0]['keypoints']
+    
+#     # Iterate over the label dictionary and coordinates list
+#     for index, label in label_dict.items():
+#         # Get the x and y coordinates for the current label index
+#         x, y = coordinates[int(index)]
+
+#         # Create the column names
+#         column_x = f'{label} x'
+#         column_y = f'{label} y'
+
+#         # Store the x and y coordinates in the column data dictionary
+#         columns_data[column_x] = [x]
+#         columns_data[column_y] = [y]
+
+#     # Create a pandas DataFrame from the column data dictionary
+#     dataframe = pd.DataFrame(columns_data)
+
+#     return dataframe
+
+def create_dataframe(label_dict, coordinates):
     # Initialize an empty dictionary to store the column data
     columns_data = {}
 
-    num_people = len(instance_info)
-    print(num_people) 
-    if num_people == 1:
-      coordinates = instance_info[0]['keypoints']
-    
     # Iterate over the label dictionary and coordinates list
     for index, label in label_dict.items():
         # Get the x and y coordinates for the current label index
@@ -94,7 +116,6 @@ def create_dataframe(label_dict, instance_info):
     dataframe = pd.DataFrame(columns_data)
 
     return dataframe
-
 
 def convert_to_df(json_file_path):
   # Assumes the JSON has results from ONE IMAGE
