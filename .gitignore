@@ -9,3 +9,4 @@ outputs_NeMo_ASR/*
 outputs_MMPose/*
 inputs_speech/*
 MMPose_models/*
+MMPose_info/*
