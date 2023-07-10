@@ -4,6 +4,8 @@ import time
 import datetime
 from setup import download_file
 import torch
+import itertools
+import json
 
 from utilsMMPose import *
 
@@ -43,6 +45,28 @@ detector_mapping = {
 }
 
 
+# Parameter grid search
+# {parameter flag}: list of values
+parameter_search = {
+  '--nms-thr': [0.2, 0.25, 0.3, 0.35], 
+  '--bbox-thr': [0.2, 0.25, 0.3, 0.35],
+  '--kpt-thr': [0.2, 0.25, 0.3, 0.35]
+}
+
+# Get all combinations of parameters
+parameter_combinations = list(itertools.product(*parameter_search.values()))
+
+# Combine parameter_search and parameter_combinations into a new dictionary
+combined_data = {
+    'parameter_search': parameter_search,
+    'parameter_combinations': parameter_combinations
+}
+
+# Save the combined data to a JSON file
+with open(os.path.join(OUTPUT_DIRECTORY, 'parameter_combinations.json'), 'x') as file:
+    json.dump(combined_data, file)
+
+
 # Get the list of all videos in the given directory
 all_videos = [vid for vid in os.listdir(VIDEO_DIRECTORY) if vid[0:1] != '.']
 
@@ -55,74 +79,86 @@ start_time = time.time()
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 
-# Loop through all model setups
-for (config_file, model_download, model_path, det_setting) in model_setup_list:
+for param_enum, combination in enumerate(parameter_combinations):
+  # Create a dictionary with parameter names and values
+  parameters = dict(zip(parameter_search.keys(), combination))
+  parameter_string = ' '.join([f'{key} {value}' for key, value in parameters.items()])
 
-  # Download model if not already there
-  if not(os.path.exists(model_path)): 
-    print(f'DOWNLOADING TO {model_path}')
-    download_file(model_download, model_path)
+  # Loop through all model setups
+  for (config_file, model_download, model_path, det_setting) in model_setup_list:
 
-  det_config_file, det_model_download, det_model_path = detector_mapping[det_setting]
+    # Download model if not already there
+    if not(os.path.exists(model_path)): 
+      print(f'DOWNLOADING TO {model_path}')
+      download_file(model_download, model_path)
 
-  # Download detector model if not already there
-  if not(os.path.exists(det_model_path)):
-    print(f'DOWNLOADING TO {det_model_path}') 
-    download_file(det_model_download, det_model_path) 
+    det_config_file, det_model_download, det_model_path = detector_mapping[det_setting]
 
-  
-  model_base = os.path.split(model_path)[-1]
-  os.makedirs(os.path.join(OUTPUT_DIRECTORY, model_base), exist_ok=True)
+    # Download detector model if not already there
+    if not(os.path.exists(det_model_path)):
+      print(f'DOWNLOADING TO {det_model_path}') 
+      download_file(det_model_download, det_model_path) 
 
-  df_list = []
+    
+    # combine parameter combination number with model name to get folder for saving!
+    model_base = f'{param_enum}_' + os.path.split(model_path)[-1]
+    os.makedirs(os.path.join(OUTPUT_DIRECTORY, model_base), exist_ok=True)
 
-  # Loop through all videos
-  for i in all_videos:
-    save_file = os.path.join(OUTPUT_DIRECTORY, f'{model_base}', 'results_' + i[:-4] + '.json') 
-    video_path = os.path.join(VIDEO_DIRECTORY, i)
-    if os.path.exists(save_file):
-      print(f'Skipping Video {i}: Output File Already Exists!')
-    elif os.path.isfile(video_path):
-      if TOP_DOWN:
+    # save parameters to a file
+    with open(os.path.join(OUTPUT_DIRECTORY, model_base, 'parameters.json'), 'x') as file:
+      json.dump(parameters, file)
+
+    df_list = []
+
+    # Loop through all videos (or images)
+    for i in all_videos:
+      save_file = os.path.join(OUTPUT_DIRECTORY, f'{model_base}', 'results_' + i[:-4] + '.json') 
+      video_path = os.path.join(VIDEO_DIRECTORY, i)
+      if os.path.exists(save_file):
+        print(f'Skipping Video/Image {i}: Output File Already Exists!')
+      elif os.path.isfile(video_path):
+        if TOP_DOWN:
+          
+          cmd = f'python mmpose/JayGopal/run_topdown.py \
+            "{os.path.abspath(det_config_file)}" \
+            "{os.path.abspath(det_model_path)}" \
+            "{os.path.abspath(config_file)}" \
+            "{os.path.abspath(model_path)}" \
+            --input "{video_path}" \
+            --draw-heatmap \
+            --save-predictions \
+            --output-root "{os.path.abspath(f"{OUTPUT_DIRECTORY}/{model_base}/")}" \
+            --device {device} \
+            {parameter_string}' 
+        else:
+          cmd = f'python mmpose/JayGopal/run_bottomup.py \
+            "{os.path.abspath(config_file)}" \
+            "{os.path.abspath(model_path)}" \
+            --input "{video_path}" \
+            --output-root "{os.path.abspath(f"{OUTPUT_DIRECTORY}/{model_base}/")}" \
+            --save-predictions --draw-heatmap \
+            --device {device} \
+            {parameter_string}'
+
+        subprocess.run(cmd, shell=True)
+        df_temp = convert_to_df(save_file)
+        df_temp.insert(0, 'Filename', [i]*len(df_temp))
+        df_list.append(df_temp) 
         
-        cmd = f'python mmpose/JayGopal/run_topdown.py \
-          "{os.path.abspath(det_config_file)}" \
-          "{os.path.abspath(det_model_path)}" \
-          "{os.path.abspath(config_file)}" \
-          "{os.path.abspath(model_path)}" \
-          --input "{video_path}" \
-          --draw-heatmap \
-          --save-predictions \
-          --output-root "{os.path.abspath(f"{OUTPUT_DIRECTORY}/{model_base}/")}" \
-          --device {device}' 
       else:
-        cmd = f'python mmpose/JayGopal/run_bottomup.py \
-          "{os.path.abspath(config_file)}" \
-          "{os.path.abspath(model_path)}" \
-          --input "{video_path}" \
-          --output-root "{os.path.abspath(f"{OUTPUT_DIRECTORY}/{model_base}/")}" \
-          --save-predictions --draw-heatmap \
-          --device {device}'
-
-      subprocess.run(cmd, shell=True)
-      df_temp = convert_to_df(save_file)
-      df_temp.insert(0, 'Filename', [i]*len(df_temp))
-      df_list.append(df_temp) 
-      
-    else:
-      print(f'WARNING: Got path {video_path}, which is not a valid video file!')
-  if len(df_list) > 0:
-    df_combined = pd.concat(df_list, ignore_index=True)
-    df_combined.to_csv(os.path.join(OUTPUT_DIRECTORY, f'{model_base}/combined.csv'), index=False)
-  # Time estimation
-  elapsed_time = time.time() - start_time
-  iterations_left = len(model_setup_list) - model_setup_list.index( (config_file, model_download, model_path, det_setting) ) - 1
-  time_per_iteration = elapsed_time / (model_setup_list.index( (config_file, model_download, model_path, det_setting) ) + 1)
-  time_left = time_per_iteration * iterations_left
-  time_left_formatted = str(datetime.timedelta(seconds=int(time_left)))
-  
-  # print an update on the progress
-  print("Approximately", time_left_formatted, "left to complete the operation")
+        print(f'WARNING: Got path {video_path}, which is not a valid video or image file!')
+    if len(df_list) > 0:
+      df_combined = pd.concat(df_list, ignore_index=True)
+      df_combined.to_csv(os.path.join(OUTPUT_DIRECTORY, f'{model_base}/combined.csv'), index=False)
+    # Time estimation
+    elapsed_time = time.time() - start_time
+    iterations_left = len(model_setup_list) - model_setup_list.index( (config_file, model_download, model_path, det_setting) ) - 1
+    time_per_iteration = elapsed_time / (model_setup_list.index( (config_file, model_download, model_path, det_setting) ) + 1)
+    time_left = time_per_iteration * iterations_left
+    time_left_formatted = str(datetime.timedelta(seconds=int(time_left)))
+    
+    # print an update on the progress
+    print("Approximately", time_left_formatted, "left to complete the operation")
   
 
 
