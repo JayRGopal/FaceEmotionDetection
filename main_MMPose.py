@@ -152,13 +152,18 @@ for param_enum, combination in enumerate(parameter_combinations):
       df_combined.to_csv(os.path.join(OUTPUT_DIRECTORY, f'{model_base}/combined.csv'), index=False)
     # Time estimation
     elapsed_time = time.time() - start_time
-    iterations_left = len(model_setup_list) - model_setup_list.index( (config_file, model_download, model_path, det_setting) ) - 1
-    time_per_iteration = elapsed_time / (model_setup_list.index( (config_file, model_download, model_path, det_setting) ) + 1)
+    total_iterations = (len(model_setup_list)*len(parameter_combinations))
+    iterations_left = total_iterations - (len(model_setup_list)*param_enum) - model_setup_list.index( (config_file, model_download, model_path, det_setting) ) - 1
+    time_per_iteration = elapsed_time / (total_iterations - iterations_left) 
     time_left = time_per_iteration * iterations_left
     time_left_formatted = str(datetime.timedelta(seconds=int(time_left)))
     
     # print an update on the progress
+    print('-' * 20)
+    print('-' * 20)
     print("Approximately", time_left_formatted, "left to complete the operation")
+    print('-' * 20)
+    print('-' * 20)
   
 
 
