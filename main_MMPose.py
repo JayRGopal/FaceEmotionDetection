@@ -37,7 +37,8 @@ model_setup_list = [
 # Detector mapping
 # {detector_setting: (det_config_file, det_model_download, det_model_path)}
 detector_mapping = {
-  'RTM': ('mmpose/projects/rtmpose/rtmdet/person/rtmdet_nano_320-8xb32_coco-person.py', 'https://download.openmmlab.com/mmpose/v1/projects/rtmpose/rtmdet_nano_8xb32-100e_coco-obj365-person-05d8511e.pth', f'{MMPOSE_MODEL_BASE}/rtmdet_nano_8xb32-100e_coco-obj365-person-05d8511e.pth'),
+  'RTM': ('mmpose/projects/rtmpose/rtmdet/person/rtmdet_m_640-8xb32_coco-person.py', 'https://download.openmmlab.com/mmpose/v1/projects/rtmpose/rtmdet_m_8xb32-100e_coco-obj365-person-235e8209.pth', f'{MMPOSE_MODEL_BASE}/rtmdet_m_8xb32-100e_coco-obj365-person-235e8209.pth'),
+  'RTMN': ('mmpose/projects/rtmpose/rtmdet/person/rtmdet_nano_320-8xb32_coco-person.py', 'https://download.openmmlab.com/mmpose/v1/projects/rtmpose/rtmdet_nano_8xb32-100e_coco-obj365-person-05d8511e.pth', f'{MMPOSE_MODEL_BASE}/rtmdet_nano_8xb32-100e_coco-obj365-person-05d8511e.pth'),
   'MM': ('mmpose/demo/mmdetection_cfg/faster_rcnn_r50_fpn_coco.py', 'https://download.openmmlab.com/mmdetection/v2.0/faster_rcnn/faster_rcnn_r50_fpn_1x_coco/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth', f'{MMPOSE_MODEL_BASE}/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth')
 }
 
