@@ -141,9 +141,13 @@ for param_enum, combination in enumerate(parameter_combinations):
             {parameter_string}'
 
         subprocess.run(cmd, shell=True)
-        df_temp = convert_to_df(save_file)
+        if video_path[-4:] == '.mp4':
+          df_temp = convert_to_df_vid(save_file)
+        else:
+          df_temp = convert_to_df(save_file)
+        
         df_temp.insert(0, 'Filename', [i]*len(df_temp))
-        df_list.append(df_temp) 
+        df_list.append(df_temp)
         
       else:
         print(f'WARNING: Got path {video_path}, which is not a valid video or image file!')
