@@ -30,6 +30,7 @@ def initial_setup():
     os.system('mim install "mmcv>=2.0.0"')
     os.system('mim install "mmdet>=3.0.0"')
     os.system('mim install "mmcls>=1.0.0rc5"')
+    os.system('mim install "mmpretrain>=1.0.0"') # for ViT Pose
     if not(os.path.exists('mmpose')):
         os.system("git clone --branch dev-1.x https://github.com/JayRGopal/mmpose")
     os.system('cd mmpose')
@@ -85,6 +86,18 @@ def download_file(link: str, output_dir: str) -> None:
     else:
         print("An error occurred while downloading the file.")
     return
+
+def download_file(link: str, output_path: str) -> None:
+    
+    # Download the file using requests with streaming and chunked writing
+    with requests.get(link, stream=True) as response:
+        if response.status_code == 200:
+            with open(output_path, "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+            print(f"File downloaded and saved to {output_path}")
+        else:
+            print("An error occurred while downloading the file.")
 
 import gdown
 

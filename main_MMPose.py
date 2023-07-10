@@ -17,21 +17,28 @@ Full Pipeline - MMPose
 VIDEO_DIRECTORY = os.path.abspath('testing_images/')
 OUTPUT_DIRECTORY = os.path.abspath('outputs_MMPose/')
 TOP_DOWN = True
-DOWNLOAD_DIRECTORY = os.path.abspath('MMPose_models/')
 CONFIGS_BASE = os.path.abspath('mmpose/configs/body_2d_keypoint') 
+MMPOSE_MODEL_BASE = os.path.abspath('MMPose_models/')
 
 
 # Model setup list
 # (config_file, model_download, model_path, detector_setting)
 model_setup_list = [
-  (f'{CONFIGS_BASE}/topdown_heatmap/coco/td-hm_hrnet-w32_8xb64-210e_coco-256x192.py', 'https://download.openmmlab.com/mmpose/top_down/hrnet/hrnet_w32_coco_256x192-c78dce93_20200708.pth', 'MMPose_models/hrnet_w32_coco_256x192-c78dce93_20200708.pth', 'MM'),
+  (f'{CONFIGS_BASE}/topdown_heatmap/coco/td-hm_hrnet-w32_8xb64-210e_coco-256x192.py', 'https://download.openmmlab.com/mmpose/top_down/hrnet/hrnet_w32_coco_256x192-c78dce93_20200708.pth', f'{MMPOSE_MODEL_BASE}/hrnet_w32_coco_256x192-c78dce93_20200708.pth', 'MM'),
+  (f'{CONFIGS_BASE}/topdown_heatmap/coco/td-hm_vitpose-huge_8xb64-210e_coco-256x192.py', 'https://download.openmmlab.com/mmpose/v1/body_2d_keypoint/topdown_heatmap/coco/td-hm_ViTPose-huge_8xb64-210e_coco-256x192-e32adcd4_20230314.pth', f'{MMPOSE_MODEL_BASE}/td-hm_ViTPose-huge_8xb64-210e_coco-256x192-e32adcd4_20230314.pth', 'MM'),
+  (f'{CONFIGS_BASE}/topdown_heatmap/coco/td-hm_ViTPose-large_8xb64-210e_coco-256x192.py', 'https://download.openmmlab.com/mmpose/v1/body_2d_keypoint/topdown_heatmap/coco/td-hm_ViTPose-large_8xb64-210e_coco-256x192-53609f55_20230314.pth', f'{MMPOSE_MODEL_BASE}/td-hm_ViTPose-large_8xb64-210e_coco-256x192-53609f55_20230314.pth', 'MM'),
+  (f'{CONFIGS_BASE}/topdown_heatmap/coco/td-hm_hrformer-base_8xb32-210e_coco-384x288.py', 'https://download.openmmlab.com/mmpose/top_down/hrformer/hrformer_base_coco_384x288-ecf0758d_20220316.pth', f'{MMPOSE_MODEL_BASE}/hrformer_base_coco_384x288-ecf0758d_20220316.pth', 'MM'),
+  (f'{CONFIGS_BASE}/topdown_heatmap/coco/td-hm_hrnet-w48_udp-8xb32-210e_coco-384x288.py', 'https://download.openmmlab.com/mmpose/v1/body_2d_keypoint/topdown_heatmap/coco/td-hm_hrnet-w48_udp-8xb32-210e_coco-384x288-70d7ab01_20220913.pth', f'{MMPOSE_MODEL_BASE}/td-hm_hrnet-w48_udp-8xb32-210e_coco-384x288-70d7ab01_20220913.pth', 'MM'),
+  (f'{CONFIGS_BASE}/rtmpose/coco/rtmpose-l_8xb256-420e_aic-coco-384x288.py', 'https://download.openmmlab.com/mmpose/v1/projects/rtmposev1/rtmpose-l_simcc-aic-coco_pt-aic-coco_420e-384x288-97d6cb0f_20230228.pth', f'{MMPOSE_MODEL_BASE}/rtmpose-l_simcc-aic-coco_pt-aic-coco_420e-384x288-97d6cb0f_20230228.pth', 'RTM'),
+  (f'{CONFIGS_BASE}/rtmpose/coco/rtmpose-m_8xb256-420e_aic-coco-384x288.py', 'https://download.openmmlab.com/mmpose/v1/projects/rtmposev1/rtmpose-m_simcc-aic-coco_pt-aic-coco_420e-384x288-a62a0b32_20230228.pth', f'{MMPOSE_MODEL_BASE}/rtmpose-m_simcc-aic-coco_pt-aic-coco_420e-384x288-a62a0b32_20230228.pth', 'RTM'),
+  (f'{CONFIGS_BASE}/rtmpose/coco/rtmpose-l_8xb256-420e_aic-coco-256x192.py', 'https://download.openmmlab.com/mmpose/v1/projects/rtmposev1/rtmpose-l_simcc-aic-coco_pt-aic-coco_420e-256x192-f016ffe0_20230126.pth', f'{MMPOSE_MODEL_BASE}/rtmpose-l_simcc-aic-coco_pt-aic-coco_420e-256x192-f016ffe0_20230126.pth', 'RTM')
 ]
 
 # Detector mapping
 # {detector_setting: (det_config_file, det_model_download, det_model_path)}
 detector_mapping = {
-  'RTM': ('mmpose/projects/rtmpose/rtmdet/person/rtmdet_nano_320-8xb32_coco-person.py', 'https://download.openmmlab.com/mmpose/v1/projects/rtmpose/rtmdet_nano_8xb32-100e_coco-obj365-person-05d8511e.pth', 'MMPose_models/rtmdet_nano_8xb32-100e_coco-obj365-person-05d8511e.pth'),
-  'MM': ('mmpose/demo/mmdetection_cfg/faster_rcnn_r50_fpn_coco.py', 'https://download.openmmlab.com/mmdetection/v2.0/faster_rcnn/faster_rcnn_r50_fpn_1x_coco/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth', 'MMPose_models/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth')
+  'RTM': ('mmpose/projects/rtmpose/rtmdet/person/rtmdet_nano_320-8xb32_coco-person.py', 'https://download.openmmlab.com/mmpose/v1/projects/rtmpose/rtmdet_nano_8xb32-100e_coco-obj365-person-05d8511e.pth', f'{MMPOSE_MODEL_BASE}/rtmdet_nano_8xb32-100e_coco-obj365-person-05d8511e.pth'),
+  'MM': ('mmpose/demo/mmdetection_cfg/faster_rcnn_r50_fpn_coco.py', 'https://download.openmmlab.com/mmdetection/v2.0/faster_rcnn/faster_rcnn_r50_fpn_1x_coco/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth', f'{MMPOSE_MODEL_BASE}/faster_rcnn_r50_fpn_1x_coco_20200130-047c8118.pth')
 }
 
 
@@ -52,12 +59,14 @@ for (config_file, model_download, model_path, det_setting) in model_setup_list:
 
   # Download model if not already there
   if not(os.path.exists(model_path)): 
+    print(f'DOWNLOADING TO {model_path}')
     download_file(model_download, model_path)
 
   det_config_file, det_model_download, det_model_path = detector_mapping[det_setting]
 
   # Download detector model if not already there
-  if not(os.path.exists(det_model_path)): 
+  if not(os.path.exists(det_model_path)):
+    print(f'DOWNLOADING TO {det_model_path}') 
     download_file(det_model_download, det_model_path) 
 
   
