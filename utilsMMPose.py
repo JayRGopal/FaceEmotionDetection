@@ -48,8 +48,13 @@ def merge_images_to_video(image_directory, output_video, order_file_path):
     # Create a list to store the image frames
     frames = []
 
+    first_shape = imageio.imread(image_files[0]).shape
+ 
     # Iterate over the image file paths and append the frames
     for image_path in image_files:
+        one_im = imageio.imread(image_path)
+        if not(one_im.shape == first_shape):
+            print(f'SHAPE MISMATCH! {one_im.shape} for {image_path}') 
         frames.append(imageio.imread(image_path))
 
     # Save the frames as a video
