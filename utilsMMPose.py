@@ -41,6 +41,9 @@ def merge_images_to_video(image_directory, output_video, order_file_path):
     # Sort the image file paths
     image_files.sort()
 
+    # REMOVE THIS!! JUST FOR DEVELOPMENT: 20 IMAGES ONLY!
+    image_files = image_files[:20] 
+
     # Dump the order into a JSON file
     with open(order_file_path, 'w') as order_file:
         json.dump(image_files, order_file)
@@ -200,7 +203,7 @@ def create_dataframe(label_dict, wrapper):
         columns_data[f'bbox_cord_{enumb}'] = [i]
           
     columns_data['bbox_score'] = [bbox_cords_conf]
-    
+
     # Create a pandas DataFrame from the column data dictionary
     dataframe = pd.DataFrame(columns_data)
 
