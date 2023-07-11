@@ -58,40 +58,11 @@ def merge_images_to_video(image_directory, output_video, order_file_path):
     print(f"Video created: {output_video}")
 
 
-# def merge_images_to_video(image_directory, output_video, order_file_path):
-#     """
-#     Merge images from a directory into a video.
-
-#     Args:
-#         image_directory (str): Path to the directory containing the images.
-#         output_video (str): Output video file name and path.
-#         order_file_path (str): Path to JSON file to store order of images.
-#     """
-
-#     # Get a list of image file names in the folder
-#     image_files = sorted(os.listdir(image_directory))
-#     image_files = [f for f in image_files if f.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp'))]
-
-#     # Dump the order into a JSON file
-#     with open(order_file_path, 'w') as order_file:
-#         json.dump(image_files, order_file)
-
-#     # Create a list to store the image frames
-#     frames = []
-
-#     # Iterate over the images and append them to the frames list
-#     for image in image_files:
-#         image_path = os.path.join(image_directory, image)
-#         frames.append(imageio.imread(image_path))
-
-#     # Save the frames as a video
-#     imageio.mimsave(output_video, frames, fps=30)
-
-#     print(f"Video created: {output_video}")
-
-
 
 def resize_images(image_folder):
+
+    # CAUTION!! THIS SAVES OVER THE IMAGES! MAKE A COPY!
+    
 
     # Iterate over the subdirectories and files in the image_directory
     for root, dirs, files in os.walk(image_folder):
@@ -104,7 +75,7 @@ def resize_images(image_folder):
             if file.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp')):
                 # Get the image file path
                 image_path = os.path.join(root, file)
-                
+
                 # resize it!
                 if os.path.isfile(image_path):
                     img = cv2.imread(image_path)
