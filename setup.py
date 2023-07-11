@@ -4,7 +4,8 @@ def initial_setup():
 
     # requirements
     os.system("pip install --user -r requirements.txt")
-
+    os.system("pip3 install --user -r requirements.txt")
+    
     # ME-GraphAU Install
     if not(os.path.exists('megraphau')):
         os.system("git clone https://github.com/JayRGopal/ME-GraphAU")
@@ -19,18 +20,19 @@ def initial_setup():
     
     os.system('pip3 install Cython')
  
-    os.system('python -m pip install git+https://github.com/NVIDIA/NeMo.git@r1.18.0#egg=nemo_toolkit')
+    os.system('python3 -m pip install git+https://github.com/NVIDIA/NeMo.git@r1.18.0#egg=nemo_toolkit')
 
     # Note: You may also need visualstudio.microsoft.com/visual-cpp-build-tools/
     # Note: We also had to clone the nemo repo and pip install requirements on the CPU workstation
 
     # MMPose Install
     os.system("pip install -U openmim")
-    os.system("mim install mmengine")
-    os.system('mim install "mmcv>=2.0.0"')
-    os.system('mim install "mmdet>=3.0.0"')
-    os.system('mim install "mmcls>=1.0.0rc5"')
-    os.system('mim install "mmpretrain>=1.0.0"') # for ViT Pose
+    os.system("pip3 install mmpose")
+    os.system("python3 -m mim install mmengine")
+    os.system('python3 -m mim install "mmcv>=2.0.0"')
+    os.system('python3 -m mim install "mmdet>=3.0.0"')
+    os.system('python3 -m mim install "mmcls>=1.0.0rc5"')
+    os.system('python3 -m mim install "mmpretrain>=1.0.0"') # for ViT Pose
     if not(os.path.exists('mmpose')):
         os.system("git clone --branch dev-1.x https://github.com/JayRGopal/mmpose")
     os.system('cd mmpose')
