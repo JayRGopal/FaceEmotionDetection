@@ -17,7 +17,8 @@ Full Pipeline - MMPose
 
 # Set the parameters
 VIDEO_DIRECTORY = os.path.abspath('testing_images/')
-OUTPUT_DIRECTORY = os.path.abspath('outputs_MMPose/')
+OUTPUT_DIRECTORY = os.path.abspath('outputs_MMPose/') # This is where json results go
+OUTPUT_VIDEO_DIRECTORY = os.path.abspath('outputs_MMPose/') # This is where videos/images with overlay go 
 TOP_DOWN = True
 CONFIGS_BASE = os.path.abspath('mmpose/configs/body_2d_keypoint') 
 MMPOSE_MODEL_BASE = os.path.abspath('MMPose_models/')
@@ -66,6 +67,8 @@ combined_data = {
 with open(os.path.join(OUTPUT_DIRECTORY, 'parameter_combinations.json'), 'x') as file:
     json.dump(combined_data, file)
 
+with open(os.path.join(OUTPUT_VIDEO_DIRECTORY, 'parameter_combinations.json'), 'x') as file:
+    json.dump(combined_data, file)
 
 # Get the list of all videos in the given directory
 all_videos = [vid for vid in os.listdir(VIDEO_DIRECTORY) if vid[0:1] != '.']
@@ -103,9 +106,13 @@ for param_enum, combination in enumerate(parameter_combinations):
     # combine parameter combination number with model name to get folder for saving!
     model_base = f'{param_enum}_' + os.path.split(model_path)[-1]
     os.makedirs(os.path.join(OUTPUT_DIRECTORY, model_base), exist_ok=True)
+    os.makedirs(os.path.join(OUTPUT_VIDEO_DIRECTORY, model_base), exist_ok=True)
 
     # save parameters to a file
     with open(os.path.join(OUTPUT_DIRECTORY, model_base, 'parameters.json'), 'x') as file:
+      json.dump(parameters, file)
+    
+    with open(os.path.join(OUTPUT_VIDEO_DIRECTORY, model_base, 'parameters.json'), 'x') as file:
       json.dump(parameters, file)
 
     df_list = []
@@ -128,6 +135,7 @@ for param_enum, combination in enumerate(parameter_combinations):
             --draw-heatmap \
             --save-predictions \
             --output-root "{os.path.abspath(f"{OUTPUT_DIRECTORY}/{model_base}/")}" \
+            --output-video "{os.path.abspath(f"{OUTPUT_VIDEO_DIRECTORY}/{model_base}/")}" \
             --device {device} \
             {parameter_string}' 
         else:
@@ -136,6 +144,7 @@ for param_enum, combination in enumerate(parameter_combinations):
             "{os.path.abspath(model_path)}" \
             --input "{video_path}" \
             --output-root "{os.path.abspath(f"{OUTPUT_DIRECTORY}/{model_base}/")}" \
+            --output-video "{os.path.abspath(f"{OUTPUT_VIDEO_DIRECTORY}/{model_base}/")}" \
             --save-predictions --draw-heatmap \
             --device {device} \
             {parameter_string}'
