@@ -64,10 +64,10 @@ combined_data = {
 }
 
 # Save the combined data to a JSON file
-with open(os.path.join(OUTPUT_DIRECTORY, 'parameter_combinations.json'), 'x') as file:
+with open(os.path.join(OUTPUT_DIRECTORY, 'parameter_combinations.json'), 'w') as file:
     json.dump(combined_data, file)
 
-with open(os.path.join(OUTPUT_VIDEO_DIRECTORY, 'parameter_combinations.json'), 'x') as file:
+with open(os.path.join(OUTPUT_VIDEO_DIRECTORY, 'parameter_combinations.json'), 'w') as file:
     json.dump(combined_data, file)
 
 # Get the list of all videos in the given directory
@@ -109,10 +109,10 @@ for param_enum, combination in enumerate(parameter_combinations):
     os.makedirs(os.path.join(OUTPUT_VIDEO_DIRECTORY, model_base), exist_ok=True)
 
     # save parameters to a file
-    with open(os.path.join(OUTPUT_DIRECTORY, model_base, 'parameters.json'), 'x') as file:
+    with open(os.path.join(OUTPUT_DIRECTORY, model_base, 'parameters.json'), 'w') as file:
       json.dump(parameters, file)
     
-    with open(os.path.join(OUTPUT_VIDEO_DIRECTORY, model_base, 'parameters.json'), 'x') as file:
+    with open(os.path.join(OUTPUT_VIDEO_DIRECTORY, model_base, 'parameters.json'), 'w') as file:
       json.dump(parameters, file)
 
     df_list = []
