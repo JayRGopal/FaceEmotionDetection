@@ -74,21 +74,6 @@ def down_now(save_path, file_id):
     
     return
 
-def download_file(link: str, output_dir: str) -> None:
-    # Extract the file name from the link
-    file_name = link.split("/")[-1]
-
-    # Download the file using requests
-    response = requests.get(link)
-    if response.status_code == 200:
-        # Save the downloaded file to the output directory
-        with open(output_dir, "wb") as f:
-            f.write(response.content)
-        print(f"File downloaded and saved to {output_dir}")
-    else:
-        print("An error occurred while downloading the file.")
-    return
-
 def download_file(link: str, output_path: str) -> None:
     
     # Download the file using requests with streaming and chunked writing
