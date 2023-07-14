@@ -27,7 +27,7 @@ MMPOSE_MODEL_BASE = os.path.abspath('MMPose_models/')
 # Model setup list
 # (config_file, model_download, model_path, detector_setting)
 model_setup_list = [
-  (f'{CONFIGS_BASE}/topdown_heatmap/coco/td-hm_hrnet-w32_8xb64-210e_coco-256x192.py', 'https://download.openmmlab.com/mmpose/top_down/hrnet/hrnet_w32_coco_256x192-c78dce93_20200708.pth', f'{MMPOSE_MODEL_BASE}/hrnet_w32_coco_256x192-c78dce93_20200708.pth', 'MM'),
+  #(f'{CONFIGS_BASE}/topdown_heatmap/coco/td-hm_hrnet-w32_8xb64-210e_coco-256x192.py', 'https://download.openmmlab.com/mmpose/top_down/hrnet/hrnet_w32_coco_256x192-c78dce93_20200708.pth', f'{MMPOSE_MODEL_BASE}/hrnet_w32_coco_256x192-c78dce93_20200708.pth', 'MM'),
   (f'{CONFIGS_BASE}/topdown_heatmap/coco/td-hm_vitpose-huge_8xb64-210e_coco-256x192.py', 'https://download.openmmlab.com/mmpose/v1/body_2d_keypoint/topdown_heatmap/coco/td-hm_ViTPose-huge_8xb64-210e_coco-256x192-e32adcd4_20230314.pth', f'{MMPOSE_MODEL_BASE}/td-hm_ViTPose-huge_8xb64-210e_coco-256x192-e32adcd4_20230314.pth', 'MM'),
   (f'{CONFIGS_BASE}/topdown_heatmap/coco/td-hm_ViTPose-large_8xb64-210e_coco-256x192.py', 'https://download.openmmlab.com/mmpose/v1/body_2d_keypoint/topdown_heatmap/coco/td-hm_ViTPose-large_8xb64-210e_coco-256x192-53609f55_20230314.pth', f'{MMPOSE_MODEL_BASE}/td-hm_ViTPose-large_8xb64-210e_coco-256x192-53609f55_20230314.pth', 'MM'),
   (f'{CONFIGS_BASE}/topdown_heatmap/coco/td-hm_hrformer-base_8xb32-210e_coco-384x288.py', 'https://download.openmmlab.com/mmpose/top_down/hrformer/hrformer_base_coco_384x288-ecf0758d_20220316.pth', f'{MMPOSE_MODEL_BASE}/hrformer_base_coco_384x288-ecf0758d_20220316.pth', 'MM'),
@@ -49,9 +49,9 @@ detector_mapping = {
 # Parameter grid search
 # {parameter flag}: list of values
 parameter_search = {
-  '--nms-thr': [0.2, 0.25, 0.3, 0.35], 
-  '--bbox-thr': [0.2, 0.25, 0.3, 0.35],
-  '--kpt-thr': [0.2, 0.25, 0.3, 0.35]
+  '--nms-thr': [0.2], 
+  '--bbox-thr': [0.3],
+  '--kpt-thr': [0.3]
 }
 
 # Get all combinations of parameters

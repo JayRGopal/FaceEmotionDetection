@@ -11,7 +11,7 @@ MERGE IMAGES INTO VIDEO
 
 """
 
-def merge_images_to_video(image_directory, output_video, order_file_path):
+def merge_images_to_video(image_directory, output_video, order_file_path, development=True):
     """
     Merge images from a directory and its subdirectories (excluding those ending with "_labeled") into a video.
 
@@ -19,6 +19,7 @@ def merge_images_to_video(image_directory, output_video, order_file_path):
         image_directory (str): Path to the directory containing the images.
         output_video (str): Output video file name and path.
         order_file_path (str): Path to JSON file to store order of images.
+        development (boolean): If true, only takes the first 20 folders!
     """
 
     # Create a list to store the image file paths
@@ -28,6 +29,10 @@ def merge_images_to_video(image_directory, output_video, order_file_path):
     for root, dirs, files in os.walk(image_directory):
         # Remove subdirectories ending with "_labeled"
         dirs[:] = [d for d in dirs if not d.endswith('_labeled')]
+        
+        # First 20 folders only (for development)
+        if development:
+            dirs = dirs[:20]
 
         # Iterate over the files in each subdirectory
         for file in files:
@@ -40,9 +45,6 @@ def merge_images_to_video(image_directory, output_video, order_file_path):
 
     # Sort the image file paths
     image_files.sort()
-
-    # REMOVE THIS!! JUST FOR DEVELOPMENT: 20 IMAGES ONLY!
-    image_files = image_files[:20] 
 
     # Dump the order into a JSON file
     with open(order_file_path, 'w') as order_file:
