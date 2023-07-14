@@ -3,6 +3,7 @@ import os
 import cv2
 import pandas as pd
 import imageio
+import glob
 
 
 """
@@ -26,22 +27,19 @@ def merge_images_to_video(image_directory, output_video, order_file_path, develo
     image_files = []
 
     # Iterate over the subdirectories and files in the image_directory
-    for root, dirs, files in os.walk(image_directory):
-        # Remove subdirectories ending with "_labeled"
-        dirs[:] = [d for d in dirs if not d.endswith('_labeled')]
-        
-        # First 20 folders only (for development)
-        if development:
-            dirs = dirs[:20]
+    # list all subfolders in main directory
+    subfolders = [f.path for f in os.scandir(image_directory) if f.is_dir() and not(f.endswith('_labeled'))]
 
-        # Iterate over the files in each subdirectory
-        for file in files:
-            # Check if the file is an image
-            if file.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp')):
-                # Get the image file path
-                image_path = os.path.join(root, file)
-                # Append the image file path to the list
-                image_files.append(image_path)
+    # development only - first 20 folders
+    if development:
+        subfolders = subfolders[:20]
+    
+    for subfolder in subfolders:
+        image_files_now = []
+        for image_format in ["jpg", "png", "gif", "jpeg"]:
+            image_files_now.extend(glob.glob(f'{subfolder}/*.{image_format}'))
+        
+        image_files = image_files + image_files_now 
 
     # Sort the image file paths
     image_files.sort()
