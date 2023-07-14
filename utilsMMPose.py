@@ -28,7 +28,7 @@ def merge_images_to_video(image_directory, output_video, order_file_path, develo
 
     # Iterate over the subdirectories and files in the image_directory
     # list all subfolders in main directory
-    subfolders = [f.path for f in os.scandir(image_directory) if f.is_dir() and not(f.endswith('_labeled'))]
+    subfolders = [f.path for f in os.scandir(image_directory) if f.is_dir() and not(f.path.endswith('_labeled'))]
 
     # development only - first 20 folders
     if development:
