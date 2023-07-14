@@ -16,7 +16,7 @@ Full Pipeline - MMPose
 """
 
 # Set the parameters
-VIDEO_DIRECTORY = os.path.abspath('testing_images/')
+VIDEO_DIRECTORY = os.path.abspath('MMPose_inputs/')
 OUTPUT_DIRECTORY = os.path.abspath('outputs_MMPose/') # This is where json results go
 OUTPUT_VIDEO_DIRECTORY = os.path.abspath('outputs_MMPose/') # This is where videos/images with overlay go 
 TOP_DOWN = True
