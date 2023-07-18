@@ -22,7 +22,8 @@ def concatenate_csvs_in_folders(main_folder, pickle_path):
         # Skip if the folder ends with _labeled
         if not subdir.endswith("_labeled"):
             for file in files:
-                if file.endswith(".csv"):  # Only process csv files
+                if file.endswith(".csv") and "machinelabels" not in file:  # Only process csv files
+                    # Don't process machinelabels.csv
                     csv_path = os.path.join(subdir, file)
 
                     # Load CSV file into a DataFrame
