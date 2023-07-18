@@ -8,6 +8,54 @@ import glob
 
 """
 
+MERGE CSVS INTO ONE DF
+
+
+"""
+
+
+def concatenate_csvs_in_folders(main_folder, pickle_path):
+    all_dfs = []  # List to store all dataframes
+
+    # Traverse through main_folder
+    for subdir, dirs, files in os.walk(main_folder):
+        # Skip if the folder ends with _labeled
+        if not subdir.endswith("_labeled"):
+            for file in files:
+                if file.endswith(".csv"):  # Only process csv files
+                    csv_path = os.path.join(subdir, file)
+
+                    # Load CSV file into a DataFrame
+                    df = pd.read_csv(csv_path)
+                    
+                    # If DataFrame has less than 3 columns, skip it
+                    if len(df.columns) < 3:
+                        continue
+
+                    # Modify the 3rd column, prepend folder name to the filenames
+                    df.iloc[:, 2] = df.iloc[:, 2].apply(lambda x: f'{os.path.basename(subdir)}/{x}')
+
+                    # Append DataFrame to the list
+                    all_dfs.append(df)
+
+    # Concatenate all dataframes
+    concatenated_df = pd.concat(all_dfs, ignore_index=True)
+    
+    # Remove rows that contain headers
+    # Assuming 'filename' is a part of the header row in the 3rd column
+    concatenated_df = concatenated_df[concatenated_df.iloc[:, 2] != 'filename']
+
+    # Save the dataframe to a pickle file
+    concatenated_df.to_pickle(pickle_path)
+
+    return concatenated_df
+
+
+
+
+
+"""
+
 MERGE IMAGES INTO VIDEO
 
 """
