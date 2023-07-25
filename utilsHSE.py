@@ -36,7 +36,7 @@ import concurrent.futures
 def process_frame(frame, imgProcessing, INPUT_SIZE):
     bounding_boxes, points = imgProcessing.detect_faces(frame)
     if bounding_boxes.shape[0] == 1: # take only frames w one face!
-        box = bounding_boxes[0].astype(np.int) # take only first face
+        box = bounding_boxes[0].astype(np.uint8) # take only first face
         x1,y1,x2,y2=box[0:4]    
         face_img=frame[y1:y2,x1:x2,:]
         
