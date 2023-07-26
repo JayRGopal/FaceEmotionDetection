@@ -10,3 +10,4 @@ outputs_MMPose/*
 inputs_speech/*
 MMPose_models/*
 MMPose_info/*
+MMPose_inputs/*
