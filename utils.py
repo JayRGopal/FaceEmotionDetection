@@ -5,6 +5,8 @@ import cv2
 import os
 import csv
 import math
+from torchvision import transforms
+
 
 # Hyperparameters - Post-Processing for OpenGraphAU
 EMA_ALPHA = 0.9
@@ -76,6 +78,43 @@ def extract_images(path, start_frame, num_to_extract, method='torch', fps=5):
 
 
 
+"""
+
+# OpenGraphAU Preprocessing
+
+"""
+
+
+class ImagePreprocessor(object):
+    def __init__(self, img_size=256, crop_size=224):
+        self.img_size = img_size
+        self.crop_size = crop_size
+        self.normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                              std=[0.229, 0.224, 0.225])
+        self.transform = transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.Resize(self.img_size),
+            transforms.CenterCrop(self.crop_size),
+            transforms.ToTensor(),
+            self.normalize
+        ])
+
+    def preprocess(self, img_batch):
+        preprocessed_images = []
+        for img_tensor in img_batch:
+            # Convert the uint8 tensor to a PIL image
+            img_tensor = self.transform(img_tensor)
+
+            # Convert the PIL image to a float tensor in the range [0, 1]
+            #img_tensor = transforms.ToTensor()(img_pil)
+
+            # Append the preprocessed image tensor to the list
+            preprocessed_images.append(img_tensor)
+
+        # Stack the preprocessed images to form the batch tensor
+        preprocessed_batch = torch.stack(preprocessed_images)
+
+        return preprocessed_batch
 
 
 """
@@ -83,6 +122,8 @@ def extract_images(path, start_frame, num_to_extract, method='torch', fps=5):
 # Face Detection (MTCNN)
 
 """
+
+
 
 # See utilsHSE.py for the mtcnn detector. This is a helper function
 
@@ -92,6 +133,13 @@ def mtcnn_to_torch(faces):
     return faces_real
 
 
+def mtcnn_to_torch_new(faces):
+    faces_real = torch.tensor(faces)
+    faces_real = torch.swapaxes(faces_real, 1, 3)
+    img_preprocessor = ImagePreprocessor()
+    faces_real = img_preprocessor.preprocess(faces_real)
+
+    return faces_real
 
 """
 
@@ -302,36 +350,36 @@ def rnn_smoothing(X):
     X_smoothed = model.predict(X)
     return X_smoothed
 
-from tslearn.metrics import dtw
-from tslearn.piecewise import PiecewiseAggregateApproximation
+# from tslearn.metrics import dtw
+# from tslearn.piecewise import PiecewiseAggregateApproximation
 
-def dtw_smoothing(X):
-    """Smooth the predictions using dynamic time warping."""
-    # Compute the piecewise aggregate approximation of the input data
-    n_segments = int(np.sqrt(X.shape[0]))
-    paa = PiecewiseAggregateApproximation(n_segments=n_segments)
-    X_paa = paa.fit_transform(X)
+# def dtw_smoothing(X):
+#     """Smooth the predictions using dynamic time warping."""
+#     # Compute the piecewise aggregate approximation of the input data
+#     n_segments = int(np.sqrt(X.shape[0]))
+#     paa = PiecewiseAggregateApproximation(n_segments=n_segments)
+#     X_paa = paa.fit_transform(X)
     
-    # Compute the distance matrix between all pairs of frames
-    distance_matrix = np.zeros((X.shape[0], X.shape[0]))
-    for i in range(X.shape[0]):
-        for j in range(X.shape[0]):
-            distance_matrix[i, j] = dtw(X_paa[i], X_paa[j])
+#     # Compute the distance matrix between all pairs of frames
+#     distance_matrix = np.zeros((X.shape[0], X.shape[0]))
+#     for i in range(X.shape[0]):
+#         for j in range(X.shape[0]):
+#             distance_matrix[i, j] = dtw(X_paa[i], X_paa[j])
     
-    # Compute the DTW-based similarity matrix
-    similarity_matrix = np.exp(-distance_matrix ** 2 / (2 * np.median(distance_matrix) ** 2))
+#     # Compute the DTW-based similarity matrix
+#     similarity_matrix = np.exp(-distance_matrix ** 2 / (2 * np.median(distance_matrix) ** 2))
     
-    # Smooth the output using the similarity matrix
-    X_smoothed = np.zeros_like(X)
-    for i in range(X.shape[0]):
-        X_smoothed[i] = np.dot(similarity_matrix[i], X) / np.sum(similarity_matrix[i])
-    return X_smoothed
+#     # Smooth the output using the similarity matrix
+#     X_smoothed = np.zeros_like(X)
+#     for i in range(X.shape[0]):
+#         X_smoothed[i] = np.dot(similarity_matrix[i], X) / np.sum(similarity_matrix[i])
+#     return X_smoothed
 
 
 def postprocess_outs(preds, method='RNN'):
   method_dictionary = {
       'RNN': rnn_smoothing,
-      'DTW': dtw_smoothing,
+      #'DTW': dtw_smoothing,
       'TD': temporal_difference,
       'KF': kalman_filter,
       'EMA': lambda x: exponential_moving_average(x, EMA_ALPHA),
