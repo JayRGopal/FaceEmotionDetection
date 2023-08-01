@@ -44,7 +44,6 @@ def verify_faces_np_data(target_img_path, np_data, tmp_save=os.path.abspath('tmp
     # Goal: determine which images have the target face, and get the bboxes of the target face in those images.
     # Returns a pandas df that has an 'index' column indicating index in np_data, and the bbox coordinates for each index
     # Note that our final pandas df won't have all indices in np_data since some frames won't have successful verification of our target face!
- 
 
     # Creating tmp_save folder if doesn't exist
     os.makedirs(tmp_save, exist_ok=True)
@@ -85,6 +84,8 @@ def verify_faces_np_data(target_img_path, np_data, tmp_save=os.path.abspath('tmp
     df = df[['index', 'Facial Box X', 'Facial Box Y', 'Facial Box W', 'Facial Box H']]
 
     return df
+
+
 
 
 """
