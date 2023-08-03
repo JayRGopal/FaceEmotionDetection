@@ -36,6 +36,30 @@ def downsample_vid(input_path, output_path, new_fps):
     return
 
 
+"""
+
+# General Pipeline Utils
+
+"""
+
+def get_valid_vids(video_dir, save_path_folder_function):
+    """
+    Takes in a path to the input video directory
+    And a function that takes in a given input video path and outputs the path to its save folder
+
+    Outputs a list of all unprocessed videos in the input directory
+
+    """
+
+    all_files = [vid for vid in os.listdir(video_dir) if vid[0:1] != '.']
+
+    valid_files = [vid for vid in all_files if os.path.isfile(os.path.join(video_dir, vid))]
+    valid_videos = [vid for vid in valid_files if vid.endswith('.mp4')] 
+    unprocessed_videos = [vid for vid in valid_videos if not(os.path.exists(save_path_folder_function(vid)))]
+
+    return unprocessed_videos 
+
+
 
 """
 

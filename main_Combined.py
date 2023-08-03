@@ -1,0 +1,186 @@
+from utils import *
+from utilsHSE import *
+from utilsMMPose import *
+import os
+import time
+import datetime
+import cv2
+
+"""
+
+Full Pipeline - HSE, OpenGraph, and MMPose
+Detection via MTCNN
+Verification using DeepFace (Model: ArcFace)
+
+"""
+
+# Choose which pipelines to run
+Run_HSE = True
+Run_OpenGraphAU = False
+Run_MMPose = False
+Do_Verification = True
+
+# Set the parameters
+BATCH_SIZE = 50000
+HSE_MODEL_TYPE = 'mobilenet_7.h5'
+OPENGRAPHAU_MODEL_BACKBONE = 'resnet50'
+INPUT_SIZE = (224, 224)
+VIDEO_DIRECTORY = os.path.abspath('inputs/')
+FPS_EXTRACTING = 5 # we'll extract 5 fps
+OUTPUT_DIRECTORY = os.path.abspath('outputs_Combined') 
+SUBJECT_FACE_IMAGE_PATH = os.path.abspath('deepface/Jimmy_Fallon.jpg')  
+
+# Function that gets us the output folder for each input video
+SAVE_PATH_FOLDER = lambda video_name: os.path.join(OUTPUT_DIRECTORY, f'{video_name}')
+
+# List of unprocessed videos
+unprocessed_videos = get_valid_vids(VIDEO_DIRECTORY, SAVE_PATH_FOLDER)
+
+# MMPose
+TOP_DOWN = True
+OUTPUT_VIDEO_DIRECTORY = OUTPUT_DIRECTORY # This is where videos/images with overlay go 
+CONFIGS_BASE = os.path.abspath('mmpose/configs/body_2d_keypoint')
+WHOLEBODY_CONFIGS_BASE = os.path.abspath('mmpose/configs/wholebody_2d_keypoint') 
+MMPOSE_MODEL_BASE = os.path.abspath('MMPose_models/')
+detector_mapping = get_detector_mapping(MMPOSE_MODEL_BASE)
+
+# For timing estimation
+num_vids = len(unprocessed_videos)
+start_time = time.time()
+
+TIMING_VERBOSE = True # yes/no do we print times for sub-processes within videos?
+
+
+# Loop through all videos
+for i in unprocessed_videos:
+  video_path = os.path.join(VIDEO_DIRECTORY, i)
+
+  frame_now = 0 # this is what we save in outputs file and print
+
+  fps = get_fps(path=video_path, extracting_fps=FPS_EXTRACTING) # FPS at which we're extracting
+
+  save_folder_now = SAVE_PATH_FOLDER(i)
+
+  
+  os.mkdir(save_folder_now)
+  save_path_now = os.path.join(save_folder_now, f'outputs.csv')
+
+  if TIMING_VERBOSE: 
+    time1 = time.time()
+
+  # Extract video frames
+  capture = cv2.VideoCapture(video_path)
+  ims = []
+  real_frame_numbers = []
+  real_fps = math.ceil(capture.get(cv2.CAP_PROP_FPS)) # real FPS of the video
+  frame_division = real_fps // FPS_EXTRACTING # Helps us only analyze 5 fps (or close to it)
+  running = True
+  frameNr = 0 # Track frame number
+  while running:
+      # Extract frames continuously
+      success, frame = capture.read()
+      if success:
+          if frameNr % frame_division == 0:
+              # We are only saving SOME frames (e.g. extracting 5 fps)
+              frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+              ims.append(frame)
+              real_frame_numbers.append(frameNr)
+          if (frameNr % BATCH_SIZE == 0) and (frameNr > 0):
+              # Let's do analysis, save results, and reset ims!
+              ims = np.array(ims)
+              print(f"Extracted Ims, Frames {frame_now} to {frame_now+BATCH_SIZE} in {i}") 
+              if TIMING_VERBOSE:
+                time2 = time.time()
+                print('Time: ', time2 - time1)
+              
+              # Batch now -- number of frames actually extracted (useful at end of video)
+              BATCH_NOW = ims.shape[0]
+
+              # Face detection
+              faces, is_null = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_PATH)
+              print(f"Detected Faces")
+              if TIMING_VERBOSE:
+                time3 = time.time()
+                print('Time: ', time3 - time2) 
+
+              # Load the relevant network and get its predictions
+              model_hse = get_emotion_predictor(HSE_MODEL_TYPE)
+              hse_scores_real = hse_preds(faces, model_hse, model_type=HSE_MODEL_TYPE)
+              hse_scores_real[is_null == 1] = 0 # clear the predictions from frames w/o faces!
+              print("Got Network Predictions: HSE")
+              if TIMING_VERBOSE:
+                time4 = time.time()
+                print('Time: ', time4 - time3)
+
+              # Save outputs to a CSV
+              frames = np.array(real_frame_numbers).reshape(-1, 1)
+              csv_save_HSE(labels=hse_scores_real, is_null=is_null, frames=frames, save_path=save_path_now, fps=real_fps)
+              print(f"Saved HSE CSV to {save_path_now}!")
+
+              frame_now = frame_now + BATCH_NOW
+
+              # Reset ims for the next batch!
+              ims = []
+
+              # Reset timing
+              if TIMING_VERBOSE: 
+                time1 = time.time()
+      else:
+          # We're out of frames!
+          running = False
+
+          # Let's do analysis, save results, and reset ims!
+          ims = np.array(ims)
+          print(f"Extracted Ims, Frames {frame_now} to {frame_now+BATCH_SIZE} in {i}") 
+          if TIMING_VERBOSE:
+            time2 = time.time()
+            print('Time: ', time2 - time1)
+          
+          # Batch now -- number of frames actually extracted (useful at end of video)
+          BATCH_NOW = ims.shape[0]
+
+          # Face detection
+          faces, is_null = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_PATH)
+          print(f"Detected Faces")
+          if TIMING_VERBOSE:
+            time3 = time.time()
+            print('Time: ', time3 - time2) 
+
+          # Load the relevant network and get its predictions
+          model_hse = get_emotion_predictor(HSE_MODEL_TYPE)
+          hse_scores_real = hse_preds(faces, model_hse, model_type=HSE_MODEL_TYPE)
+          hse_scores_real[is_null == 1] = 0 # clear the predictions from frames w/o faces!
+          print("Got Network Predictions: HSE")
+          if TIMING_VERBOSE:
+            time4 = time.time()
+            print('Time: ', time4 - time3)
+
+          # Save outputs to a CSV
+          frames = np.array(real_frame_numbers).reshape(-1, 1)
+          csv_save_HSE(labels=hse_scores_real, is_null=is_null, frames=frames, save_path=save_path_now, fps=real_fps)
+          print(f"Saved HSE CSV to {save_path_now}!")
+
+          frame_now = frame_now + BATCH_NOW
+
+          # Reset ims to save space
+          ims = []
+
+          # Reset timing
+          if TIMING_VERBOSE: 
+            time1 = time.time()
+
+      frameNr = frameNr + 1
+  capture.release()
+
+  # Time estimation
+  elapsed_time = time.time() - start_time
+  iterations_left = num_vids - unprocessed_videos.index(i) - 1
+  time_per_iteration = elapsed_time / (unprocessed_videos.index(i) + 1)
+  time_left = time_per_iteration * iterations_left
+  time_left_formatted = str(datetime.timedelta(seconds=int(time_left)))
+  
+  # print an update on the progress
+  print("Approximately ", time_left_formatted, " left to complete analyzing all videos")
+
+ 
+

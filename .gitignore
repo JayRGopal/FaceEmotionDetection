@@ -12,3 +12,5 @@ MMPose_models/*
 MMPose_info/*
 MMPose_inputs/*
 **/.DS_Store
+tmp_save_deepface/*
+__pycache__/

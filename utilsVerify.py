@@ -19,7 +19,7 @@ def verify_images(target_img_path, folder_path):
     for image_file in os.listdir(folder_path):
         if image_file.endswith('.jpg'):
             img_path = os.path.join(folder_path, image_file)
-            result = DeepFace.verify(img1_path=target_img_path, img2_path=img_path, enforce_detection=False, model_name='ArcFace')
+            result = DeepFace.verify(img1_path=target_img_path, img2_path=img_path, enforce_detection=False, model_name='VGG-Face')
 
             if result['verified']:
                 face_x = result['facial_areas']['img2']['x']
@@ -37,6 +37,7 @@ def verify_images(target_img_path, folder_path):
                 results.append(image_data)
 
     results_df = pd.DataFrame(results)
+    results_df.columns = ['Image File', 'Distance', 'Facial Box X', 'Facial Box Y', 'Facial Box W', 'Facial Box H']
     return results_df
 
 
@@ -61,21 +62,24 @@ def verify_faces_np_data(target_img_path, np_data, tmp_save=os.path.abspath('tmp
 
     # Saving each frame in np_data in sequential order to the tmp_save folder
     for i in range(np_data.shape[0]):
-        cv2.imwrite(os.path.join(tmp_save, f'frame_{i}.jpg'), np_data[i])
+        data_now = np_data[i]
+        # Undo preprocessing
+        data_now = cv2.cvtColor(data_now, cv2.COLOR_RGB2BGR) 
+        cv2.imwrite(os.path.join(tmp_save, f'frame_{i}.jpg'), data_now)
 
     # Getting a pandas df by calling verify_images(target_img_path, tmp_save)
     df = verify_images(target_img_path, tmp_save)
 
     # Deleting everything in the tmp_save folder if anything exists
-    for filename in os.listdir(tmp_save):
-        file_path = os.path.join(tmp_save, filename)
-        try:
-            if os.path.isfile(file_path) or os.path.islink(file_path):
-                os.unlink(file_path)
-            elif os.path.isdir(file_path):
-                shutil.rmtree(file_path)
-        except Exception as e:
-            print('Failed to delete %s. Reason: %s' % (file_path, e))
+    # for filename in os.listdir(tmp_save):
+    #     file_path = os.path.join(tmp_save, filename)
+    #     try:
+    #         if os.path.isfile(file_path) or os.path.islink(file_path):
+    #             os.unlink(file_path)
+    #         elif os.path.isdir(file_path):
+    #             shutil.rmtree(file_path)
+    #     except Exception as e:
+    #         print('Failed to delete %s. Reason: %s' % (file_path, e))
 
     # Adding index column indicating index in np_data
     df['index'] = df['Image File'].apply(lambda x: int(os.path.basename(x).split('_')[1].split('.')[0]))
@@ -119,6 +123,7 @@ def init_analyzer(cfg, path_image='./facetorch/demo.jpg'):
 
 def get_verify_vectors_one_face(analyzer, cfg, face_data, tmp_save='./facetorch/tmp_save.jpg'):
   # Save Image to file
+  cv2.imwrite(os.path.join(tmp_save, f'frame_0.jpg'), face_data)
 
   # Get Facetorch output
   response = analyzer.run(
@@ -129,7 +134,7 @@ def get_verify_vectors_one_face(analyzer, cfg, face_data, tmp_save='./facetorch/
         include_tensors=cfg.include_tensors,
         path_output='./facetorch/im_out.jpg')
 
-return
+  return response
 
 
 

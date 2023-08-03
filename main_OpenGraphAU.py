@@ -97,7 +97,7 @@ for i in all_videos:
                   BATCH_NOW = ims.shape[0]
 
                   # Face detection
-                  faces, is_null = extract_faces_mtcnn_new(ims, INPUT_SIZE)
+                  faces, is_null = extract_faces_mtcnn(ims, INPUT_SIZE)
                   faces = mtcnn_to_torch_new(faces)
                   print(f"Detected Faces")
                   if TIMING_VERBOSE:
@@ -149,7 +149,7 @@ for i in all_videos:
               BATCH_NOW = ims.shape[0]
 
               # Face detection
-              faces, is_null = extract_faces_mtcnn_new(ims, INPUT_SIZE)
+              faces, is_null = extract_faces_mtcnn(ims, INPUT_SIZE)
               faces = mtcnn_to_torch_new(faces)
               print(f"Detected Faces")
               if TIMING_VERBOSE:

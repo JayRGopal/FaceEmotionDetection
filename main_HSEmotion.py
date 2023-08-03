@@ -35,6 +35,13 @@ start_time = time.time()
 TIMING_VERBOSE = True # yes/no do we print times for sub-processes within videos?
 
 
+# One-time initializations
+use_cuda = torch.cuda.is_available()
+device = 'cuda' if use_cuda else 'cpu'
+
+from facenet_pytorch import MTCNN
+mtcnn = MTCNN(keep_all=True, post_process=False, min_face_size=40, device=device)
+
 
 
 # Loop through all videos
@@ -95,7 +102,7 @@ for i in all_videos:
                   BATCH_NOW = ims.shape[0]
 
                   # Face detection
-                  faces, is_null = extract_faces_mtcnn_new(ims, INPUT_SIZE)
+                  faces, is_null = extract_faces_mtcnn(ims, INPUT_SIZE)
                   print(f"Detected Faces")
                   if TIMING_VERBOSE:
                     time3 = time.time()
@@ -139,7 +146,7 @@ for i in all_videos:
               BATCH_NOW = ims.shape[0]
 
               # Face detection
-              faces, is_null = extract_faces_mtcnn_new(ims, INPUT_SIZE)
+              faces, is_null = extract_faces_mtcnn(ims, INPUT_SIZE)
               print(f"Detected Faces")
               if TIMING_VERBOSE:
                 time3 = time.time()
