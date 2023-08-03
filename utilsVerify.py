@@ -95,7 +95,6 @@ def verify_faces_np_data_new(target_img_path, np_data):
     # Returns a pandas df that has an 'index' column indicating index in np_data, and the bbox coordinates for each index
     # Note that our final pandas df won't have all indices in np_data since some frames won't have successful verification of our target face!
 
-    
     # Verifying each image
     results = []
     for i in range(np_data.shape[0]):

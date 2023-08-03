@@ -134,7 +134,7 @@ def extract_faces_with_verify(frames, INPUT_SIZE, target_img_path):
         verify_np_array = frames[verification_indices] 
         verify_results = verify_faces_np_data_new(target_img_path, verify_np_array)
         for _, row in verify_results.iterrows():
-            idx = row['index']
+            idx = row['Index']
             real_index = verification_indices[idx]
             x, y, w, h = row['Facial Box X'], row['Facial Box Y'], row['Facial Box W'], row['Facial Box H']
             full_image = frames[real_index]
