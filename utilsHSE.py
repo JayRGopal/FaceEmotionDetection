@@ -132,11 +132,11 @@ def extract_faces_with_verify(frames, INPUT_SIZE, target_img_path):
             is_null[enum] = 1
     if len(verification_indices) > 0: 
         verify_np_array = frames[verification_indices] 
-        verify_results = verify_faces_np_data_new(target_img_path, verify_np_array)
+        verify_results = verify_faces_np_data(target_img_path, verify_np_array)
         for _, row in verify_results.iterrows():
             idx = row['Index']
-            real_index = verification_indices[idx]
-            x, y, w, h = row['Facial Box X'], row['Facial Box Y'], row['Facial Box W'], row['Facial Box H']
+            real_index = verification_indices[int(idx)]
+            x, y, w, h = int(row['Facial Box X']), int(row['Facial Box Y']), int(row['Facial Box W']), int(row['Facial Box H'])
             full_image = frames[real_index]
             face_img = full_image[y:y+h, x:x+w, :]
             face_img=cv2.resize(face_img, INPUT_SIZE)
