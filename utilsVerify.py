@@ -19,7 +19,7 @@ def verify_images(target_img_path, folder_path):
     for image_file in os.listdir(folder_path):
         if image_file.endswith('.jpg'):
             img_path = os.path.join(folder_path, image_file)
-            result = DeepFace.verify(img1_path=target_img_path, img2_path=img_path, enforce_detection=False, model_name='VGG-Face')
+            result = DeepFace.verify(img1_path=target_img_path, img2_path=img_path, enforce_detection=False, model_name='VGG-Face', detector_backend='mtcnn')
 
             if result['verified']:
                 face_x = result['facial_areas']['img2']['x']
@@ -66,7 +66,7 @@ def verify_faces_np_data(target_img_path, np_data, tmp_save=os.path.abspath('tmp
         # Undo preprocessing
         data_now = cv2.cvtColor(data_now, cv2.COLOR_RGB2BGR) 
         cv2.imwrite(os.path.join(tmp_save, f'frame_{i}.jpg'), data_now)
-
+         
     # Getting a pandas df by calling verify_images(target_img_path, tmp_save)
     df = verify_images(target_img_path, tmp_save)
 
@@ -89,6 +89,41 @@ def verify_faces_np_data(target_img_path, np_data, tmp_save=os.path.abspath('tmp
 
     return df
 
+
+def verify_faces_np_data_new(target_img_path, np_data):
+    # Goal: determine which images have the target face, and get the bboxes of the target face in those images.
+    # Returns a pandas df that has an 'index' column indicating index in np_data, and the bbox coordinates for each index
+    # Note that our final pandas df won't have all indices in np_data since some frames won't have successful verification of our target face!
+
+    
+    # Verifying each image
+    results = []
+    for i in range(np_data.shape[0]):
+        data_now = np_data[i]
+        # Undo preprocessing
+        data_now = cv2.cvtColor(data_now, cv2.COLOR_RGB2BGR) 
+        result = DeepFace.verify(img1_path=target_img_path, img2_path=data_now, enforce_detection=False, model_name='VGG-Face', detector_backend='mtcnn')
+
+        if result['verified']:
+            face_x = result['facial_areas']['img2']['x']
+            face_y = result['facial_areas']['img2']['y']
+            face_w = result['facial_areas']['img2']['w']
+            face_h = result['facial_areas']['img2']['h']
+            image_data = {
+                'Index': i,
+                'Distance': result['distance'],
+                'Facial Box X': face_x,
+                'Facial Box Y': face_y,
+                'Facial Box W': face_w,
+                'Facial Box H': face_h
+            }
+            results.append(image_data)
+
+    # Getting a pandas df by calling verify_images(target_img_path, tmp_save)
+    df = pd.DataFrame(results)
+    df.columns = ['Index', 'Distance', 'Facial Box X', 'Facial Box Y', 'Facial Box W', 'Facial Box H']
+    
+    return df
 
 
 

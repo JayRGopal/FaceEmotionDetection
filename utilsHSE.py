@@ -132,7 +132,7 @@ def extract_faces_with_verify(frames, INPUT_SIZE, target_img_path):
             is_null[enum] = 1
     if len(verification_indices) > 0: 
         verify_np_array = frames[verification_indices] 
-        verify_results = verify_faces_np_data(target_img_path, verify_np_array, tmp_save=os.path.abspath('tmp_save_deepface/'))
+        verify_results = verify_faces_np_data_new(target_img_path, verify_np_array)
         for _, row in verify_results.iterrows():
             idx = row['index']
             real_index = verification_indices[idx]
