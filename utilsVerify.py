@@ -9,6 +9,7 @@ import pandas as pd
 from deepface import DeepFace
 import cv2
 import shutil
+import numpy as np
 
 def verify_faces_np_data(target_img_path, np_data):
     # Goal: determine which images have the target face, and get the bboxes of the target face in those images.
@@ -43,6 +44,59 @@ def verify_faces_np_data(target_img_path, np_data):
     df.columns = ['Index', 'Distance', 'Facial Box X', 'Facial Box Y', 'Facial Box W', 'Facial Box H']
     
     return df
+
+def verify_one_face_np_data(target_img_path, np_data):
+    # Goal: determine if one image has the target face, and get the bboxes of the target face in that image.
+    # Returns either a 4-membered tuple (x, y, w, h) or None depending on whether face was verified
+    
+    # Verifying each image
+    
+    data_now = np_data
+    # Undo preprocessing
+    data_now = cv2.cvtColor(data_now, cv2.COLOR_RGB2BGR) 
+    result = DeepFace.verify(img1_path=target_img_path, img2_path=data_now, enforce_detection=False, model_name='VGG-Face', detector_backend='mtcnn')
+
+    if result['verified']:
+        face_x = result['facial_areas']['img2']['x']
+        face_y = result['facial_areas']['img2']['y']
+        face_w = result['facial_areas']['img2']['w']
+        face_h = result['facial_areas']['img2']['h']
+        return_tuple = (face_x, face_y, face_w, face_h)
+        return return_tuple
+    else:
+        return None 
+
+
+
+"""
+
+MMPose
+
+"""
+
+
+def avg_face_conf_body_2d(pose_results):
+  # Given a list of MMPose poseResult objects
+  # Returns a (num_faces,) array with average face confidence for each face
+  # Assumes there is at least 1 face detected (len(pose_results) >= 1)
+  # NOTE: Assumes body 2d keypoints, which has a specific number of facial landmarks!
+
+  if len(pose_results) < 1
+    raise ValueError("Pose Results must have at least 1 face detected!")
+  
+  confidences = []
+  for i in pose_results:
+    preds = i.get('pred_instances')
+    kp_scores = preds['keypoint_scores']
+    face_confidences = kp_scores[0:5]
+    avg_conf = np.mean(face_confidences)
+    confidences.append(avg_conf)
+  confidences = np.array(confidences)
+  return confidences 
+
+
+  
+
 
 
 
