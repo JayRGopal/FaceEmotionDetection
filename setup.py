@@ -49,9 +49,10 @@ def gpu_setup():
     return
 
 if __name__ == '__main__':
-    #initial_setup()
+    initial_setup()
+
     # Uncomment for GPU
-    gpu_setup()
+    #gpu_setup()
 
 
 import requests
