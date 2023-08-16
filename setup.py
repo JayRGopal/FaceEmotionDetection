@@ -9,7 +9,7 @@ def initial_setup():
     # ME-GraphAU Install
     if not(os.path.exists('megraphau')):
         os.system("git clone https://github.com/JayRGopal/ME-GraphAU")
-        os.rename('me-graphau', 'megraphau')
+        os.rename('ME-GraphAU', 'megraphau')
 
     # NEMO Install
     if not os.path.exists("scripts_nemo_asr/transcribe_speech.py"):
