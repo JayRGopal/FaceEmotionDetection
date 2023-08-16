@@ -156,6 +156,7 @@ for param_enum, combination in enumerate(parameter_combinations):
             --target-face-path {SUBJECT_FACE_IMAGE_PATH} \
             {"--debug" if DEBUG else ""} \
             {parameter_string}' 
+          print(cmd)
         else:
           cmd = f'python mmpose/JayGopal/run_bottomup.py \
             "{os.path.abspath(config_file)}" \
