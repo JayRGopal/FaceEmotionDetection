@@ -26,6 +26,7 @@ def initial_setup():
     # Note: We also had to clone the nemo repo and pip install requirements on the CPU workstation
 
     # MMPose Install
+    os.system('pip install numpy==1.23.5')
     os.system("pip install -U openmim")
     os.system("pip3 install mmpose")
     os.system("python3 -m mim install mmengine")
@@ -39,7 +40,7 @@ def initial_setup():
     os.system('pip install -r requirements.txt')
     os.system('pip install -v -e .')
     os.system('cd ..')
-    os.system('pip install numpy --upgrade')
+    os.system('pip install numpy==1.23.5')
 
     return
 
