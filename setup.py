@@ -43,18 +43,16 @@ def initial_setup():
 
     return
 
-
-if __name__ == '__main__':
-    initial_setup()
-
-
 def gpu_setup():
     # May need to adjust this based on workstation
     os.system("pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117")
     return
 
-# Uncomment for GPU
-# gpu_setup()
+if __name__ == '__main__':
+    #initial_setup()
+    # Uncomment for GPU
+    gpu_setup()
+
 
 import requests
 
