@@ -207,8 +207,12 @@ def create_dataframe_vid(label_dict, instance_info):
           columns_data_all.append(temp_df)
 
     # combine into one df and insert frame number
-    dataframe = pd.concat(columns_data_all, ignore_index=True)
-    dataframe.insert(0, 'Frame Number', frame_ids)
+    if columns_data_all:
+        dataframe = pd.concat(columns_data_all, ignore_index=True)
+        dataframe.insert(0, 'Frame Number', frame_ids)
+    else:
+        dataframe = pd.DataFrame(columns=['Frame Number'])
+        dataframe['Frame Number'] = frame_ids
 
 
     return dataframe

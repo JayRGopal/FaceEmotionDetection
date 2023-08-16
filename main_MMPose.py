@@ -139,7 +139,7 @@ for param_enum, combination in enumerate(parameter_combinations):
         print(f'Skipping Video/Image {i}: Output File Already Exists!')
       elif os.path.isfile(video_path):
         if TOP_DOWN:
-          
+           
           cmd = f'python mmpose/JayGopal/run_topdown.py \
             "{os.path.abspath(det_config_file)}" \
             "{os.path.abspath(det_model_path)}" \

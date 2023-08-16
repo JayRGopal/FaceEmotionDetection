@@ -23,6 +23,8 @@ TOP_DOWN = True
 CONFIGS_BASE = os.path.abspath('mmpose/configs/body_2d_keypoint')
 WHOLEBODY_CONFIGS_BASE = os.path.abspath('mmpose/configs/wholebody_2d_keypoint') 
 MMPOSE_MODEL_BASE = os.path.abspath('MMPose_models/')
+SUBJECT_FACE_IMAGE_PATH = os.path.abspath('deepface/Jimmy_Fallon.jpg') 
+DEBUG = True
 
 # Model setup list
 # (config_file, model_download, model_path, detector_setting)
@@ -151,6 +153,8 @@ for param_enum, combination in enumerate(parameter_combinations):
             --output-root "{os.path.abspath(f"{OUTPUT_DIRECTORY}/{model_base}/")}" \
             --output-video "{os.path.abspath(f"{OUTPUT_VIDEO_DIRECTORY}/{model_base}/")}" \
             --device {device} \
+            --target-face-path {SUBJECT_FACE_IMAGE_PATH} \
+            {"--debug" if DEBUG else ""} \
             {parameter_string}' 
         else:
           cmd = f'python mmpose/JayGopal/run_bottomup.py \
@@ -168,8 +172,9 @@ for param_enum, combination in enumerate(parameter_combinations):
         else:
           df_temp = convert_to_df(save_file)
         
-        df_temp.insert(0, 'Filename', [i]*len(df_temp))
-        df_list.append(df_temp)
+        if len(df_temp.columns) > 1:
+          df_temp.insert(0, 'Filename', [i]*len(df_temp))
+          df_list.append(df_temp)
         
       else:
         print(f'WARNING: Got path {video_path}, which is not a valid video or image file!')

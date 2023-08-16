@@ -81,23 +81,42 @@ def avg_face_conf_body_2d(pose_results):
   # Assumes there is at least 1 face detected (len(pose_results) >= 1)
   # NOTE: Assumes body 2d keypoints, which has a specific number of facial landmarks!
 
-  if len(pose_results) < 1
+  if len(pose_results) < 1:
     raise ValueError("Pose Results must have at least 1 face detected!")
   
   confidences = []
   for i in pose_results:
     preds = i.get('pred_instances')
     kp_scores = preds['keypoint_scores']
-    face_confidences = kp_scores[0:5]
+    face_confidences = kp_scores[0][0:5]
     avg_conf = np.mean(face_confidences)
     confidences.append(avg_conf)
   confidences = np.array(confidences)
   return confidences 
 
+def get_nose_coords_body_2d(pose_results):
+  # Given a list of MMPose poseResult objects
+  # Returns a (num_faces,2) array with nose x, nose y for each face
+  # Assumes there is at least 1 face detected (len(pose_results) >= 1)
+  # NOTE: Assumes body 2d keypoints, which has a specific number of facial landmarks!
+
+  if len(pose_results) < 1:
+    raise ValueError("Pose Results must have at least 1 face detected!")
+  
+  nose_coords_all = []
+  for i in pose_results:
+    preds = i.get('pred_instances')
+    kp_coords = preds['keypoints']
+    nose_coords = kp_coords[0][0]
+    nose_coords_all.append(nose_coords)
+  nose_coords_all = np.array(nose_coords_all)
+  return nose_coords_all 
 
   
 
-
+def closest_person_index(correct_x, correct_y, nose_coordinates):
+    distances = np.sqrt((nose_coordinates[:, 0] - correct_x)**2 + (nose_coordinates[:, 1] - correct_y)**2)
+    return np.argmin(distances)
 
 
 """
