@@ -35,7 +35,7 @@ def initial_setup():
     os.system('python3 -m mim install "mmcls>=1.0.0rc5"')
     os.system('python3 -m mim install "mmpretrain>=1.0.0"') # for ViT Pose
     if not(os.path.exists('mmpose')):
-        os.system("git clone --branch dev-1.x https://github.com/JayRGopal/mmpose")
+        os.system("git clone https://github.com/JayRGopal/mmpose")
     os.system('cd mmpose')
     os.system('pip install -r requirements.txt')
     os.system('pip install -v -e .')
