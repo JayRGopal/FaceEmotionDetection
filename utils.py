@@ -151,13 +151,13 @@ class ImagePreprocessor(object):
 
 # See utilsHSE.py for the mtcnn detector. This is a helper function
 
+# def mtcnn_to_torch(faces):
+#     faces_real = torch.tensor(faces).float()
+#     faces_real = torch.swapaxes(faces_real, 1, 3) / 255
+#     return faces_real
+
+
 def mtcnn_to_torch(faces):
-    faces_real = torch.tensor(faces).float()
-    faces_real = torch.swapaxes(faces_real, 1, 3) / 255
-    return faces_real
-
-
-def mtcnn_to_torch_new(faces):
     faces_real = torch.tensor(faces)
     faces_real = torch.swapaxes(faces_real, 1, 3)
     img_preprocessor = ImagePreprocessor()
@@ -281,7 +281,7 @@ def get_model_preds(faces, net, model_type):
       print('Using GPU for Model Inference!')
       faces = faces.cuda()
       net = net.cuda()
-
+  
   with torch.no_grad():
     if model_type == 'BP4D':
       pred_ff = net(faces / 255)

@@ -166,7 +166,7 @@ def csv_save_HSE(labels, is_null, frames, save_path, fps):
             row1 = ['frame', 'timestamp', 'success'] + class_labels
             writer.writerow(row1)
     
-    # Make a modified array with (frame, timestamp, success) before AUs
+    # Make a modified array with (frame, timestamp, success) before emotions
     success_array = 1 - is_null
     modified_arr = np.concatenate((np.array(success_array).reshape(-1, 1), labels), axis=1)
     timestamps = [frame / fps for frame in frames]

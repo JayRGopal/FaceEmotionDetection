@@ -8,21 +8,21 @@ import cv2
 
 """
 
-Full Pipeline - HSE, OpenGraph, and MMPose
+Full Pipeline - HSE and OpenGraphAU
 Detection via MTCNN
-Verification using DeepFace (Model: ArcFace)
+Verification using DeepFace (Model: VGG-Face)
 
 """
 
 # Choose which pipelines to run
-Run_HSE = True
-Run_OpenGraphAU = False
-Run_MMPose = False
+Run_HSE = False
+Run_OpenGraphAU = True
 Do_Verification = True
 
 # Set the parameters
 BATCH_SIZE = 50000
 HSE_MODEL_TYPE = 'mobilenet_7.h5'
+OPENGRAPHAU_MODEL_TYPE = 'OpenGraphAU'
 OPENGRAPHAU_MODEL_BACKBONE = 'resnet50'
 INPUT_SIZE = (224, 224)
 VIDEO_DIRECTORY = os.path.abspath('inputs/')
@@ -50,6 +50,12 @@ start_time = time.time()
 
 TIMING_VERBOSE = True # yes/no do we print times for sub-processes within videos?
 
+if Run_HSE:
+  model_hse = get_emotion_predictor(HSE_MODEL_TYPE)
+
+if Run_OpenGraphAU:
+  model_ogau = load_network(model_type=OPENGRAPHAU_MODEL_TYPE, backbone=OPENGRAPHAU_MODEL_BACKBONE)
+
 
 # Loop through all videos
 for i in unprocessed_videos:
@@ -63,7 +69,8 @@ for i in unprocessed_videos:
 
   
   os.mkdir(save_folder_now)
-  save_path_now = os.path.join(save_folder_now, f'outputs.csv')
+  save_path_hse = os.path.join(save_folder_now, f'outputs_hse.csv')
+  save_path_ogau = os.path.join(save_folder_now, f'outputs_ogau.csv') 
 
   if TIMING_VERBOSE: 
     time1 = time.time()
@@ -103,19 +110,31 @@ for i in unprocessed_videos:
                 time3 = time.time()
                 print('Time: ', time3 - time2) 
 
-              # Load the relevant network and get its predictions
-              model_hse = get_emotion_predictor(HSE_MODEL_TYPE)
-              hse_scores_real = hse_preds(faces, model_hse, model_type=HSE_MODEL_TYPE)
-              hse_scores_real[is_null == 1] = 0 # clear the predictions from frames w/o faces!
-              print("Got Network Predictions: HSE")
+              # Get predictions of relevant network
+              if Run_HSE:
+                hse_scores_real = hse_preds(faces, model_hse, model_type=HSE_MODEL_TYPE)
+                hse_scores_real[is_null == 1] = 0 # clear the predictions from frames w/o faces!
+                print("Got Network Predictions: HSE")
+              
+              if Run_OpenGraphAU:
+                ogau_predictions = get_model_preds(mtcnn_to_torch(faces), model_ogau, model_type=OPENGRAPHAU_MODEL_TYPE)
+                ogau_predictions[is_null == 1] = 0 # clear the predictions from frames w/o faces!
+                print("Got Network Predictions: OGAU")
+              
               if TIMING_VERBOSE:
                 time4 = time.time()
                 print('Time: ', time4 - time3)
 
               # Save outputs to a CSV
               frames = np.array(real_frame_numbers).reshape(-1, 1)
-              csv_save_HSE(labels=hse_scores_real, is_null=is_null, frames=frames, save_path=save_path_now, fps=real_fps)
-              print(f"Saved HSE CSV to {save_path_now}!")
+
+              if Run_HSE:
+                csv_save_HSE(labels=hse_scores_real, is_null=is_null, frames=frames, save_path=save_path_hse, fps=real_fps)
+                print(f"Saved HSE CSV to {save_path_hse}!")
+              
+              if Run_OpenGraphAU:
+                csv_save(labels=ogau_predictions, is_null=is_null, frames=frames, save_path=save_path_ogau, fps=fps)
+                print(f"Saved OpenGraphAU CSV to {save_path_ogau}!")
 
               frame_now = frame_now + BATCH_NOW
 
@@ -146,19 +165,31 @@ for i in unprocessed_videos:
             time3 = time.time()
             print('Time: ', time3 - time2) 
 
-          # Load the relevant network and get its predictions
-          model_hse = get_emotion_predictor(HSE_MODEL_TYPE)
-          hse_scores_real = hse_preds(faces, model_hse, model_type=HSE_MODEL_TYPE)
-          hse_scores_real[is_null == 1] = 0 # clear the predictions from frames w/o faces!
-          print("Got Network Predictions: HSE")
+          # Get predictions of relevant network
+          if Run_HSE:
+            hse_scores_real = hse_preds(faces, model_hse, model_type=HSE_MODEL_TYPE)
+            hse_scores_real[is_null == 1] = 0 # clear the predictions from frames w/o faces!
+            print("Got Network Predictions: HSE")
+          
+          if Run_OpenGraphAU:
+            ogau_predictions = get_model_preds(mtcnn_to_torch(faces), model_ogau, model_type=OPENGRAPHAU_MODEL_TYPE)
+            ogau_predictions[is_null == 1] = 0 # clear the predictions from frames w/o faces!
+            print("Got Network Predictions: OGAU")
+          
           if TIMING_VERBOSE:
             time4 = time.time()
             print('Time: ', time4 - time3)
 
           # Save outputs to a CSV
           frames = np.array(real_frame_numbers).reshape(-1, 1)
-          csv_save_HSE(labels=hse_scores_real, is_null=is_null, frames=frames, save_path=save_path_now, fps=real_fps)
-          print(f"Saved HSE CSV to {save_path_now}!")
+
+          if Run_HSE:
+            csv_save_HSE(labels=hse_scores_real, is_null=is_null, frames=frames, save_path=save_path_hse, fps=real_fps)
+            print(f"Saved HSE CSV to {save_path_hse}!")
+
+          if Run_OpenGraphAU:
+            csv_save(labels=ogau_predictions, is_null=is_null, frames=frames, save_path=save_path_ogau, fps=fps)
+            print(f"Saved OpenGraphAU CSV to {save_path_ogau}!")
 
           frame_now = frame_now + BATCH_NOW
 
