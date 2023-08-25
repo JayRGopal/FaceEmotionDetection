@@ -24,7 +24,8 @@ CONFIGS_BASE = os.path.abspath('mmpose/configs/body_2d_keypoint')
 WHOLEBODY_CONFIGS_BASE = os.path.abspath('mmpose/configs/wholebody_2d_keypoint') 
 MMPOSE_MODEL_BASE = os.path.abspath('MMPose_models/')
 SUBJECT_FACE_IMAGE_PATH = os.path.abspath('deepface/Jimmy_Fallon.jpg') 
-DEBUG = True
+VERIFY_EVERY_FRAME = True
+DEBUG = False # If debug is true, it stops verification & you can see all poses detected
 
 # Model setup list
 # (config_file, model_download, model_path, detector_setting)
@@ -155,8 +156,8 @@ for param_enum, combination in enumerate(parameter_combinations):
             --device {device} \
             --target-face-path {SUBJECT_FACE_IMAGE_PATH} \
             {"--debug" if DEBUG else ""} \
+            {"--verifyAll" if VERIFY_EVERY_FRAME else ""} \
             {parameter_string}' 
-          print(cmd)
         else:
           cmd = f'python mmpose/JayGopal/run_bottomup.py \
             "{os.path.abspath(config_file)}" \

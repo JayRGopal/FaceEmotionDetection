@@ -259,6 +259,7 @@ def load_network(model_type, backbone):
     net = MEFARG_OpenGraphAU(num_main_classes=27, num_sub_classes=14, backbone=backbone, neighbor_num=4)
 
     path = 'megraphau/checkpoints/OpenGprahAU-ResNet50_first_stage.pth'
+    #path = 'megraphau/checkpoints/OpenGprahAU-ResNet50_second_stage.pth'
     if torch.cuda.is_available():
         oau_state_dict = torch.load(path).get('state_dict')
     else:
