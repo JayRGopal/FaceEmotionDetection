@@ -158,12 +158,9 @@ class ImagePreprocessor(object):
 
 
 def mtcnn_to_torch(faces):
-    faces_real = torch.tensor(faces)
-    faces_real = torch.swapaxes(faces_real, 1, 3)
-    img_preprocessor = ImagePreprocessor()
-    faces_real = img_preprocessor.preprocess(faces_real)
-
+    faces_real = torch.tensor(faces, dtype=torch.float32).permute(0, 3, 1, 2) / 255.0
     return faces_real
+
 
 """
 
@@ -245,20 +242,37 @@ from megraphau.model.MEFL import MEFARG
 from megraphau.OpenGraphAU.model.ANFL import MEFARG as MEFARG_OpenGraphAU
 from collections import OrderedDict
 
+class image_eval(object):
+    def __init__(self, img_size=256, crop_size=224):
+        self.img_size = img_size
+        self.crop_size = crop_size
 
-def load_network(model_type, backbone):
+    def __call__(self, img):
+        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                         std=[0.229, 0.224, 0.225])
+        transform = transforms.Compose([
+            # transforms.Resize(self.img_size),
+            # transforms.CenterCrop(self.crop_size),
+            # transforms.ToTensor(),
+            normalize
+        ])
+        img = transform(img)
+        return img
+
+
+def load_network(model_type, backbone, path):
   if model_type == 'BP4D':
     net = MEFARG(num_classes=12, backbone=backbone)
-    path = 'megraphau/checkpoints/MEFARG_resnet50_BP4D_fold3.pth'
+    #path = 'megraphau/checkpoints/MEFARG_resnet50_BP4D_fold3.pth'
     if torch.cuda.is_available():
        net.load_state_dict(torch.load(path).get('state_dict'))
     else:
         net.load_state_dict(torch.load(path, map_location=torch.device('cpu')).get('state_dict'))
 
   elif model_type == 'OpenGraphAU':
-    net = MEFARG_OpenGraphAU(num_main_classes=27, num_sub_classes=14, backbone=backbone, neighbor_num=4)
-
-    path = 'megraphau/checkpoints/OpenGprahAU-ResNet50_first_stage.pth'
+    net = MEFARG_OpenGraphAU(num_main_classes=27, num_sub_classes=14, backbone=backbone, neighbor_num=4, metric='dots')
+    
+    #path = 'megraphau/checkpoints/OpenGprahAU-ResNet50_first_stage.pth'
     #path = 'megraphau/checkpoints/OpenGprahAU-ResNet50_second_stage.pth'
     if torch.cuda.is_available():
         oau_state_dict = torch.load(path).get('state_dict')
@@ -662,4 +676,42 @@ def save_video_from_images(images, video_name, fps=30):
 
     # Release the VideoWriter object
     video_writer.release()
+
+
+"""
+
+# VIDEO PROCESSING
+
+"""
+
+
+def extract_specific_frames(input_video_path, frame_numbers, output_video_path):
+    # Open the video file
+    cap = cv2.VideoCapture(input_video_path)
+    if not cap.isOpened():
+        raise ValueError(f"Unable to open video file: {input_video_path}")
+
+    # Get video properties
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = cap.get(cv2.CAP_PROP_FPS)
+
+    # Set video writer
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v') 
+    out = cv2.VideoWriter(output_video_path, fourcc, fps, (width, height))
+    
+    frame_number_set = set(frame_numbers)  # Convert to set for O(1) look-up time
+
+    current_frame = 0
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        if current_frame in frame_number_set:
+            out.write(frame)
+        current_frame += 1
+
+    cap.release()
+    out.release()
+    cv2.destroyAllWindows()
 

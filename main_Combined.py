@@ -6,6 +6,7 @@ import time
 import datetime
 import cv2
 
+
 """
 
 Full Pipeline - HSE and OpenGraphAU
@@ -13,6 +14,7 @@ Detection via MTCNN
 Verification using DeepFace (Model: VGG-Face)
 
 """
+
 
 # Choose which pipelines to run
 Run_HSE = False
@@ -23,7 +25,8 @@ Do_Verification = True
 BATCH_SIZE = 50000
 HSE_MODEL_TYPE = 'mobilenet_7.h5'
 OPENGRAPHAU_MODEL_TYPE = 'OpenGraphAU'
-OPENGRAPHAU_MODEL_BACKBONE = 'resnet50'
+OPENGRAPHAU_MODEL_BACKBONE = 'swin_transformer_base'
+OPENGRAPHAU_MODEL_PATH = os.path.abspath('megraphau/checkpoints/OpenGprahAU-SwinB_first_stage.pth')
 INPUT_SIZE = (224, 224)
 VIDEO_DIRECTORY = os.path.abspath('inputs/')
 FPS_EXTRACTING = 5 # we'll extract 5 fps
@@ -54,7 +57,7 @@ if Run_HSE:
   model_hse = get_emotion_predictor(HSE_MODEL_TYPE)
 
 if Run_OpenGraphAU:
-  model_ogau = load_network(model_type=OPENGRAPHAU_MODEL_TYPE, backbone=OPENGRAPHAU_MODEL_BACKBONE)
+  model_ogau = load_network(model_type=OPENGRAPHAU_MODEL_TYPE, backbone=OPENGRAPHAU_MODEL_BACKBONE, path=OPENGRAPHAU_MODEL_PATH)
 
 
 # Loop through all videos
@@ -117,7 +120,10 @@ for i in unprocessed_videos:
                 print("Got Network Predictions: HSE")
               
               if Run_OpenGraphAU:
-                ogau_predictions = get_model_preds(mtcnn_to_torch(faces), model_ogau, model_type=OPENGRAPHAU_MODEL_TYPE)
+                image_evaluator = image_eval()
+                faces_ogau = mtcnn_to_torch(faces)
+                faces_ogau = image_evaluator(faces_ogau)
+                ogau_predictions = get_model_preds(faces_ogau, model_ogau, model_type=OPENGRAPHAU_MODEL_TYPE)
                 ogau_predictions[is_null == 1] = 0 # clear the predictions from frames w/o faces!
                 print("Got Network Predictions: OGAU")
               
@@ -172,7 +178,10 @@ for i in unprocessed_videos:
             print("Got Network Predictions: HSE")
           
           if Run_OpenGraphAU:
-            ogau_predictions = get_model_preds(mtcnn_to_torch(faces), model_ogau, model_type=OPENGRAPHAU_MODEL_TYPE)
+            image_evaluator = image_eval()
+            faces_ogau = mtcnn_to_torch(faces)
+            faces_ogau = image_evaluator(faces_ogau)
+            ogau_predictions = get_model_preds(faces_ogau, model_ogau, model_type=OPENGRAPHAU_MODEL_TYPE)
             ogau_predictions[is_null == 1] = 0 # clear the predictions from frames w/o faces!
             print("Got Network Predictions: OGAU")
           
