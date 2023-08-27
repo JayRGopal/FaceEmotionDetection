@@ -19,7 +19,7 @@ Verification using DeepFace (Model: VGG-Face)
 # Choose which pipelines to run
 Run_HSE = False
 Run_OpenGraphAU = True
-Do_Verification = True
+Do_Verification = True # Toggling this isn't supported yet. Verification will always happen
 
 # Set the parameters
 BATCH_SIZE = 50000
@@ -184,7 +184,7 @@ for i in unprocessed_videos:
             ogau_predictions = get_model_preds(faces_ogau, model_ogau, model_type=OPENGRAPHAU_MODEL_TYPE)
             ogau_predictions[is_null == 1] = 0 # clear the predictions from frames w/o faces!
             print("Got Network Predictions: OGAU")
-          
+
           if TIMING_VERBOSE:
             time4 = time.time()
             print('Time: ', time4 - time3)
