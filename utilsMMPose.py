@@ -165,55 +165,57 @@ VIDEO PROCESSING
 
 
 def create_dataframe_vid(label_dict, instance_info):
+    # Create an empty DataFrame with 'Frame Number' from 0 to the last frame
+    max_frame_number = len(instance_info) - 1
+    dataframe = pd.DataFrame({'Frame Number': range(0, max_frame_number + 1)})
+    
+    # To store rows which have data
     columns_data_all = []
-    frame_ids = []
+    
     # loop through each frame
     for enum, i in enumerate(instance_info):
         ii_now = i['instances']
+        
         # loop through each person in one frame
-        for j in ii_now:
-          # Initialize an empty dictionary to store the column data
-          columns_data = {}
-
-          frame_ids.append(enum)
-          coordinates = j['keypoints']
-          coordinates_conf = j['keypoint_scores']
-          bbox_cords = j['bbox'][0]
-          bbox_cords_conf = j['bbox_score']
-          # Iterate over the label dictionary and coordinates list
-          for index, label in label_dict.items():
-              # Get the x and y coordinates for the current label index
-              x, y = coordinates[int(index)]
-
-              col_conf_value = coordinates_conf[int(index)]
-
-              # Create the column names
-              column_x = f'{label} x'
-              column_y = f'{label} y'
-              column_conf = f'{label} conf'
-
-              # Store the x and y coordinates in the column data dictionary
-              columns_data[column_x] = [x]
-              columns_data[column_y] = [y]
-              columns_data[column_conf] = [col_conf_value]
-          
-          for enumb, i in enumerate(bbox_cords):
-              columns_data[f'bbox_cord_{enumb}'] = [i]
-          
-          columns_data['bbox_score'] = [bbox_cords_conf]
-
-          # Create a pandas DataFrame from the column data dictionary
-          temp_df = pd.DataFrame(columns_data)
-          columns_data_all.append(temp_df)
-
-    # combine into one df and insert frame number
+        if len(ii_now) > 0:
+            for j in ii_now:
+                # Initialize an empty dictionary to store the column data
+                columns_data = {}
+                columns_data['Frame Number'] = enum
+                
+                coordinates = j['keypoints']
+                coordinates_conf = j['keypoint_scores']
+                bbox_cords = j['bbox'][0]
+                bbox_cords_conf = j['bbox_score']
+                
+                # Iterate over the label dictionary and coordinates list
+                for index, label in label_dict.items():
+                    # Get the x and y coordinates for the current label index
+                    x, y = coordinates[int(index)]
+                    col_conf_value = coordinates_conf[int(index)]
+                    
+                    # Create the column names
+                    column_x = f'{label} x'
+                    column_y = f'{label} y'
+                    column_conf = f'{label} conf'
+                    
+                    # Store the x and y coordinates in the column data dictionary
+                    columns_data[column_x] = x
+                    columns_data[column_y] = y
+                    columns_data[column_conf] = col_conf_value
+                
+                for enumb, i in enumerate(bbox_cords):
+                    columns_data[f'bbox_cord_{enumb}'] = i
+                
+                columns_data['bbox_score'] = bbox_cords_conf
+                
+                # Create a pandas DataFrame from the column data dictionary
+                columns_data_all.append(columns_data)
+    
+    # Convert columns_data_all to DataFrame and merge with the original dataframe
     if columns_data_all:
-        dataframe = pd.concat(columns_data_all, ignore_index=True)
-        dataframe.insert(0, 'Frame Number', frame_ids)
-    else:
-        dataframe = pd.DataFrame(columns=['Frame Number'])
-        dataframe['Frame Number'] = frame_ids
-
+        data_df = pd.DataFrame(columns_data_all)
+        dataframe = pd.merge(dataframe, data_df, how='left', on='Frame Number')
 
     return dataframe
 
