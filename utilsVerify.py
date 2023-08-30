@@ -114,10 +114,25 @@ def get_nose_coords_body_2d(pose_results):
 
   
 
-def closest_person_index(correct_x, correct_y, nose_coordinates):
-    distances = np.sqrt((nose_coordinates[:, 0] - correct_x)**2 + (nose_coordinates[:, 1] - correct_y)**2)
-    return np.argmin(distances)
 
+def closest_person_index(correct_x, correct_y, nose_coordinates, threshold=25, printMins=True):
+    # Compute the Euclidean distances from (correct_x, correct_y) to all points in nose_coordinates
+    distances = np.sqrt((nose_coordinates[:, 0] - correct_x)**2 + (nose_coordinates[:, 1] - correct_y)**2)
+    
+    # Get the index of the closest person
+    min_index = np.argmin(distances)
+
+    # Printing
+    if printMins:
+      print()
+      print('MINIMUM DISTANCE FOR ONE FRAME:', distances[min_index])
+      print()
+    
+    # Check if the closest distance is greater than the threshold
+    if distances[min_index] > threshold:
+        return -1
+    else:
+        return min_index
 
 """
 
