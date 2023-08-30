@@ -9,6 +9,7 @@ import pandas as pd
 from deepface import DeepFace
 import cv2
 import shutil
+import sys
 import numpy as np
 
 def verify_faces_np_data(target_img_path, np_data):
@@ -22,7 +23,13 @@ def verify_faces_np_data(target_img_path, np_data):
         data_now = np_data[i]
         # Undo preprocessing
         data_now = cv2.cvtColor(data_now, cv2.COLOR_RGB2BGR) 
+
+        # SILENT RUN
+        original_stdout = sys.stdout
+        sys.stdout = open(os.devnull, 'w')
         result = DeepFace.verify(img1_path=target_img_path, img2_path=data_now, enforce_detection=False, model_name='VGG-Face', detector_backend='mtcnn')
+        sys.stdout.close()
+        sys.stdout = original_stdout
 
         if result['verified']:
             face_x = result['facial_areas']['img2']['x']
@@ -54,7 +61,13 @@ def verify_one_face_np_data(target_img_path, np_data):
     data_now = np_data
     # Undo preprocessing
     data_now = cv2.cvtColor(data_now, cv2.COLOR_RGB2BGR) 
+
+    # SILENT RUN
+    original_stdout = sys.stdout
+    sys.stdout = open(os.devnull, 'w')
     result = DeepFace.verify(img1_path=target_img_path, img2_path=data_now, enforce_detection=False, model_name='VGG-Face', detector_backend='mtcnn')
+    sys.stdout.close()
+    sys.stdout = original_stdout
 
     if result['verified']:
         face_x = result['facial_areas']['img2']['x']
@@ -88,7 +101,7 @@ def avg_face_conf_body_2d(pose_results):
   for i in pose_results:
     preds = i.get('pred_instances')
     kp_scores = preds['keypoint_scores']
-    face_confidences = kp_scores[0][0:5]
+    face_confidences = kp_scores[0][0:3] # nose and two eyes
     avg_conf = np.mean(face_confidences)
     confidences.append(avg_conf)
   confidences = np.array(confidences)
@@ -124,9 +137,7 @@ def closest_person_index(correct_x, correct_y, nose_coordinates, threshold=25, p
 
     # Printing
     if printMins:
-      print()
       print('MINIMUM DISTANCE FOR ONE FRAME:', distances[min_index])
-      print()
     
     # Check if the closest distance is greater than the threshold
     if distances[min_index] > threshold:
