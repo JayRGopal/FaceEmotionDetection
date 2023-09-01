@@ -38,7 +38,7 @@ DEBUG = False # If debug is true, it stops verification & you can see all poses 
 
 # # FOR TOP DOWN BODY 2D
 model_setup_list = [
-  (f'{CONFIGS_BASE}/topdown_heatmap/coco/td-hm_vitpose-huge_8xb64-210e_coco-256x192.py', 'https://download.openmmlab.com/mmpose/v1/body_2d_keypoint/topdown_heatmap/coco/td-hm_ViTPose-huge_8xb64-210e_coco-256x192-e32adcd4_20230314.pth', f'{MMPOSE_MODEL_BASE}/td-hm_ViTPose-huge_8xb64-210e_coco-256x192-e32adcd4_20230314.pth', 'MM'),
+  (f'{CONFIGS_BASE}/topdown_heatmap/coco/td-hm_ViTPose-huge_8xb64-210e_coco-256x192.py', 'https://download.openmmlab.com/mmpose/v1/body_2d_keypoint/topdown_heatmap/coco/td-hm_ViTPose-huge_8xb64-210e_coco-256x192-e32adcd4_20230314.pth', f'{MMPOSE_MODEL_BASE}/td-hm_ViTPose-huge_8xb64-210e_coco-256x192-e32adcd4_20230314.pth', 'MM'),
   (f'{CONFIGS_BASE}/topdown_heatmap/coco/td-hm_ViTPose-large_8xb64-210e_coco-256x192.py', 'https://download.openmmlab.com/mmpose/v1/body_2d_keypoint/topdown_heatmap/coco/td-hm_ViTPose-large_8xb64-210e_coco-256x192-53609f55_20230314.pth', f'{MMPOSE_MODEL_BASE}/td-hm_ViTPose-large_8xb64-210e_coco-256x192-53609f55_20230314.pth', 'MM'),
   (f'{CONFIGS_BASE}/topdown_heatmap/coco/td-hm_hrformer-base_8xb32-210e_coco-384x288.py', 'https://download.openmmlab.com/mmpose/top_down/hrformer/hrformer_base_coco_384x288-ecf0758d_20220316.pth', f'{MMPOSE_MODEL_BASE}/hrformer_base_coco_384x288-ecf0758d_20220316.pth', 'MM'),
   (f'{CONFIGS_BASE}/topdown_heatmap/coco/td-hm_hrnet-w48_udp-8xb32-210e_coco-384x288.py', 'https://download.openmmlab.com/mmpose/v1/body_2d_keypoint/topdown_heatmap/coco/td-hm_hrnet-w48_udp-8xb32-210e_coco-384x288-70d7ab01_20220913.pth', f'{MMPOSE_MODEL_BASE}/td-hm_hrnet-w48_udp-8xb32-210e_coco-384x288-70d7ab01_20220913.pth', 'MM'),
