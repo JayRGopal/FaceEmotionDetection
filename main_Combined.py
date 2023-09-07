@@ -17,9 +17,9 @@ Verification using DeepFace (Model: VGG-Face)
 
 
 # Choose which pipelines to run
-Run_HSE = False
+Run_HSE = True
 Run_OpenGraphAU = True
-Do_Verification = True # Toggling this isn't supported yet. Verification will always happen
+Do_Verification = False # Toggling this isn't supported yet. Verification will always happen
 
 # Set the parameters
 BATCH_SIZE = 50000
