@@ -19,7 +19,7 @@ Verification using DeepFace (Model: VGG-Face)
 # Choose which pipelines to run
 Run_HSE = True
 Run_OpenGraphAU = True
-Do_Verification = False # Toggling this isn't supported yet. Verification will always happen
+Do_Verification = True # Toggling this isn't supported yet. Verification will always happen
 
 # Set the parameters
 BATCH_SIZE = 50000
@@ -31,7 +31,7 @@ INPUT_SIZE = (224, 224)
 VIDEO_DIRECTORY = os.path.abspath('inputs/')
 FPS_EXTRACTING = 5 # we'll extract 5 fps
 OUTPUT_DIRECTORY = os.path.abspath('outputs_Combined') 
-SUBJECT_FACE_IMAGE_PATH = os.path.abspath('deepface/Jimmy_Fallon.jpg')  
+SUBJECT_FACE_IMAGE_PATH = os.path.abspath('deepface/Smiling_Face.jpg')  
 
 # Function that gets us the output folder for each input video
 SAVE_PATH_FOLDER = lambda video_name: os.path.join(OUTPUT_DIRECTORY, f'{video_name}')
