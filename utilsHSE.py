@@ -29,6 +29,18 @@ def get_emotion_predictor(MODEL_NOW):
     model=load_model(MODEL_PATH)
     return model
 
+def convert_to_gpu_tensor(faces):
+    # Check if a GPU is available
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    
+    if gpus:
+        # GPU is available, convert to GPU tensor
+        gpu_faces = tf.convert_to_tensor(faces, dtype=tf.float32)
+        return gpu_faces
+    else:
+        # No GPU available, return the input as is
+        return faces
+
 
 import concurrent.futures
 

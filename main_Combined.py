@@ -5,7 +5,11 @@ import os
 import time
 import datetime
 import cv2
+import torch
 
+# Device
+use_cuda = torch.cuda.is_available()
+device = 'cuda' if use_cuda else 'cpu'
 
 """
 
@@ -115,7 +119,8 @@ for i in unprocessed_videos:
 
               # Get predictions of relevant network
               if Run_HSE:
-                hse_scores_real = hse_preds(faces, model_hse, model_type=HSE_MODEL_TYPE)
+                faces_for_hse = convert_to_gpu_tensor(faces)
+                hse_scores_real = hse_preds(faces_for_hse, model_hse, model_type=HSE_MODEL_TYPE)
                 hse_scores_real[is_null == 1] = 0 # clear the predictions from frames w/o faces!
                 print("Got Network Predictions: HSE")
               
@@ -123,6 +128,7 @@ for i in unprocessed_videos:
                 image_evaluator = image_eval()
                 faces_ogau = mtcnn_to_torch(faces)
                 faces_ogau = image_evaluator(faces_ogau)
+                faces_ogau = faces_ogau.to(device)
                 ogau_predictions = get_model_preds(faces_ogau, model_ogau, model_type=OPENGRAPHAU_MODEL_TYPE)
                 ogau_predictions[is_null == 1] = 0 # clear the predictions from frames w/o faces!
                 print("Got Network Predictions: OGAU")
@@ -139,7 +145,7 @@ for i in unprocessed_videos:
                 print(f"Saved HSE CSV to {save_path_hse}!")
               
               if Run_OpenGraphAU:
-                csv_save(labels=ogau_predictions, is_null=is_null, frames=frames, save_path=save_path_ogau, fps=fps)
+                csv_save(labels=ogau_predictions, is_null=is_null, frames=frames, save_path=save_path_ogau, fps=real_fps)
                 print(f"Saved OpenGraphAU CSV to {save_path_ogau}!")
 
               frame_now = frame_now + BATCH_NOW
@@ -173,7 +179,8 @@ for i in unprocessed_videos:
 
           # Get predictions of relevant network
           if Run_HSE:
-            hse_scores_real = hse_preds(faces, model_hse, model_type=HSE_MODEL_TYPE)
+            faces_for_hse = convert_to_gpu_tensor(faces)
+            hse_scores_real = hse_preds(faces_for_hse, model_hse, model_type=HSE_MODEL_TYPE)    
             hse_scores_real[is_null == 1] = 0 # clear the predictions from frames w/o faces!
             print("Got Network Predictions: HSE")
           
@@ -181,6 +188,7 @@ for i in unprocessed_videos:
             image_evaluator = image_eval()
             faces_ogau = mtcnn_to_torch(faces)
             faces_ogau = image_evaluator(faces_ogau)
+            faces_ogau = faces_ogau.to(device)
             ogau_predictions = get_model_preds(faces_ogau, model_ogau, model_type=OPENGRAPHAU_MODEL_TYPE)
             ogau_predictions[is_null == 1] = 0 # clear the predictions from frames w/o faces!
             print("Got Network Predictions: OGAU")
@@ -197,7 +205,7 @@ for i in unprocessed_videos:
             print(f"Saved HSE CSV to {save_path_hse}!")
 
           if Run_OpenGraphAU:
-            csv_save(labels=ogau_predictions, is_null=is_null, frames=frames, save_path=save_path_ogau, fps=fps)
+            csv_save(labels=ogau_predictions, is_null=is_null, frames=frames, save_path=save_path_ogau, fps=real_fps)
             print(f"Saved OpenGraphAU CSV to {save_path_ogau}!")
 
           frame_now = frame_now + BATCH_NOW
