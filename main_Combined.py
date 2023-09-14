@@ -27,7 +27,7 @@ Run_OpenGraphAU = True
 Do_Verification = True # Toggling this isn't supported yet. Verification will always happen
 
 # Set the parameters
-BATCH_SIZE = 30
+BATCH_SIZE = 5000
 HSE_MODEL_TYPE = 'mobilenet_7.h5'
 OPENGRAPHAU_MODEL_TYPE = 'OpenGraphAU'
 OPENGRAPHAU_MODEL_BACKBONE = 'swin_transformer_base'
