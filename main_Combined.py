@@ -24,7 +24,7 @@ Verification using DeepFace (Model: VGG-Face)
 # Choose which pipelines to run
 Run_HSE = True
 Run_OpenGraphAU = True
-Do_Verification = True # Toggling this isn't supported yet. Verification will always happen
+Do_Verification = False 
 
 # Set the parameters
 BATCH_SIZE = 5000
@@ -43,14 +43,6 @@ SAVE_PATH_FOLDER = lambda video_name: os.path.join(OUTPUT_DIRECTORY, f'{video_na
 
 # List of unprocessed videos
 unprocessed_videos = get_valid_vids(VIDEO_DIRECTORY, SAVE_PATH_FOLDER)
-
-# MMPose
-TOP_DOWN = True
-OUTPUT_VIDEO_DIRECTORY = OUTPUT_DIRECTORY # This is where videos/images with overlay go 
-CONFIGS_BASE = os.path.abspath('mmpose/configs/body_2d_keypoint')
-WHOLEBODY_CONFIGS_BASE = os.path.abspath('mmpose/configs/wholebody_2d_keypoint') 
-MMPOSE_MODEL_BASE = os.path.abspath('MMPose_models/')
-detector_mapping = get_detector_mapping(MMPOSE_MODEL_BASE)
 
 # For timing estimation
 num_vids = len(unprocessed_videos)
@@ -109,7 +101,10 @@ for i in unprocessed_videos:
                 print('Time: ', time2 - time1)
 
               # Face detection
-              faces, is_null = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_PATH)
+              if Do_Verification:
+                faces, is_null = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_PATH)
+              else:
+                faces, is_null = extract_faces_mtcnn(ims, INPUT_SIZE)
               print(f"Detected Faces")
               if TIMING_VERBOSE:
                 time3 = time.time()
@@ -173,12 +168,15 @@ for i in unprocessed_videos:
             print('Time: ', time2 - time1)
 
           # Face detection
-          faces, is_null = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_PATH)
+          if Do_Verification:
+            faces, is_null = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_PATH)
+          else:
+            faces, is_null = extract_faces_mtcnn(ims, INPUT_SIZE)
           print(f"Detected Faces")
           if TIMING_VERBOSE:
             time3 = time.time()
             print('Time: ', time3 - time2) 
-
+          
           # Get predictions of relevant network
           if Run_HSE:
             faces_for_hse = convert_to_gpu_tensor(faces)
