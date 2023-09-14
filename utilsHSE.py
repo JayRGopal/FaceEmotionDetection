@@ -50,7 +50,9 @@ def detect_bboxes(frame, confidence_threshold=0.9):
 
     bounding_boxes, probs = mtcnn.detect(frame, landmarks=False)
     # If any faces detected, make sure they're confident!
-    if bounding_boxes.shape[0] > 0: 
+    if bounding_boxes is None:
+        return np.array([]) # better to return empty array than None!
+    if bounding_boxes.shape[0] > 0:
         bounding_boxes=bounding_boxes[probs>confidence_threshold]
     return bounding_boxes
 
