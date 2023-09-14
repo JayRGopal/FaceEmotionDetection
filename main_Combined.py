@@ -24,7 +24,7 @@ Verification using DeepFace (Model: VGG-Face)
 # Choose which pipelines to run
 Run_HSE = True
 Run_OpenGraphAU = True
-Do_Verification = False 
+Do_Verification = True 
 
 # Set the parameters
 BATCH_SIZE = 5000
