@@ -27,7 +27,7 @@ Run_OpenGraphAU = True
 Do_Verification = True # Toggling this isn't supported yet. Verification will always happen
 
 # Set the parameters
-BATCH_SIZE = 20000
+BATCH_SIZE = 30
 HSE_MODEL_TYPE = 'mobilenet_7.h5'
 OPENGRAPHAU_MODEL_TYPE = 'OpenGraphAU'
 OPENGRAPHAU_MODEL_BACKBONE = 'swin_transformer_base'
@@ -100,16 +100,13 @@ for i in unprocessed_videos:
               frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
               ims.append(frame)
               real_frame_numbers.append(frameNr)
-          if (frameNr % BATCH_SIZE == 0) and (frameNr > 0):
+          if (frameNr % BATCH_SIZE == 0) and (frameNr > 0) and len(real_frame_numbers) > 0:
               # Let's do analysis, save results, and reset ims!
               ims = np.array(ims)
-              print(f"Extracted Ims, Frames {frame_now} to {frame_now+BATCH_SIZE} in {i}") 
+              print(f"Extracted Ims, Frames {frame_now} to {frameNr} in {i}") 
               if TIMING_VERBOSE:
                 time2 = time.time()
                 print('Time: ', time2 - time1)
-              
-              # Batch now -- number of frames actually extracted (useful at end of video)
-              BATCH_NOW = ims.shape[0]
 
               # Face detection
               faces, is_null = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_PATH)
@@ -146,6 +143,7 @@ for i in unprocessed_videos:
 
               # Save outputs to a CSV
               frames = np.array(real_frame_numbers).reshape(-1, 1)
+              real_frame_numbers = []
 
               if Run_HSE:
                 csv_save_HSE(labels=hse_scores_real, is_null=is_null, frames=frames, save_path=save_path_hse, fps=real_fps)
@@ -155,7 +153,7 @@ for i in unprocessed_videos:
                 csv_save(labels=ogau_predictions, is_null=is_null, frames=frames, save_path=save_path_ogau, fps=real_fps)
                 print(f"Saved OpenGraphAU CSV to {save_path_ogau}!")
 
-              frame_now = frame_now + BATCH_NOW
+              frame_now = frameNr
 
               # Reset ims for the next batch!
               ims = []
@@ -169,13 +167,10 @@ for i in unprocessed_videos:
 
           # Let's do analysis, save results, and reset ims!
           ims = np.array(ims)
-          print(f"Extracted Ims, Frames {frame_now} to {frame_now+BATCH_SIZE} in {i}") 
+          print(f"Extracted Ims, Frames {frame_now} to {frameNr} in {i}") 
           if TIMING_VERBOSE:
             time2 = time.time()
             print('Time: ', time2 - time1)
-          
-          # Batch now -- number of frames actually extracted (useful at end of video)
-          BATCH_NOW = ims.shape[0]
 
           # Face detection
           faces, is_null = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_PATH)
@@ -212,6 +207,7 @@ for i in unprocessed_videos:
 
           # Save outputs to a CSV
           frames = np.array(real_frame_numbers).reshape(-1, 1)
+          real_frame_numbers = []
 
           if Run_HSE:
             csv_save_HSE(labels=hse_scores_real, is_null=is_null, frames=frames, save_path=save_path_hse, fps=real_fps)
@@ -221,7 +217,7 @@ for i in unprocessed_videos:
             csv_save(labels=ogau_predictions, is_null=is_null, frames=frames, save_path=save_path_ogau, fps=real_fps)
             print(f"Saved OpenGraphAU CSV to {save_path_ogau}!")
 
-          frame_now = frame_now + BATCH_NOW
+          frame_now = frameNr
 
           # Reset ims to save space
           ims = []
@@ -229,7 +225,6 @@ for i in unprocessed_videos:
           # Reset timing
           if TIMING_VERBOSE: 
             time1 = time.time()
-
       frameNr = frameNr + 1
   capture.release()
 

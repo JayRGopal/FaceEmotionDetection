@@ -159,6 +159,12 @@ def hse_preds(faces, model, model_type='mobilenet_7.h5'):
     
     # Check if a GPU is available and use it if possible
     device_name = tf.test.gpu_device_name()
+
+    # If empty, return empty
+    if faces.shape[0] == 0:
+        return np.array([])
+    
+    # Device
     if device_name != '' and '/device:GPU' in device_name:
         with tf.device('/device:GPU:0'):
             scores = model.predict(faces)
@@ -169,7 +175,10 @@ def hse_preds(faces, model, model_type='mobilenet_7.h5'):
     return scores
 
 def csv_save_HSE(labels, is_null, frames, save_path, fps):
-    if labels.shape[1] == 7: # 7 emotions - mobilenet
+    if labels.shape[0] == 0: # 0 frames successfully found in whole batch (due to downsampling)!
+        class_labels=['Anger', 'Disgust', 'Fear', 'Happiness', 'Neutral', 'Sadness', 'Surprise']
+        labels = np.zeros((frames.shape[0], 7))
+    elif labels.shape[1] == 7: # 7 emotions - mobilenet
         class_labels=['Anger', 'Disgust', 'Fear', 'Happiness', 'Neutral', 'Sadness', 'Surprise']
     else: 
         print(f'Unexpected shape of labels! {labels.shape}') 
@@ -183,7 +192,8 @@ def csv_save_HSE(labels, is_null, frames, save_path, fps):
     # Make a modified array with (frame, timestamp, success) before emotions
     success_array = 1 - is_null
     modified_arr = np.concatenate((np.array(success_array).reshape(-1, 1), labels), axis=1)
-    timestamps = [frame / fps for frame in frames]
+    frames_t = frames.astype(np.float32)
+    timestamps = [frame / fps for frame in frames_t]
     modified_arr = np.concatenate((frames, np.array(timestamps), modified_arr), axis=1)
     
     # Save the data to the CSV file, making sure to append and not write over!

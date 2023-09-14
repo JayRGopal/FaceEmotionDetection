@@ -297,6 +297,10 @@ def get_model_preds(faces, net, model_type):
       faces = faces.cuda()
       net = net.cuda()
   
+  # If empty, return empty
+  if faces.shape[0] == 0:
+      return np.array([])
+
   with torch.no_grad():
     if model_type == 'BP4D':
       pred_ff = net(faces / 255)
@@ -436,7 +440,10 @@ def postprocess_outs(preds, method='RNN'):
 """
 
 def csv_save(labels, is_null, frames, save_path, fps):
-    if labels.shape[1] == 12: # BP4D
+    if labels.shape[0] == 0: # 0 frames successfully found in whole batch (due to downsampling)!
+        labels = np.zeros((frames.shape[0], 41)) # We are defaulting to OpenGraphAU!
+    
+    elif labels.shape[1] == 12: # BP4D
         AU_ids = ['1', '2', '4', '6', '7', '10', '12', '14', '15', '17', '23', '24']
     elif labels.shape[1] == 41: # OpenGraphAU
         AU_ids = ['1', '2', '4', '5', '6', '7', '9', '10', '11', '12', '13', '14', '15', 
