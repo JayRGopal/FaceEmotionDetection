@@ -10,6 +10,8 @@ import torch
 # Device
 use_cuda = torch.cuda.is_available()
 device = 'cuda' if use_cuda else 'cpu'
+if use_cuda:
+  torch.cuda.empty_cache()
 
 """
 
@@ -19,14 +21,13 @@ Verification using DeepFace (Model: VGG-Face)
 
 """
 
-
 # Choose which pipelines to run
 Run_HSE = True
 Run_OpenGraphAU = True
 Do_Verification = True # Toggling this isn't supported yet. Verification will always happen
 
 # Set the parameters
-BATCH_SIZE = 50000
+BATCH_SIZE = 20000
 HSE_MODEL_TYPE = 'mobilenet_7.h5'
 OPENGRAPHAU_MODEL_TYPE = 'OpenGraphAU'
 OPENGRAPHAU_MODEL_BACKBONE = 'swin_transformer_base'
@@ -124,6 +125,9 @@ for i in unprocessed_videos:
                 hse_scores_real[is_null == 1] = 0 # clear the predictions from frames w/o faces!
                 print("Got Network Predictions: HSE")
               
+              if use_cuda:
+                torch.cuda.empty_cache()
+
               if Run_OpenGraphAU:
                 image_evaluator = image_eval()
                 faces_ogau = mtcnn_to_torch(faces)
@@ -132,6 +136,9 @@ for i in unprocessed_videos:
                 ogau_predictions = get_model_preds(faces_ogau, model_ogau, model_type=OPENGRAPHAU_MODEL_TYPE)
                 ogau_predictions[is_null == 1] = 0 # clear the predictions from frames w/o faces!
                 print("Got Network Predictions: OGAU")
+
+              if use_cuda:
+                torch.cuda.empty_cache()
               
               if TIMING_VERBOSE:
                 time4 = time.time()
@@ -183,6 +190,9 @@ for i in unprocessed_videos:
             hse_scores_real = hse_preds(faces_for_hse, model_hse, model_type=HSE_MODEL_TYPE)    
             hse_scores_real[is_null == 1] = 0 # clear the predictions from frames w/o faces!
             print("Got Network Predictions: HSE")
+
+          if use_cuda:
+            torch.cuda.empty_cache()
           
           if Run_OpenGraphAU:
             image_evaluator = image_eval()
@@ -192,6 +202,9 @@ for i in unprocessed_videos:
             ogau_predictions = get_model_preds(faces_ogau, model_ogau, model_type=OPENGRAPHAU_MODEL_TYPE)
             ogau_predictions[is_null == 1] = 0 # clear the predictions from frames w/o faces!
             print("Got Network Predictions: OGAU")
+
+          if use_cuda:
+            torch.cuda.empty_cache()
 
           if TIMING_VERBOSE:
             time4 = time.time()
