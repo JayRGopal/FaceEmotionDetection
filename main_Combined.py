@@ -19,6 +19,11 @@ Full Pipeline - HSE and OpenGraphAU
 Detection via MTCNN
 Verification using DeepFace (Model: VGG-Face)
 
+Success column:
+1: Successful!
+0: Failure: Zero faces detected
+-1: Failure: 2+ faces detected, and verification failed (across all images in loop!)
+
 """
 
 # Choose which pipelines to run
@@ -27,7 +32,7 @@ Run_OpenGraphAU = True
 Do_Verification = True 
 
 # Set the parameters
-BATCH_SIZE = 5000
+BATCH_SIZE = 2000
 HSE_MODEL_TYPE = 'mobilenet_7.h5'
 OPENGRAPHAU_MODEL_TYPE = 'OpenGraphAU'
 OPENGRAPHAU_MODEL_BACKBONE = 'swin_transformer_base'
@@ -36,7 +41,7 @@ INPUT_SIZE = (224, 224)
 VIDEO_DIRECTORY = os.path.abspath('inputs/')
 FPS_EXTRACTING = 5 # we'll extract 5 fps
 OUTPUT_DIRECTORY = os.path.abspath('outputs_Combined') 
-SUBJECT_FACE_IMAGE_PATH = os.path.abspath('deepface/Smiling_Face.jpg')  
+SUBJECT_FACE_IMAGE_FOLDER = os.path.abspath('deepface/')  
 
 # Function that gets us the output folder for each input video
 SAVE_PATH_FOLDER = lambda video_name: os.path.join(OUTPUT_DIRECTORY, f'{video_name}')
@@ -102,7 +107,7 @@ for i in unprocessed_videos:
 
               # Face detection
               if Do_Verification:
-                faces, is_null = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_PATH)
+                faces, is_null = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_FOLDER)
               else:
                 faces, is_null = extract_faces_mtcnn(ims, INPUT_SIZE)
               print(f"Detected Faces")
@@ -114,7 +119,7 @@ for i in unprocessed_videos:
               if Run_HSE:
                 faces_for_hse = convert_to_gpu_tensor(faces)
                 hse_scores_real = hse_preds(faces_for_hse, model_hse, model_type=HSE_MODEL_TYPE)
-                hse_scores_real[is_null == 1] = 0 # clear the predictions from frames w/o faces!
+                hse_scores_real[is_null > 0] = 0 # clear the predictions from frames w/o faces!
                 print("Got Network Predictions: HSE")
               
               if use_cuda:
@@ -126,7 +131,7 @@ for i in unprocessed_videos:
                 faces_ogau = image_evaluator(faces_ogau)
                 faces_ogau = faces_ogau.to(device)
                 ogau_predictions = get_model_preds(faces_ogau, model_ogau, model_type=OPENGRAPHAU_MODEL_TYPE)
-                ogau_predictions[is_null == 1] = 0 # clear the predictions from frames w/o faces!
+                ogau_predictions[is_null > 0] = 0 # clear the predictions from frames w/o faces!
                 print("Got Network Predictions: OGAU")
 
               if use_cuda:
@@ -169,7 +174,7 @@ for i in unprocessed_videos:
 
           # Face detection
           if Do_Verification:
-            faces, is_null = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_PATH)
+            faces, is_null = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_FOLDER)
           else:
             faces, is_null = extract_faces_mtcnn(ims, INPUT_SIZE)
           print(f"Detected Faces")
@@ -181,7 +186,7 @@ for i in unprocessed_videos:
           if Run_HSE:
             faces_for_hse = convert_to_gpu_tensor(faces)
             hse_scores_real = hse_preds(faces_for_hse, model_hse, model_type=HSE_MODEL_TYPE)    
-            hse_scores_real[is_null == 1] = 0 # clear the predictions from frames w/o faces!
+            hse_scores_real[is_null > 0] = 0 # clear the predictions from frames w/o faces!
             print("Got Network Predictions: HSE")
 
           if use_cuda:
@@ -193,7 +198,7 @@ for i in unprocessed_videos:
             faces_ogau = image_evaluator(faces_ogau)
             faces_ogau = faces_ogau.to(device)
             ogau_predictions = get_model_preds(faces_ogau, model_ogau, model_type=OPENGRAPHAU_MODEL_TYPE)
-            ogau_predictions[is_null == 1] = 0 # clear the predictions from frames w/o faces!
+            ogau_predictions[is_null > 0] = 0 # clear the predictions from frames w/o faces!
             print("Got Network Predictions: OGAU")
 
           if use_cuda:

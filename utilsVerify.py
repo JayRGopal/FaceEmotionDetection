@@ -11,11 +11,16 @@ import cv2
 import shutil
 import sys
 import numpy as np
+import glob
 
-def verify_faces_np_data(target_img_path, np_data):
-    # Goal: determine which images have the target face, and get the bboxes of the target face in those images.
+
+def verify_faces_np_data(target_img_folder, np_data):
+    # Goal: determine which images have any one of the target faces, and get the bboxes of the target face in those images.
     # Returns a pandas df that has an 'index' column indicating index in np_data, and the bbox coordinates for each index
     # Note that our final pandas df won't have all indices in np_data since some frames won't have successful verification of our target face!
+
+    # All target images
+    target_jpg_file_list = glob.glob(target_img_folder + '/*.[jJ][pP][eE]?[gG]')
 
     # Verifying each image
     results = []
@@ -24,31 +29,34 @@ def verify_faces_np_data(target_img_path, np_data):
         # Undo preprocessing
         data_now = cv2.cvtColor(data_now, cv2.COLOR_RGB2BGR) 
 
-        # SILENT RUN
-        original_stdout = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
-        result = DeepFace.verify(img1_path=target_img_path, img2_path=data_now, enforce_detection=False, model_name='VGG-Face', detector_backend='mtcnn')
-        sys.stdout.close()
-        sys.stdout = original_stdout
+        for target_img_path in target_jpg_file_list:
+          # SILENT RUN
+          original_stdout = sys.stdout
+          sys.stdout = open(os.devnull, 'w')
+          result = DeepFace.verify(img1_path=target_img_path, img2_path=data_now, enforce_detection=False, model_name='VGG-Face', detector_backend='mtcnn')
+          sys.stdout.close()
+          sys.stdout = original_stdout
 
-        if result['verified']:
-            face_x = result['facial_areas']['img2']['x']
-            face_y = result['facial_areas']['img2']['y']
-            face_w = result['facial_areas']['img2']['w']
-            face_h = result['facial_areas']['img2']['h']
-            image_data = {
-                'Index': int(i),
-                'Distance': result['distance'],
-                'Facial Box X': int(face_x),
-                'Facial Box Y': int(face_y),
-                'Facial Box W': int(face_w),
-                'Facial Box H': int(face_h)
-            }
-            results.append(image_data)
+          if result['verified']:
+              face_x = result['facial_areas']['img2']['x']
+              face_y = result['facial_areas']['img2']['y']
+              face_w = result['facial_areas']['img2']['w']
+              face_h = result['facial_areas']['img2']['h']
+              image_data = {
+                  'Index': int(i),
+                  'Distance': result['distance'],
+                  'Facial Box X': int(face_x),
+                  'Facial Box Y': int(face_y),
+                  'Facial Box W': int(face_w),
+                  'Facial Box H': int(face_h)
+              }
+              results.append(image_data)
+              break # break the inner for loop here!
 
     # Getting a pandas df
     df = pd.DataFrame(results)
-    df.columns = ['Index', 'Distance', 'Facial Box X', 'Facial Box Y', 'Facial Box W', 'Facial Box H']
+    if df.shape and df.shape[0] > 0:
+      df.columns = ['Index', 'Distance', 'Facial Box X', 'Facial Box Y', 'Facial Box W', 'Facial Box H']
     
     return df
 
