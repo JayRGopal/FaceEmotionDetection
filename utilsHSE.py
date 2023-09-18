@@ -101,7 +101,7 @@ def extract_faces_mtcnn(frames, INPUT_SIZE):
 
     return faces, is_null
 
-def extract_faces_with_verify(frames, INPUT_SIZE, target_img_path):
+def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder):
     is_null = np.zeros(frames.shape[0])
     faces = np.zeros([frames.shape[0], INPUT_SIZE[0], INPUT_SIZE[1], 3], dtype=np.uint8)
     verification_indices = [] # Pool frames with >1 face and send to verification pipeline
@@ -119,12 +119,12 @@ def extract_faces_with_verify(frames, INPUT_SIZE, target_img_path):
                 faces[enum] = face_img 
         elif bounding_boxes.shape[0] > 1: # more than one face!
             verification_indices.append(enum)
-            is_null[enum] = 1 # It's null for now, but will be valid if verified! 
+            is_null[enum] = 2 # It's null for now, but will be valid if verified! 
         else: # zero faces
             is_null[enum] = 1
     if len(verification_indices) > 0: 
         verify_np_array = frames[verification_indices] 
-        verify_results = verify_faces_np_data(target_img_path, verify_np_array)
+        verify_results = verify_faces_np_data(target_img_folder, verify_np_array)
         for _, row in verify_results.iterrows():
             idx = row['Index']
             real_index = verification_indices[int(idx)]
