@@ -133,9 +133,9 @@ def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder):
             face_img = full_image[y:y+h, x:x+w, :]
             face_img=letterbox_image_np(face_img, INPUT_SIZE)
 
-            # # DEBUG ONLY: SAVE THE IMAGES, SHOWING BBOXES!
+            # DEBUG ONLY: SAVE THE IMAGES, SHOWING BBOXES!
             # showing_image = cv2.cvtColor(full_image, cv2.COLOR_RGB2BGR) 
-            # draw_bbox_and_save(showing_image, (x, y, w, h), os.path.abspath(f'outputs_Combined/Verification_Demo.mp4/frame_{real_index*6}.jpg'))
+            # draw_bbox_and_save(showing_image, (x, y, w, h), os.path.abspath(f'outputs_Combined/Fallon_Kimmel_Demo.mp4/frame_{real_index*6}.jpg'))
 
             faces[real_index] = face_img
             is_null[real_index] = 0 # it's been verified, so it is not null

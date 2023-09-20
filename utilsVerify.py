@@ -20,7 +20,11 @@ def verify_faces_np_data(target_img_folder, np_data):
     # Note that our final pandas df won't have all indices in np_data since some frames won't have successful verification of our target face!
 
     # All target images
-    target_jpg_file_list = glob.glob(target_img_folder + '/*.[jJ][pP][eE]?[gG]')
+    allowed_endings = ['jpg', 'jpeg', 'JPG', 'JPEG']
+    target_jpg_file_list = []
+    for ending_now in allowed_endings:
+      target_jpg_file_list = target_jpg_file_list + glob.glob(target_img_folder + f'/*.{ending_now}')
+    target_jpg_file_list = sorted(target_jpg_file_list)
 
     # Verifying each image
     results = []
@@ -38,6 +42,9 @@ def verify_faces_np_data(target_img_folder, np_data):
           sys.stdout = original_stdout
 
           if result['verified']:
+              # DEBUG ONLY
+              # print(f'verified one face! {i}')
+
               face_x = result['facial_areas']['img2']['x']
               face_y = result['facial_areas']['img2']['y']
               face_w = result['facial_areas']['img2']['w']
