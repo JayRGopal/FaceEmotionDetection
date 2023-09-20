@@ -194,11 +194,15 @@ def csv_save_HSE(labels, is_null, frames, save_path, fps):
     modified_arr = np.concatenate((np.array(success_array).reshape(-1, 1), labels), axis=1)
     frames_t = frames.astype(np.float32)
     timestamps = [frame / fps for frame in frames_t]
-    modified_arr = np.concatenate((frames, np.array(timestamps), modified_arr), axis=1)
+    if frames_t.shape[0] == 0:
+        # No data to save, so let's move on!
+        return
+    else:
+        modified_arr = np.concatenate((frames, np.array(timestamps), modified_arr), axis=1)
     
-    # Save the data to the CSV file, making sure to append and not write over!
-    with open(save_path, 'a') as file:
-        np.savetxt(file, modified_arr, delimiter=',', header='', footer='', comments='')
+        # Save the data to the CSV file, making sure to append and not write over!
+        with open(save_path, 'a') as file:
+            np.savetxt(file, modified_arr, delimiter=',', header='', footer='', comments='')
 
 
 
