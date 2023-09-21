@@ -23,7 +23,7 @@ TOP_DOWN = True
 CONFIGS_BASE = os.path.abspath('mmpose/configs/body_2d_keypoint')
 WHOLEBODY_CONFIGS_BASE = os.path.abspath('mmpose/configs/wholebody_2d_keypoint') 
 MMPOSE_MODEL_BASE = os.path.abspath('MMPose_models/')
-SUBJECT_FACE_IMAGE_PATH = os.path.abspath('deepface/Jimmy_Fallon.jpg') 
+SUBJECT_FACE_IMAGE_PATH = os.path.abspath('deepface/0_Jimmy_Fallon.jpg') 
 VERIFY_EVERY_FRAME = True
 DEBUG = False # If debug is true, it stops verification & you can see all poses detected
 

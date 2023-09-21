@@ -6,7 +6,7 @@ import os
 import csv
 import math
 from torchvision import transforms
-
+import random
 
 # Hyperparameters - Post-Processing for OpenGraphAU
 EMA_ALPHA = 0.9
@@ -162,6 +162,18 @@ def mtcnn_to_torch(faces):
     return faces_real
 
 
+# Letterbox function
+def letterbox_image_np(image_np, desired_size):
+    height, width = image_np.shape[:2]
+    ratio = min(desired_size[0] / width, desired_size[1] / height)
+    new_size = (round(width * ratio), round(height * ratio))
+    image_np_resized = cv2.resize(image_np, new_size, interpolation=cv2.INTER_LINEAR)
+    new_im_np = np.zeros((desired_size[1], desired_size[0], 3), dtype=np.uint8)
+    top_left_y = (desired_size[1] - new_size[1]) // 2
+    top_left_x = (desired_size[0] - new_size[0]) // 2
+    new_im_np[top_left_y:top_left_y + new_size[1], top_left_x:top_left_x + new_size[0]] = image_np_resized
+    return new_im_np
+
 """
 
 # Face Detection (RetinaFace)
@@ -173,22 +185,28 @@ def mtcnn_to_torch(faces):
 
 from retinaface import RetinaFace
 
-def detect_extract_faces(ims, face_shape=(224, 224, 3)):
+def detect_extract_faces(ims, face_shape=(224, 224)):
   NUM_TO_EXTRACT = ims.shape[0]
-  is_null = torch.zeros(ims.shape[0])
-  faces = torch.empty((NUM_TO_EXTRACT, face_shape[0], face_shape[1], face_shape[2]), dtype=torch.float32)
+  is_null = np.zeros(ims.shape[0], dtype=np.uint8)
+  faces = np.zeros((NUM_TO_EXTRACT, face_shape[0], face_shape[1], 3), dtype=np.float32)
   for i in range(NUM_TO_EXTRACT):
     print(f'Extracting Face {i+1} / {NUM_TO_EXTRACT}')
     one_face = RetinaFace.extract_faces(ims[i])
     if len(one_face) > 0:
       one_face = np.array(one_face[0])
-      dims_fixed = tf.image.resize_with_crop_or_pad(one_face, face_shape[0], face_shape[1])
-      torch_one = torch.tensor(dims_fixed.numpy())
-      faces[i] = torch_one.float()
+      dims_fixed = letterbox_image_np(one_face, face_shape)
+
+      # DEBUG ONLY
+      # extracted_face = cv2.cvtColor(dims_fixed, cv2.COLOR_RGB2BGR)
+      # cv2.imwrite(os.path.abspath(f'outputs_Combined/Night_Demo_Pat_data.mp4/frame_{random.randint(1, 1000)}.jpg'), extracted_face)
+
+      #tf.image.resize_with_crop_or_pad(one_face, face_shape[0], face_shape[1])
+      #torch_one = torch.tensor(dims_fixed)
+      #faces[i] = torch_one.float()
+      faces[i] = dims_fixed
     else:
-      faces[i] = torch.zeros(face_shape[0], face_shape[1], face_shape[2]).float()
       is_null[i] = 1
-  faces = torch.swapaxes(faces, 1, 3) / 255
+  #faces = torch.swapaxes(faces, 1, 3) / 255
   return faces, is_null
 
 def detect_extract_one_face(one_im):
@@ -198,7 +216,8 @@ def detect_extract_one_face(one_im):
     one_face = RetinaFace.extract_faces(one_im)
     if len(one_face) > 0:
         one_face = np.array(one_face[0])
-        dims_fixed = tf.image.resize_with_crop_or_pad(one_face, face_shape[0], face_shape[1])
+        dims_fixed = letterbox_image_np(one_face, face_shape)
+        #tf.image.resize_with_crop_or_pad(one_face, face_shape[0], face_shape[1])
         torch_one = torch.tensor(dims_fixed.numpy())
         faces[0] = torch_one.float()
     else:

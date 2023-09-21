@@ -30,6 +30,7 @@ Success column:
 Run_HSE = True
 Run_OpenGraphAU = True
 Do_Verification = True 
+Face_Detector = 'MTCNN' # Options: ['MTCNN', 'RetinaFace', 'DeepFace']
 
 # Set the parameters
 BATCH_SIZE = 2000
@@ -39,7 +40,7 @@ OPENGRAPHAU_MODEL_BACKBONE = 'swin_transformer_base'
 OPENGRAPHAU_MODEL_PATH = os.path.abspath('megraphau/checkpoints/OpenGprahAU-SwinB_first_stage.pth')
 INPUT_SIZE = (224, 224)
 VIDEO_DIRECTORY = os.path.abspath('inputs/')
-FPS_EXTRACTING = 5 # we'll extract 5 fps
+FPS_EXTRACTING = 5 # we'll extract this many fps from the video for analysis
 OUTPUT_DIRECTORY = os.path.abspath('outputs_Combined') 
 SUBJECT_FACE_IMAGE_FOLDER = os.path.abspath('deepface/')  
 
@@ -107,9 +108,15 @@ for i in unprocessed_videos:
 
               # Face detection
               if Do_Verification:
-                faces, is_null = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_FOLDER)
+                if Face_Detector == 'MTCNN':
+                  faces, is_null = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_FOLDER)
+                elif Face_Detector == 'RetinaFace':
+                  faces, is_null = detect_extract_faces(ims, INPUT_SIZE)
               else:
-                faces, is_null = extract_faces_mtcnn(ims, INPUT_SIZE)
+                if Face_Detector == 'MTCNN':
+                  faces, is_null = extract_faces_mtcnn(ims, INPUT_SIZE)
+                elif Face_Detector == 'RetinaFace':
+                  faces, is_null = detect_extract_faces(ims, INPUT_SIZE)
               print(f"Detected Faces")
               if TIMING_VERBOSE:
                 time3 = time.time()
@@ -174,9 +181,15 @@ for i in unprocessed_videos:
 
           # Face detection
           if Do_Verification:
-            faces, is_null = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_FOLDER)
+            if Face_Detector == 'MTCNN':
+              faces, is_null = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_FOLDER)
+            elif Face_Detector == 'RetinaFace':
+              faces, is_null = detect_extract_faces(ims, INPUT_SIZE)
           else:
-            faces, is_null = extract_faces_mtcnn(ims, INPUT_SIZE)
+            if Face_Detector == 'MTCNN':
+              faces, is_null = extract_faces_mtcnn(ims, INPUT_SIZE)
+            elif Face_Detector == 'RetinaFace':
+              faces, is_null = detect_extract_faces(ims, INPUT_SIZE)
           print(f"Detected Faces")
           if TIMING_VERBOSE:
             time3 = time.time()

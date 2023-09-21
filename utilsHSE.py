@@ -8,6 +8,7 @@ from tensorflow.keras.models import Model,Sequential, load_model,model_from_json
 import csv
 import torch
 from utilsVerify import *
+from utils import *
 use_cuda = torch.cuda.is_available()
 device = 'cuda' if use_cuda else 'cpu'
 
@@ -56,17 +57,6 @@ def detect_bboxes(frame, confidence_threshold=0.9):
         bounding_boxes=bounding_boxes[probs>confidence_threshold]
     return bounding_boxes
 
-# Letterbox function
-def letterbox_image_np(image_np, desired_size):
-    height, width = image_np.shape[:2]
-    ratio = min(desired_size[0] / width, desired_size[1] / height)
-    new_size = (round(width * ratio), round(height * ratio))
-    image_np_resized = cv2.resize(image_np, new_size, interpolation=cv2.INTER_LINEAR)
-    new_im_np = np.zeros((desired_size[1], desired_size[0], 3), dtype=np.uint8)
-    top_left_y = (desired_size[1] - new_size[1]) // 2
-    top_left_x = (desired_size[0] - new_size[0]) // 2
-    new_im_np[top_left_y:top_left_y + new_size[1], top_left_x:top_left_x + new_size[0]] = image_np_resized
-    return new_im_np
 
 def process_frame(frame, INPUT_SIZE):
     bounding_boxes = detect_bboxes(frame)
