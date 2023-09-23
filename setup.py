@@ -46,7 +46,7 @@ def initial_setup():
 
 def gpu_setup():
     # May need to adjust this based on workstation
-    os.system("pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117")
+    os.system("pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118")
     return
 
 if __name__ == '__main__':
