@@ -31,8 +31,7 @@ Run_HSE = True
 Run_OpenGraphAU = True
 Do_Verification = True 
 Partial_Verify = True # Verify, then find nearest face within distance max (below)
-Distance_Max_Partial_Verify = 30
-Face_Detector = 'MTCNN' # Options: ['MTCNN', 'RetinaFace', 'DeepFace']
+Face_Detector = 'MTCNN' # Options: ['MTCNN', 'RetinaFace']
 
 # Set the parameters
 BATCH_SIZE = 2000
@@ -44,11 +43,14 @@ INPUT_SIZE = (224, 224)
 VIDEO_DIRECTORY = os.path.abspath('inputs/')
 FPS_EXTRACTING = 5 # we'll extract this many fps from the video for analysis
 OUTPUT_DIRECTORY = os.path.abspath('outputs_Combined') 
-SUBJECT_FACE_IMAGE_FOLDER = os.path.abspath('deepface/')  
-PARTIAL_VERIFY_RANDOM_FACE_FOLDER = os.path.abspath('deepface/')
+SUBJECT_FACE_IMAGE_FOLDER = os.path.abspath('deepface/')
+DISTANCE_MAX_PARTIAL_VERIFY = 30
+SAVE_PROB_PARTIAL_VERIFY = 0.01
+OUTPUT_DIRECTORY_PARTIAL_VERIFY = os.path.abspath('outputs_Combined_PatData') 
 
 # Function that gets us the output folder for each input video
 SAVE_PATH_FOLDER = lambda video_name: os.path.join(OUTPUT_DIRECTORY, f'{video_name}')
+SAVE_PATH_FOLDER_PARTIAL_VERIFY = lambda video_name: os.path.join(OUTPUT_DIRECTORY_PARTIAL_VERIFY, f'{video_name}')
 
 # List of unprocessed videos
 unprocessed_videos = get_valid_vids(VIDEO_DIRECTORY, SAVE_PATH_FOLDER)
@@ -74,10 +76,12 @@ for i in unprocessed_videos:
 
   fps = get_fps(path=video_path, extracting_fps=FPS_EXTRACTING) # FPS at which we're extracting
 
+  # Save paths/folders
   save_folder_now = SAVE_PATH_FOLDER(i)
-
-  
+  save_folder_partial_verify_now = SAVE_PATH_FOLDER_PARTIAL_VERIFY(i)
   os.mkdir(save_folder_now)
+  if Do_Verification and Partial_Verify:
+    os.makedirs(save_folder_partial_verify_now, exist_ok=True)
   save_path_hse = os.path.join(save_folder_now, f'outputs_hse.csv')
   save_path_ogau = os.path.join(save_folder_now, f'outputs_ogau.csv') 
 
@@ -112,7 +116,9 @@ for i in unprocessed_videos:
               # Face detection
               if Do_Verification:
                 if Face_Detector == 'MTCNN':
-                  faces, is_null = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_FOLDER, partialVerify=Partial_Verify, distance_max=Distance_Max_Partial_Verify)
+                  faces, is_null = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_FOLDER, partialVerify=Partial_Verify, \
+                                                             distance_max=DISTANCE_MAX_PARTIAL_VERIFY, save_folder_path=save_folder_partial_verify_now, \
+                                                              real_frame_numbers=real_frame_numbers, saveProb=SAVE_PROB_PARTIAL_VERIFY)
                 elif Face_Detector == 'RetinaFace':
                   faces, is_null = detect_extract_faces(ims, INPUT_SIZE)
               else:
@@ -185,7 +191,9 @@ for i in unprocessed_videos:
           # Face detection
           if Do_Verification:
             if Face_Detector == 'MTCNN':
-              faces, is_null = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_FOLDER, partialVerify=Partial_Verify, distance_max=Distance_Max_Partial_Verify)
+              faces, is_null = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_FOLDER, partialVerify=Partial_Verify, \
+                                                         distance_max=DISTANCE_MAX_PARTIAL_VERIFY, save_folder_path=save_folder_partial_verify_now, \
+                                                          real_frame_numbers=real_frame_numbers, saveProb=SAVE_PROB_PARTIAL_VERIFY)
             elif Face_Detector == 'RetinaFace':
               faces, is_null = detect_extract_faces(ims, INPUT_SIZE)
           else:

@@ -54,7 +54,8 @@ def verify_partial_faces_np_data(target_img_folder, np_data, bboxes, distance_ma
             #print(f'Successful partial verify')
             image_data = {
                 'Index': int(i),
-                'Distance': min_distance + 1000, # Add 1000 to clearly show partial track
+                'Partial Verify': True,
+                'Distance': min_distance,
                 'Facial Box X': int(face_x),
                 'Facial Box Y': int(face_y),
                 'Facial Box W': int(face_w),
@@ -93,6 +94,7 @@ def verify_partial_faces_np_data(target_img_folder, np_data, bboxes, distance_ma
                 face_h = result['facial_areas']['img2']['h']
                 image_data = {
                     'Index': int(i),
+                    'Partial Verify': False,
                     'Distance': result['distance'],
                     'Facial Box X': int(face_x),
                     'Facial Box Y': int(face_y),
@@ -111,7 +113,7 @@ def verify_partial_faces_np_data(target_img_folder, np_data, bboxes, distance_ma
     # Getting a pandas df
     df = pd.DataFrame(results)
     if df.shape and df.shape[0] > 0:
-      df.columns = ['Index', 'Distance', 'Facial Box X', 'Facial Box Y', 'Facial Box W', 'Facial Box H']
+      df.columns = ['Index', 'Partial Verify', 'Distance', 'Facial Box X', 'Facial Box Y', 'Facial Box W', 'Facial Box H']
     
     return df
 
@@ -154,6 +156,7 @@ def verify_faces_np_data(target_img_folder, np_data):
               face_h = result['facial_areas']['img2']['h']
               image_data = {
                   'Index': int(i),
+                  'Partial Verify': False,
                   'Distance': result['distance'],
                   'Facial Box X': int(face_x),
                   'Facial Box Y': int(face_y),
@@ -166,7 +169,7 @@ def verify_faces_np_data(target_img_folder, np_data):
     # Getting a pandas df
     df = pd.DataFrame(results)
     if df.shape and df.shape[0] > 0:
-      df.columns = ['Index', 'Distance', 'Facial Box X', 'Facial Box Y', 'Facial Box W', 'Facial Box H']
+      df.columns = ['Index', 'Partial Verify', 'Distance', 'Facial Box X', 'Facial Box Y', 'Facial Box W', 'Facial Box H']
     
     return df
 

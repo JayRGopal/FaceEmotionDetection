@@ -9,6 +9,7 @@ import csv
 import torch
 from utilsVerify import *
 from utils import *
+import random
 use_cuda = torch.cuda.is_available()
 device = 'cuda' if use_cuda else 'cpu'
 
@@ -91,7 +92,16 @@ def extract_faces_mtcnn(frames, INPUT_SIZE):
 
     return faces, is_null
 
-def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder, partialVerify=False, distance_max=30):
+def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder, partialVerify=False, distance_max=30, save_folder_path='', real_frame_numbers=[], saveProb=0.01):
+    # Extracts faces using MTCNN from frames
+    # Reshapes using letterbox to INPUT_SIZE
+    # target_img_folder has the verification target images (JPEGs)
+    # partialVerify: if this is true, we don't verify every frame with 2+ faces. We check if there's a face close to the last verified face
+    # distance_max for partialVerify. If nearest face is beyond distance_max, verification occurs again.
+    # save_folder_path - only used for partialVerify to randomly save 1% of partially verified faces.
+    # real_frame_numbers - only used for partialVerify. If a frame is saved, its number is also saved.
+    # saveProb - probability that a partially verified frame is saved
+
     is_null = np.zeros(frames.shape[0])
     faces = np.zeros([frames.shape[0], INPUT_SIZE[0], INPUT_SIZE[1], 3], dtype=np.uint8)
     verification_indices = [] # Pool frames with >1 face and send to verification pipeline
@@ -127,6 +137,12 @@ def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder, partialVeri
             full_image = frames[real_index]
             face_img = full_image[y:y+h, x:x+w, :]
             face_img=letterbox_image_np(face_img, INPUT_SIZE)
+
+            if partialVerify and row['Partial Verify']:
+                savingThisFrame = random.random() < saveProb
+                if savingThisFrame:
+                    showing_face = cv2.cvtColor(face_img, cv2.COLOR_RGB2BGR)
+                    cv2.imwrite(os.path.join(save_folder_path, f'partialVerify_{real_frame_numbers[real_index]}.jpg'), showing_face)
 
             # DEBUG ONLY: SAVE THE IMAGES, SHOWING BBOXES!
             # showing_image = cv2.cvtColor(full_image, cv2.COLOR_RGB2BGR) 
