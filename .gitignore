@@ -9,6 +9,7 @@ outputs_OpenFace/*
 outputs_NeMo_ASR/*
 outputs_MMPose/*
 outputs_MMPose_Verify/*
+outputs_Combined/*
 !outputs_MMPose_Verify/.gitkeep
 inputs_speech/*
 MMPose_models/*
