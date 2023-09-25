@@ -10,6 +10,7 @@ outputs_NeMo_ASR/*
 outputs_MMPose/*
 outputs_MMPose_Verify/*
 outputs_Combined/*
+outputs_Combined_PatData/*
 !outputs_MMPose_Verify/.gitkeep
 inputs_speech/*
 MMPose_models/*
