@@ -91,10 +91,11 @@ def extract_faces_mtcnn(frames, INPUT_SIZE):
 
     return faces, is_null
 
-def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder):
+def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder, partialVerify=False, distance_max=30):
     is_null = np.zeros(frames.shape[0])
     faces = np.zeros([frames.shape[0], INPUT_SIZE[0], INPUT_SIZE[1], 3], dtype=np.uint8)
     verification_indices = [] # Pool frames with >1 face and send to verification pipeline
+    verification_bboxes = []
     for enum, frame in enumerate(frames):
         bounding_boxes = detect_bboxes(frame)
         if bounding_boxes.shape[0] == 1: # frames with one face
@@ -109,12 +110,16 @@ def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder):
                 faces[enum] = face_img 
         elif bounding_boxes.shape[0] > 1: # more than one face!
             verification_indices.append(enum)
+            verification_bboxes.append(bounding_boxes)
             is_null[enum] = 2 # It's null for now, but will be valid if verified! 
         else: # zero faces
             is_null[enum] = 1
     if len(verification_indices) > 0: 
         verify_np_array = frames[verification_indices] 
-        verify_results = verify_faces_np_data(target_img_folder, verify_np_array)
+        if partialVerify:
+            verify_results = verify_partial_faces_np_data(target_img_folder, verify_np_array, verification_bboxes, distance_max=distance_max)
+        else:
+            verify_results = verify_faces_np_data(target_img_folder, verify_np_array)
         for _, row in verify_results.iterrows():
             idx = row['Index']
             real_index = verification_indices[int(idx)]
@@ -131,6 +136,7 @@ def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder):
             is_null[real_index] = 0 # it's been verified, so it is not null
 
     return faces, is_null
+
 
 def draw_bbox_and_save(img, bbox, filepath):
     # Unpack the bounding box

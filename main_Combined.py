@@ -30,6 +30,8 @@ Success column:
 Run_HSE = True
 Run_OpenGraphAU = True
 Do_Verification = True 
+Partial_Verify = True # Verify, then find nearest face within distance max (below)
+Distance_Max_Partial_Verify = 30
 Face_Detector = 'MTCNN' # Options: ['MTCNN', 'RetinaFace', 'DeepFace']
 
 # Set the parameters
@@ -43,6 +45,7 @@ VIDEO_DIRECTORY = os.path.abspath('inputs/')
 FPS_EXTRACTING = 5 # we'll extract this many fps from the video for analysis
 OUTPUT_DIRECTORY = os.path.abspath('outputs_Combined') 
 SUBJECT_FACE_IMAGE_FOLDER = os.path.abspath('deepface/')  
+PARTIAL_VERIFY_RANDOM_FACE_FOLDER = os.path.abspath('deepface/')
 
 # Function that gets us the output folder for each input video
 SAVE_PATH_FOLDER = lambda video_name: os.path.join(OUTPUT_DIRECTORY, f'{video_name}')
@@ -109,7 +112,7 @@ for i in unprocessed_videos:
               # Face detection
               if Do_Verification:
                 if Face_Detector == 'MTCNN':
-                  faces, is_null = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_FOLDER)
+                  faces, is_null = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_FOLDER, partialVerify=Partial_Verify, distance_max=Distance_Max_Partial_Verify)
                 elif Face_Detector == 'RetinaFace':
                   faces, is_null = detect_extract_faces(ims, INPUT_SIZE)
               else:
@@ -182,7 +185,7 @@ for i in unprocessed_videos:
           # Face detection
           if Do_Verification:
             if Face_Detector == 'MTCNN':
-              faces, is_null = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_FOLDER)
+              faces, is_null = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_FOLDER, partialVerify=Partial_Verify, distance_max=Distance_Max_Partial_Verify)
             elif Face_Detector == 'RetinaFace':
               faces, is_null = detect_extract_faces(ims, INPUT_SIZE)
           else:

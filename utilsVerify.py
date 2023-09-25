@@ -12,6 +12,109 @@ import shutil
 import sys
 import numpy as np
 import glob
+import math
+
+def verify_partial_faces_np_data(target_img_folder, np_data, bboxes, distance_max=30):
+    # Goal: determine which images have any one of the target faces, and get the bboxes of the target face in those images.
+    # Returns a pandas df that has an 'index' column indicating index in np_data, and the bbox coordinates for each index
+    # Note that our final pandas df won't have all indices in np_data since some frames won't have successful verification of our target face!
+    
+    # PARTIAL verify. Verify one face, then use the "nearest" face within a threshold for subsequent frames.
+    # If no face is within threshold, verify next face and continue.
+    # This speeds up the pipeline significantly.
+
+    # All target images
+    allowed_endings = ['jpg', 'jpeg', 'JPG', 'JPEG']
+    target_jpg_file_list = []
+    for ending_now in allowed_endings:
+      target_jpg_file_list = target_jpg_file_list + glob.glob(target_img_folder + f'/*.{ending_now}')
+    target_jpg_file_list = sorted(target_jpg_file_list)
+
+    # Partial verification
+    results = []
+    last_frame_was_verified = False
+    last_x_center = 0
+    last_y_center = 0
+    for i in range(np_data.shape[0]):
+        data_now = np_data[i]
+        verifyThisFrame = True # By default, we will verify this frame
+        if last_frame_was_verified:
+          verifyThisFrame = False # If last frame was verified, partial verify doesn't verify this frame
+          bounding_boxes_one_frame = bboxes[i]
+          bbox_x_centers = [(box_now[0] + box_now[2])/2 for box_now in bounding_boxes_one_frame]
+          bbox_y_centers = [(box_now[1] + box_now[3])/2 for box_now in bounding_boxes_one_frame]
+          face_distances = [math.sqrt((x - last_x_center)**2 + (y - last_y_center)**2) for x, y in zip(bbox_x_centers, bbox_y_centers)]
+          min_distance_index = np.argmin(face_distances)
+          min_distance = face_distances[min_distance_index]
+          if min_distance < distance_max:
+            face_x, face_y, face_x2, face_y2 = bounding_boxes_one_frame[min_distance_index]
+            face_w = face_x2 - face_x
+            face_h = face_y2 - face_y
+            # DEBUG ONLY
+            #print(f'Successful partial verify')
+            image_data = {
+                'Index': int(i),
+                'Distance': min_distance + 1000, # Add 1000 to clearly show partial track
+                'Facial Box X': int(face_x),
+                'Facial Box Y': int(face_y),
+                'Facial Box W': int(face_w),
+                'Facial Box H': int(face_h)
+            }
+            results.append(image_data)
+            last_frame_was_verified = True
+            last_x_center = bbox_x_centers[min_distance_index]
+            last_y_center = bbox_y_centers[min_distance_index]
+          else:
+            # DEBUG ONLY
+            #print(f'Failed partial verify. Min distance was {min_distance}')
+            last_frame_was_verified = False
+            verifyThisFrame = True # Partial verify calls on full verify if no face is within distance_max
+
+
+        if verifyThisFrame:
+          # Undo preprocessing
+          data_now = cv2.cvtColor(data_now, cv2.COLOR_RGB2BGR) 
+
+          for enum_target, target_img_path in enumerate(target_jpg_file_list):
+            # SILENT RUN
+            original_stdout = sys.stdout
+            sys.stdout = open(os.devnull, 'w')
+            result = DeepFace.verify(img1_path=target_img_path, img2_path=data_now, enforce_detection=False, model_name='VGG-Face', detector_backend='mtcnn')
+            sys.stdout.close()
+            sys.stdout = original_stdout
+
+            if result['verified']:
+                # DEBUG ONLY
+                #print(f'verified one face! {i}')
+
+                face_x = result['facial_areas']['img2']['x']
+                face_y = result['facial_areas']['img2']['y']
+                face_w = result['facial_areas']['img2']['w']
+                face_h = result['facial_areas']['img2']['h']
+                image_data = {
+                    'Index': int(i),
+                    'Distance': result['distance'],
+                    'Facial Box X': int(face_x),
+                    'Facial Box Y': int(face_y),
+                    'Facial Box W': int(face_w),
+                    'Facial Box H': int(face_h)
+                }
+                results.append(image_data)
+                last_frame_was_verified = True
+                last_x_center = face_x + face_w/2
+                last_y_center = face_y + face_h/2
+                break # break the inner for loop here!
+            if enum_target == (len(target_jpg_file_list) - 1):
+                # Failed verification across all jpgs. We need to reset last frame
+                last_frame_was_verified = False
+
+    # Getting a pandas df
+    df = pd.DataFrame(results)
+    if df.shape and df.shape[0] > 0:
+      df.columns = ['Index', 'Distance', 'Facial Box X', 'Facial Box Y', 'Facial Box W', 'Facial Box H']
+    
+    return df
+
 
 
 def verify_faces_np_data(target_img_folder, np_data):
