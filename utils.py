@@ -165,13 +165,16 @@ def mtcnn_to_torch(faces):
 # Letterbox function
 def letterbox_image_np(image_np, desired_size):
     height, width = image_np.shape[:2]
-    ratio = min(desired_size[0] / width, desired_size[1] / height)
-    new_size = (round(width * ratio), round(height * ratio))
-    image_np_resized = cv2.resize(image_np, new_size, interpolation=cv2.INTER_LINEAR)
-    new_im_np = np.zeros((desired_size[1], desired_size[0], 3), dtype=np.uint8)
-    top_left_y = (desired_size[1] - new_size[1]) // 2
-    top_left_x = (desired_size[0] - new_size[0]) // 2
-    new_im_np[top_left_y:top_left_y + new_size[1], top_left_x:top_left_x + new_size[0]] = image_np_resized
+    if height == 0 or width == 0:
+        new_im_np = np.zeros([desired_size[0], desired_size[1], 3], dtype=np.uint8)
+    else:
+        ratio = min(desired_size[0] / width, desired_size[1] / height)
+        new_size = (round(width * ratio), round(height * ratio))
+        image_np_resized = cv2.resize(image_np, new_size, interpolation=cv2.INTER_LINEAR)
+        new_im_np = np.zeros((desired_size[1], desired_size[0], 3), dtype=np.uint8)
+        top_left_y = (desired_size[1] - new_size[1]) // 2
+        top_left_x = (desired_size[0] - new_size[0]) // 2
+        new_im_np[top_left_y:top_left_y + new_size[1], top_left_x:top_left_x + new_size[0]] = image_np_resized
     return new_im_np
 
 """
