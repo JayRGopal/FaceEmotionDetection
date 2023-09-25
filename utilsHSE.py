@@ -134,22 +134,23 @@ def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder, partialVeri
             idx = row['Index']
             real_index = verification_indices[int(idx)]
             x, y, w, h = int(row['Facial Box X']), int(row['Facial Box Y']), int(row['Facial Box W']), int(row['Facial Box H'])
-            full_image = frames[real_index]
-            face_img = full_image[y:y+h, x:x+w, :]
-            face_img=letterbox_image_np(face_img, INPUT_SIZE)
+            if w > 0 and h > 0: # Avoid "empty" verifications
+                full_image = frames[real_index]
+                face_img = full_image[y:y+h, x:x+w, :]
+                face_img=letterbox_image_np(face_img, INPUT_SIZE)
 
-            if partialVerify and row['Partial Verify']:
-                savingThisFrame = random.random() < saveProb
-                if savingThisFrame:
-                    showing_face = cv2.cvtColor(face_img, cv2.COLOR_RGB2BGR)
-                    cv2.imwrite(os.path.join(save_folder_path, f'partialVerify_{real_frame_numbers[real_index]}.jpg'), showing_face)
+                if partialVerify and row['Partial Verify']:
+                    savingThisFrame = random.random() < saveProb
+                    if savingThisFrame:
+                        showing_face = cv2.cvtColor(face_img, cv2.COLOR_RGB2BGR)
+                        cv2.imwrite(os.path.join(save_folder_path, f'partialVerify_{real_frame_numbers[real_index]}.jpg'), showing_face)
 
-            # DEBUG ONLY: SAVE THE IMAGES, SHOWING BBOXES!
-            # showing_image = cv2.cvtColor(full_image, cv2.COLOR_RGB2BGR) 
-            # draw_bbox_and_save(showing_image, (x, y, w, h), os.path.abspath(f'outputs_Combined/Fallon_Kimmel_Demo.mp4/frame_{real_index*6}.jpg'))
+                # DEBUG ONLY: SAVE THE IMAGES, SHOWING BBOXES!
+                # showing_image = cv2.cvtColor(full_image, cv2.COLOR_RGB2BGR) 
+                # draw_bbox_and_save(showing_image, (x, y, w, h), os.path.abspath(f'outputs_Combined/Fallon_Kimmel_Demo.mp4/frame_{real_index*6}.jpg'))
 
-            faces[real_index] = face_img
-            is_null[real_index] = 0 # it's been verified, so it is not null
+                faces[real_index] = face_img
+                is_null[real_index] = 0 # it's been verified, so it is not null
 
     return faces, is_null
 
