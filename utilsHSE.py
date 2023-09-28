@@ -11,7 +11,7 @@ from utilsVerify import *
 from utils import *
 import random
 use_cuda = torch.cuda.is_available()
-device = 'cuda' if use_cuda else 'cpu'
+device = 'cuda:0' if use_cuda else 'cpu'
 
 from facenet_pytorch import MTCNN
 mtcnn = MTCNN(keep_all=True, post_process=False, min_face_size=40, device=device)
