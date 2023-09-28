@@ -181,7 +181,6 @@ def hse_preds(faces, model, model_type='mobilenet_7.h5'):
     if device_name != '' and '/device:GPU' in device_name:
         with tf.device('/device:GPU:0'):
             scores = model.predict(faces)
-            scores = scores.cpu()
     else:
         scores = model.predict(faces)
 
