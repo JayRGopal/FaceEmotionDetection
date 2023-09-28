@@ -1,4 +1,5 @@
 import os
+import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
@@ -6,7 +7,6 @@ from PIL import Image
 import tensorflow as tf
 from tensorflow.keras.models import Model,Sequential, load_model,model_from_json
 import csv
-import torch
 from utilsVerify import *
 from utils import *
 import random
