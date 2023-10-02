@@ -10,6 +10,14 @@ def initial_setup():
     if not(os.path.exists('megraphau')):
         os.system("git clone https://github.com/JayRGopal/ME-GraphAU")
         os.rename('ME-GraphAU', 'megraphau')
+    
+    # Yolo_Tracking Install
+    if not(os.path.exists('yolo_tracking')):
+        os.system("git clone https://github.com/JayRGopal/yolo_tracking")
+        os.chdir('yolo_tracking')
+        os.system("pip install -e .")
+        os.chdir('..')
+
 
     # NEMO Install
     # if not os.path.exists("scripts_nemo_asr/transcribe_speech.py"):
