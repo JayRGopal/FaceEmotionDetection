@@ -8,14 +8,10 @@ import cv2
 import torch
 
 # Device
-os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 use_cuda = torch.cuda.is_available()
 device = 'cuda:0' if use_cuda else 'cpu'
 if use_cuda:
   torch.cuda.empty_cache()
-  mem_frac = 0.9
-  torch.cuda.set_per_process_memory_fraction(mem_frac, device)
-
 
 """
 
