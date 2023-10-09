@@ -1,6 +1,7 @@
 from utils import *
 from utilsHSE import *
 from utilsMMPose import *
+from utilsVerify import *
 import os
 import time
 import datetime
@@ -66,6 +67,9 @@ if Run_HSE:
 
 if Run_OpenGraphAU:
   model_ogau = load_network(model_type=OPENGRAPHAU_MODEL_TYPE, backbone=OPENGRAPHAU_MODEL_BACKBONE, path=OPENGRAPHAU_MODEL_PATH)
+
+if Do_Verification:
+  assert has_jpg_or_jpeg_files(SUBJECT_FACE_IMAGE_FOLDER), "No jpg or jpeg files found in SUBJECT_FACE_IMAGE_FOLDER. Can't do facial verification!"
 
 
 # Loop through all videos

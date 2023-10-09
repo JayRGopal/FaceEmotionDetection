@@ -36,6 +36,8 @@ def verify_partial_faces_np_data(target_img_folder, np_data, bboxes, distance_ma
     last_x_center = 0
     last_y_center = 0
     for i in range(np_data.shape[0]):
+        # DEBUG ONLY
+        print(f'Starting verification {i}/{np_data.shape[0]}')
         data_now = np_data[i]
         verifyThisFrame = True # By default, we will verify this frame
         if last_frame_was_verified:
@@ -200,6 +202,18 @@ def verify_one_face_np_data(target_img_path, np_data):
     else:
         return None 
 
+
+
+def has_jpg_or_jpeg_files(folder_path):
+    # List all files in the folder
+    files = os.listdir(folder_path)
+    
+    # Check if there are any .jpg or .jpeg files
+    for file in files:
+        if file.lower().endswith((".jpg", ".jpeg")):
+            return True  # Found at least one jpg or jpeg file
+    
+    return False  # No jpg or jpeg files found
 
 
 """
