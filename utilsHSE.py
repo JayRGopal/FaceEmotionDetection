@@ -67,30 +67,36 @@ def process_frame(frame, INPUT_SIZE):
         face_img=frame[y1:y2,x1:x2,:]
         
         if not face_img.size: # check if face_img is empty
-            return None, True
+            return None, True, []
         
         face_img=letterbox_image_np(face_img, INPUT_SIZE)
-        return face_img, False
+        return face_img, False, [x1,y1,x2-x1,y2-y1]
     else:
-        return None, True
+        return None, True, []
 
 
-def extract_faces_mtcnn(frames, INPUT_SIZE):
+def extract_faces_mtcnn(frames, INPUT_SIZE, real_frame_numbers=[]):
     is_null = np.zeros(frames.shape[0])
     faces = np.zeros([frames.shape[0], INPUT_SIZE[0], INPUT_SIZE[1], 3], dtype=np.uint8)
+    all_bboxes = [] # Save the bboxes!
+
     with concurrent.futures.ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
         futures = []
         for frame in frames:
             future = executor.submit(process_frame, frame, INPUT_SIZE)
             futures.append(future)
         for enum, future in enumerate(concurrent.futures.as_completed(futures)):
-            inp, null = future.result()
+            inp, null, bbox = future.result()
             if not null:
                 faces[enum, :, :, :] = inp
+                all_bboxes.append((real_frame_numbers[enum], bbox[0], bbox[1], bbox[2], bbox[3]))
             else:
                 is_null[enum] = 1
+                all_bboxes.append((real_frame_numbers[enum], 0, 0, 0, 0))
+    all_bboxes = pd.DataFrame(all_bboxes, columns=['Index', 'Facial Box X', 'Facial Box Y', 'Facial Box W', 'Facial Box H'])
+    
 
-    return faces, is_null
+    return faces, is_null, all_bboxes
 
 def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder, partialVerify=False, distance_max=30, save_folder_path='', real_frame_numbers=[], saveProb=0.01):
     # Extracts faces using MTCNN from frames
@@ -106,6 +112,7 @@ def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder, partialVeri
     faces = np.zeros([frames.shape[0], INPUT_SIZE[0], INPUT_SIZE[1], 3], dtype=np.uint8)
     verification_indices = [] # Pool frames with >1 face and send to verification pipeline
     verification_bboxes = []
+    all_bboxes = [] # Save the bboxes!
     for enum, frame in enumerate(frames):
         bounding_boxes = detect_bboxes(frame)
         if bounding_boxes.shape[0] == 1: # frames with one face
@@ -115,21 +122,45 @@ def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder, partialVeri
             
             if not face_img.size: # check if face_img is empty
                 is_null[enum] = 1
+                all_bboxes.append((real_frame_numbers[enum], 0, 0, 0, 0)) # add empty face to bboxes
             else:
                 face_img=letterbox_image_np(face_img, INPUT_SIZE)
                 faces[enum] = face_img 
+
+                all_bboxes.append((real_frame_numbers[enum], x1, y1, x2 - x1, y2 - y1))
         elif bounding_boxes.shape[0] > 1: # more than one face!
             verification_indices.append(enum)
             verification_bboxes.append(bounding_boxes)
             is_null[enum] = 2 # It's null for now, but will be valid if verified! 
+            all_bboxes.append((real_frame_numbers[enum], 0, 0, 0, 0)) # add empty face to bboxes
         else: # zero faces
             is_null[enum] = 1
+            all_bboxes.append((real_frame_numbers[enum], 0, 0, 0, 0)) # add empty face to bboxes
+    
+    # Convert all_bboxes to a pd dataframe
+    all_bboxes = pd.DataFrame(all_bboxes, columns=['Index', 'Facial Box X', 'Facial Box Y', 'Facial Box W', 'Facial Box H'])
+    
     if len(verification_indices) > 0: 
         verify_np_array = frames[verification_indices] 
         if partialVerify:
             verify_results = verify_partial_faces_np_data(target_img_folder, verify_np_array, verification_bboxes, distance_max=distance_max)
         else:
             verify_results = verify_faces_np_data(target_img_folder, verify_np_array)
+        
+
+        df_copy = verify_results.copy()
+        df_copy['Index'] = df_copy['Index'].apply(lambda idx: real_frame_numbers[verification_indices[int(idx)]])
+        df_copy = df_copy[['Index', 'Facial Box X', 'Facial Box Y', 'Facial Box W', 'Facial Box H']]
+        all_bboxes = all_bboxes[~all_bboxes['Index'].isin(df_copy['Index'])]
+        merged_df = pd.concat([all_bboxes, df_copy])
+        merged_df.sort_values(by='Index', inplace=True)
+        all_bboxes = merged_df
+
+
+        # DEBUG ONLY: SAVE THE FULL VERIFICATION BBOXES!
+        # df_copy.to_csv(os.path.abspath(f'outputs_Combined/Verification_Demo.mp4/verify_bboxes.csv'), index=False)    
+        
+
         for _, row in verify_results.iterrows():
             idx = row['Index']
             real_index = verification_indices[int(idx)]
@@ -152,7 +183,7 @@ def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder, partialVeri
                 faces[real_index] = face_img
                 is_null[real_index] = 0 # it's been verified, so it is not null
 
-    return faces, is_null
+    return faces, is_null, all_bboxes
 
 
 def draw_bbox_and_save(img, bbox, filepath):
@@ -193,7 +224,38 @@ def csv_save_HSE(labels, is_null, frames, save_path, fps):
     elif labels.shape[1] == 7: # 7 emotions - mobilenet
         class_labels=['Anger', 'Disgust', 'Fear', 'Happiness', 'Neutral', 'Sadness', 'Surprise']
     else: 
-        print(f'Unexpected shape of labels! {labels.shape}') 
+        print(f'Unexpected shape of hse labels! {labels.shape}') 
+        return
+    if not(os.path.exists(save_path)): # Make a new file with the correct first rows
+        with open(save_path, 'w', newline='') as file:
+            writer = csv.writer(file)
+            row1 = ['frame', 'timestamp', 'success'] + class_labels
+            writer.writerow(row1)
+    
+    # Make a modified array with (frame, timestamp, success) before emotions
+    success_array = 1 - is_null
+    modified_arr = np.concatenate((np.array(success_array).reshape(-1, 1), labels), axis=1)
+    frames_t = frames.astype(np.float32)
+    timestamps = [frame / fps for frame in frames_t]
+    if frames_t.shape[0] == 0:
+        # No data to save, so let's move on!
+        return
+    else:
+        modified_arr = np.concatenate((frames, np.array(timestamps), modified_arr), axis=1)
+    
+        # Save the data to the CSV file, making sure to append and not write over!
+        with open(save_path, 'a') as file:
+            np.savetxt(file, modified_arr, delimiter=',', header='', footer='', comments='')
+
+
+def csv_save_bboxes(labels, is_null, frames, save_path, fps):
+    if labels.shape[0] == 0: # 0 frames successfully found in whole batch (due to downsampling)!
+        class_labels=['Facial Box X', 'Facial Box Y', 'Facial Box W', 'Facial Box H']
+        labels = np.zeros((frames.shape[0], 4))
+    elif labels.shape[1] == 4: # 4 datapoints for bounding box
+        class_labels=['Facial Box X', 'Facial Box Y', 'Facial Box W', 'Facial Box H']
+    else: 
+        print(f'Unexpected shape of bboxes array! {labels.shape}') 
         return
     if not(os.path.exists(save_path)): # Make a new file with the correct first rows
         with open(save_path, 'w', newline='') as file:

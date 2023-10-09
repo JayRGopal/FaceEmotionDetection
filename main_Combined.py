@@ -84,6 +84,7 @@ for i in unprocessed_videos:
     os.makedirs(save_folder_partial_verify_now, exist_ok=True)
   save_path_hse = os.path.join(save_folder_now, f'outputs_hse.csv')
   save_path_ogau = os.path.join(save_folder_now, f'outputs_ogau.csv') 
+  save_path_bboxes = os.path.join(save_folder_now, f'outputs_bboxes.csv') 
 
   if TIMING_VERBOSE: 
     time1 = time.time()
@@ -116,14 +117,14 @@ for i in unprocessed_videos:
               # Face detection
               if Do_Verification:
                 if Face_Detector == 'MTCNN':
-                  faces, is_null = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_FOLDER, partialVerify=Partial_Verify, \
+                  faces, is_null, all_bboxes = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_FOLDER, partialVerify=Partial_Verify, \
                                                              distance_max=DISTANCE_MAX_PARTIAL_VERIFY, save_folder_path=save_folder_partial_verify_now, \
                                                               real_frame_numbers=real_frame_numbers, saveProb=SAVE_PROB_PARTIAL_VERIFY)
                 elif Face_Detector == 'RetinaFace':
                   faces, is_null = detect_extract_faces(ims, INPUT_SIZE)
               else:
                 if Face_Detector == 'MTCNN':
-                  faces, is_null = extract_faces_mtcnn(ims, INPUT_SIZE)
+                  faces, is_null, all_bboxes = extract_faces_mtcnn(ims, INPUT_SIZE, real_frame_numbers=real_frame_numbers)
                 elif Face_Detector == 'RetinaFace':
                   faces, is_null = detect_extract_faces(ims, INPUT_SIZE)
               print(f"Detected Faces")
@@ -169,6 +170,10 @@ for i in unprocessed_videos:
                 csv_save(labels=ogau_predictions, is_null=is_null, frames=frames, save_path=save_path_ogau, fps=real_fps)
                 print(f"Saved OpenGraphAU CSV to {save_path_ogau}!")
 
+              if 'all_bboxes' in globals():
+                csv_save_bboxes(labels=all_bboxes[['Facial Box X', 'Facial Box Y', 'Facial Box W', 'Facial Box H']].values,  is_null=is_null, frames=frames, save_path=save_path_bboxes, fps=real_fps)
+                print(f"Saved Facial Bboxes CSV to {save_path_bboxes}!")
+              
               frame_now = frameNr
 
               # Reset ims for the next batch!
@@ -191,14 +196,14 @@ for i in unprocessed_videos:
           # Face detection
           if Do_Verification:
             if Face_Detector == 'MTCNN':
-              faces, is_null = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_FOLDER, partialVerify=Partial_Verify, \
+              faces, is_null, all_bboxes = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_FOLDER, partialVerify=Partial_Verify, \
                                                          distance_max=DISTANCE_MAX_PARTIAL_VERIFY, save_folder_path=save_folder_partial_verify_now, \
                                                           real_frame_numbers=real_frame_numbers, saveProb=SAVE_PROB_PARTIAL_VERIFY)
             elif Face_Detector == 'RetinaFace':
               faces, is_null = detect_extract_faces(ims, INPUT_SIZE)
           else:
             if Face_Detector == 'MTCNN':
-              faces, is_null = extract_faces_mtcnn(ims, INPUT_SIZE)
+              faces, is_null, all_bboxes = extract_faces_mtcnn(ims, INPUT_SIZE, real_frame_numbers=real_frame_numbers)
             elif Face_Detector == 'RetinaFace':
               faces, is_null = detect_extract_faces(ims, INPUT_SIZE)
           print(f"Detected Faces")
@@ -243,6 +248,10 @@ for i in unprocessed_videos:
           if Run_OpenGraphAU:
             csv_save(labels=ogau_predictions, is_null=is_null, frames=frames, save_path=save_path_ogau, fps=real_fps)
             print(f"Saved OpenGraphAU CSV to {save_path_ogau}!")
+
+          if 'all_bboxes' in globals():
+            csv_save_bboxes(labels=all_bboxes[['Facial Box X', 'Facial Box Y', 'Facial Box W', 'Facial Box H']].values,  is_null=is_null, frames=frames, save_path=save_path_bboxes, fps=real_fps)
+            print(f"Saved Facial Bboxes CSV to {save_path_bboxes}!")
 
           frame_now = frameNr
 
