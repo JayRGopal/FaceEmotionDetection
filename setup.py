@@ -18,6 +18,8 @@ def initial_setup():
         os.system("pip install -e .")
         os.chdir('..')
 
+    os.system("pip install -e .")
+    os.system("pip3 install -e .")
 
     # NEMO Install
     # if not os.path.exists("scripts_nemo_asr/transcribe_speech.py"):
