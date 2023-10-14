@@ -507,6 +507,12 @@ def get_fps(path, extracting_fps=5):
 
   return actual_fps
 
+def get_true_video_fps(path):
+  # image fps 
+  capture = cv2.VideoCapture(path)
+  fps = math.ceil(capture.get(cv2.CAP_PROP_FPS))
+  return fps
+
 
 
 """
