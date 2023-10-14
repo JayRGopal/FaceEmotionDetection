@@ -1,6 +1,7 @@
 import cv2
 import pandas as pd
 import numpy as np
+import os
 
 def visualize_analysis(video_path, au_csv_path, emotion_csv_path, bbox_csv_path, output_path_no_audio, threshold=0.5):
     # Load video
@@ -106,6 +107,10 @@ def visualize_analysis(video_path, au_csv_path, emotion_csv_path, bbox_csv_path,
 
 # Example usage:
 ANALYZING_NOW = 'Friends_Clip.mp4'
+VISUALIZER_OUTPUT_FOLDER = 'output_videos'
+
+os.makedirs(VISUALIZER_OUTPUT_FOLDER, exist_ok=True)
+
 visualize_analysis(f'../inputs/{ANALYZING_NOW}', f'../outputs_Combined/{ANALYZING_NOW}/outputs_ogau.csv', f'../outputs_Combined/{ANALYZING_NOW}/outputs_hse.csv', 
-                   f'../outputs_Combined/{ANALYZING_NOW}/outputs_bboxes.csv', f'output_videos/VISUAL_{ANALYZING_NOW}', threshold=0.5)
+                   f'../outputs_Combined/{ANALYZING_NOW}/outputs_bboxes.csv', f'{VISUALIZER_OUTPUT_FOLDER}/VISUAL_{ANALYZING_NOW}', threshold=0.5)
 
