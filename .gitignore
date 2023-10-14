@@ -12,6 +12,8 @@ outputs_MMPose/*
 outputs_MMPose_Verify/*
 outputs_Combined/*
 outputs_Combined_PatData/*
+outputs_Yolov8/*
+outputs_Yolov8_PatData/*
 !outputs_MMPose_Verify/.gitkeep
 inputs_speech/*
 MMPose_models/*
