@@ -3,7 +3,7 @@ megraphau
 mmpose
 yolo_tracking
 OpenGraphAU
-Demo_Video_Nottingham.mp4
+inputs/larger_vids/*
 outputs_HSEmotion/*
 outputs_OpenGraphAU/*
 outputs_OpenFace/*
