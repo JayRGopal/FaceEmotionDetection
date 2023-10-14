@@ -501,7 +501,7 @@ def get_fps(path, extracting_fps=5):
   capture = cv2.VideoCapture(path)
   fps = math.ceil(capture.get(cv2.CAP_PROP_FPS))
 
-  # we want 5 fps. What did we get?
+  # we want extracting_fps fps. What did we get?
   frame_division = fps // extracting_fps
   actual_fps = fps / frame_division
 
