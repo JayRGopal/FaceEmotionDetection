@@ -175,6 +175,47 @@ def verify_faces_np_data(target_img_folder, np_data):
     
     return df
 
+
+def verify_one_face_folder_np_data(target_img_folder, np_data):
+    # Goal: determine if one image has the target face, and get the bboxes of the target face in that image.
+    # Returns either a 4-membered tuple (x, y, w, h) or None depending on whether face was verified
+    
+    # All target images
+    allowed_endings = ['jpg', 'jpeg', 'JPG', 'JPEG']
+    target_jpg_file_list = []
+    for ending_now in allowed_endings:
+      target_jpg_file_list = target_jpg_file_list + glob.glob(target_img_folder + f'/*.{ending_now}')
+    target_jpg_file_list = sorted(target_jpg_file_list)
+
+    # Verifying each image
+    
+    data_now = np_data
+    # Undo preprocessing
+    data_now = cv2.cvtColor(data_now, cv2.COLOR_RGB2BGR) 
+
+    for target_img_path in target_jpg_file_list:
+      # SILENT RUN
+      original_stdout = sys.stdout
+      sys.stdout = open(os.devnull, 'w')
+      result = DeepFace.verify(img1_path=target_img_path, img2_path=data_now, enforce_detection=False, model_name='VGG-Face', detector_backend='mtcnn')
+      sys.stdout.close()
+      sys.stdout = original_stdout
+
+      if result['verified']:
+          # DEBUG ONLY
+          # print(f'verified one face! {i}')
+
+          face_x = result['facial_areas']['img2']['x']
+          face_y = result['facial_areas']['img2']['y']
+          face_w = result['facial_areas']['img2']['w']
+          face_h = result['facial_areas']['img2']['h']
+          return_tuple = (face_x, face_y, face_w, face_h)
+          return return_tuple
+
+    return None
+
+
+
 def verify_one_face_np_data(target_img_path, np_data):
     # Goal: determine if one image has the target face, and get the bboxes of the target face in that image.
     # Returns either a 4-membered tuple (x, y, w, h) or None depending on whether face was verified
