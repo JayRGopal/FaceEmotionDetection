@@ -26,6 +26,7 @@ MMPOSE_MODEL_BASE = os.path.abspath('MMPose_models/')
 SUBJECT_FACE_IMAGE_PATH = os.path.abspath('deepface/') 
 VERIFY_EVERY_FRAME = True
 VERIFY_DISTANCE_THRESHOLD = 50
+PRINT_MIN_DISTANCE = True
 DEBUG = False # If debug is true, it stops verification & you can see all poses detected
 
 # Model setup list
@@ -159,6 +160,7 @@ for param_enum, combination in enumerate(parameter_combinations):
             {"--debug" if DEBUG else ""} \
             {"--verifyAll" if VERIFY_EVERY_FRAME else ""} \
             --verify-distance-threshold {VERIFY_DISTANCE_THRESHOLD} \
+            {"--print-mins" if PRINT_MIN_DISTANCE else ""} \
             {parameter_string}'
         else:
           cmd = f'python mmpose/JayGopal/run_bottomup.py \
