@@ -147,14 +147,14 @@ def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder, partialVeri
         else:
             verify_results = verify_faces_np_data(target_img_folder, verify_np_array)
         
-
-        df_copy = verify_results.copy()
-        df_copy['Index'] = df_copy['Index'].apply(lambda idx: real_frame_numbers[verification_indices[int(idx)]])
-        df_copy = df_copy[['Index', 'Facial Box X', 'Facial Box Y', 'Facial Box W', 'Facial Box H']]
-        all_bboxes = all_bboxes[~all_bboxes['Index'].isin(df_copy['Index'])]
-        merged_df = pd.concat([all_bboxes, df_copy])
-        merged_df.sort_values(by='Index', inplace=True)
-        all_bboxes = merged_df
+        if verify_results.shape and verify_results.shape[0] > 0:
+            df_copy = verify_results.copy()
+            df_copy['Index'] = df_copy['Index'].apply(lambda idx: real_frame_numbers[verification_indices[int(idx)]])
+            df_copy = df_copy[['Index', 'Facial Box X', 'Facial Box Y', 'Facial Box W', 'Facial Box H']]
+            all_bboxes = all_bboxes[~all_bboxes['Index'].isin(df_copy['Index'])]
+            merged_df = pd.concat([all_bboxes, df_copy])
+            merged_df.sort_values(by='Index', inplace=True)
+            all_bboxes = merged_df
 
 
         # DEBUG ONLY: SAVE THE FULL VERIFICATION BBOXES!

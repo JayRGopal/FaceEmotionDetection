@@ -37,7 +37,7 @@ def verify_partial_faces_np_data(target_img_folder, np_data, bboxes, distance_ma
     last_y_center = 0
     for i in range(np_data.shape[0]):
         # DEBUG ONLY
-        print(f'Starting verification {i}/{np_data.shape[0]}')
+        # print(f'Starting verification {i}/{np_data.shape[0]}')
         data_now = np_data[i]
         verifyThisFrame = True # By default, we will verify this frame
         if last_frame_was_verified:
@@ -310,7 +310,7 @@ def closest_person_index(correct_x, correct_y, nose_coordinates, threshold=25, p
     
     # Get the index of the closest person
     min_index = np.argmin(distances)
-    
+
     # Printing
     if printMins:
       print('MINIMUM DISTANCE FOR ONE FRAME:', distances[min_index])
