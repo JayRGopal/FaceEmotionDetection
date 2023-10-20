@@ -310,7 +310,7 @@ def closest_person_index(correct_x, correct_y, nose_coordinates, threshold=25, p
     
     # Get the index of the closest person
     min_index = np.argmin(distances)
-
+    
     # Printing
     if printMins:
       print('MINIMUM DISTANCE FOR ONE FRAME:', distances[min_index])
