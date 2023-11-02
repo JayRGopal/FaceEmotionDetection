@@ -80,6 +80,12 @@ for i in unprocessed_videos:
 
   fps = get_fps(path=video_path, extracting_fps=FPS_EXTRACTING) # FPS at which we're extracting
 
+  # If video is corrupted, skip it
+  if fps == 0:
+    print('-'*15)
+    print(f'MAJOR WARNING! SKIPPING CORRUPTED VIDEO: {i}')
+    print('-'*15)
+
   # Save paths/folders
   save_folder_now = SAVE_PATH_FOLDER(i)
   save_folder_partial_verify_now = SAVE_PATH_FOLDER_PARTIAL_VERIFY(i)

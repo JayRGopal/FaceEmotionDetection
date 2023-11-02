@@ -501,6 +501,10 @@ def get_fps(path, extracting_fps=5):
   capture = cv2.VideoCapture(path)
   fps = math.ceil(capture.get(cv2.CAP_PROP_FPS))
 
+  # If video is corrupted, it will have 0 or very low fps, so actual fps is 0
+  if fps < extracting_fps:
+      return 0
+  
   # we want extracting_fps fps. What did we get?
   frame_division = fps // extracting_fps
   actual_fps = fps / frame_division
