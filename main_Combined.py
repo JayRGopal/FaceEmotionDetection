@@ -82,6 +82,7 @@ for i in unprocessed_videos:
 
   # If video is corrupted, skip it
   if fps == 0:
+    running = False
     print('-'*15)
     print(f'MAJOR WARNING! SKIPPING CORRUPTED VIDEO: {i}')
     print('-'*15)
