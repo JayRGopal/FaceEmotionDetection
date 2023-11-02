@@ -78,6 +78,8 @@ for i in unprocessed_videos:
 
   frame_now = 0 # this is what we save in outputs file and print
 
+  running = True
+  
   fps = get_fps(path=video_path, extracting_fps=FPS_EXTRACTING) # FPS at which we're extracting
 
   # If video is corrupted, skip it
@@ -106,7 +108,6 @@ for i in unprocessed_videos:
   real_frame_numbers = []
   real_fps = math.ceil(capture.get(cv2.CAP_PROP_FPS)) # real FPS of the video
   frame_division = real_fps // FPS_EXTRACTING # Helps us only analyze 5 fps (or close to it)
-  running = True
   frameNr = 0 # Track frame number
   while running:
       # Extract frames continuously
