@@ -8,6 +8,13 @@ import math
 from torchvision import transforms
 import random
 
+
+# Device
+use_cuda = torch.cuda.is_available()
+device = 'cuda:0' if use_cuda else 'cpu'
+if use_cuda:
+  torch.cuda.empty_cache()
+
 # Hyperparameters - Post-Processing for OpenGraphAU
 EMA_ALPHA = 0.9
 SMA_WINDOW_SIZE = 10
@@ -286,8 +293,8 @@ def load_network(model_type, backbone, path):
   if model_type == 'BP4D':
     net = MEFARG(num_classes=12, backbone=backbone)
     #path = 'megraphau/checkpoints/MEFARG_resnet50_BP4D_fold3.pth'
-    if torch.cuda.is_available():
-       net.load_state_dict(torch.load(path).get('state_dict'))
+    if use_cuda:
+       net.load_state_dict(torch.load(path, map_location=torch.device(device)).get('state_dict'))
     else:
         net.load_state_dict(torch.load(path, map_location=torch.device('cpu')).get('state_dict'))
 
@@ -296,8 +303,8 @@ def load_network(model_type, backbone, path):
     
     #path = 'megraphau/checkpoints/OpenGprahAU-ResNet50_first_stage.pth'
     #path = 'megraphau/checkpoints/OpenGprahAU-ResNet50_second_stage.pth'
-    if torch.cuda.is_available():
-        oau_state_dict = torch.load(path).get('state_dict')
+    if use_cuda:
+        oau_state_dict = torch.load(path, map_location=torch.device(device)).get('state_dict')
     else:
       oau_state_dict = torch.load(path, map_location=torch.device('cpu')).get('state_dict')
          
@@ -314,10 +321,10 @@ def load_network(model_type, backbone, path):
 
 
 def get_model_preds(faces, net, model_type):
-  if torch.cuda.is_available():
+  if use_cuda:
       print('Using GPU for Model Inference!')
-      faces = faces.cuda()
-      net = net.cuda()
+      faces = faces.to(device)
+      net = net.to(device)
   
   # If empty, return empty
   if faces.shape[0] == 0:
