@@ -88,7 +88,7 @@ def verify_partial_faces_np_data(target_img_folder, np_data, bboxes, distance_ma
 
             if result['verified']:
                 # DEBUG ONLY
-                #print(f'verified one face! {i}')
+                # print(f'verified one face! {i}')
 
                 face_x = result['facial_areas']['img2']['x']
                 face_y = result['facial_areas']['img2']['y']

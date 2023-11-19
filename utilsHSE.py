@@ -102,8 +102,9 @@ def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder, partialVeri
     # Extracts faces using MTCNN from frames
     # Reshapes using letterbox to INPUT_SIZE
     # target_img_folder has the verification target images (JPEGs)
+    # Default is to verify all frames with 2+ faces
     # partialVerify: if this is true, we don't verify every frame with 2+ faces. We check if there's a face close to the last verified face
-    # verifyAll: if this is true, 
+    # verifyAll: if this is true, every frame with 1+ person will be verified.
     # distance_max for partialVerify. If nearest face is beyond distance_max, verification occurs again.
     # save_folder_path - only used for partialVerify to randomly save 1% of partially verified faces.
     # real_frame_numbers - only used for partialVerify. If a frame is saved, its number is also saved.
@@ -125,10 +126,17 @@ def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder, partialVeri
                 is_null[enum] = 1
                 all_bboxes.append((real_frame_numbers[enum], 0, 0, 0, 0)) # add empty face to bboxes
             else:
-                face_img=letterbox_image_np(face_img, INPUT_SIZE)
-                faces[enum] = face_img 
+                if verifyAll:
+                    verification_indices.append(enum)
+                    verification_bboxes.append(bounding_boxes)
+                    is_null[enum] = 3 # It's null for now, but will be valid if verified! 
+                    all_bboxes.append((real_frame_numbers[enum], 0, 0, 0, 0)) # add empty face to bboxes
+                else:
+                    face_img=letterbox_image_np(face_img, INPUT_SIZE)
+                    faces[enum] = face_img 
 
-                all_bboxes.append((real_frame_numbers[enum], x1, y1, x2 - x1, y2 - y1))
+                    all_bboxes.append((real_frame_numbers[enum], x1, y1, x2 - x1, y2 - y1))
+
         elif bounding_boxes.shape[0] > 1: # more than one face!
             verification_indices.append(enum)
             verification_bboxes.append(bounding_boxes)
@@ -179,7 +187,7 @@ def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder, partialVeri
 
                 # DEBUG ONLY: SAVE THE IMAGES, SHOWING BBOXES!
                 # showing_image = cv2.cvtColor(full_image, cv2.COLOR_RGB2BGR) 
-                # draw_bbox_and_save(showing_image, (x, y, w, h), os.path.abspath(f'outputs_Combined/Fallon_Kimmel_Demo.mp4/frame_{real_index*6}.jpg'))
+                # draw_bbox_and_save(showing_image, (x, y, w, h), os.path.abspath(f'outputs_Combined/Friends_Clip.mp4/frame_{real_index*6}.jpg'))
 
                 faces[real_index] = face_img
                 is_null[real_index] = 0 # it's been verified, so it is not null

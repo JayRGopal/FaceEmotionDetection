@@ -31,8 +31,8 @@ Success column:
 Run_HSE = True
 Run_OpenGraphAU = True
 Do_Verification = True 
-Partial_Verify = True # Verify, then find nearest face within distance max (below)
-Verify_Every_Frame = True # Verify all frames, even if only 1 person is detected. Overrides partial verify if True.
+Partial_Verify = False # Verify, then find nearest face within distance max (below)
+Verify_Every_Frame = True # Verify all frames, even if only 1 person is detected
 Face_Detector = 'MTCNN' # Options: ['MTCNN', 'RetinaFace']
 
 # Set the parameters
