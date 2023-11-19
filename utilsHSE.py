@@ -98,11 +98,12 @@ def extract_faces_mtcnn(frames, INPUT_SIZE, real_frame_numbers=[]):
 
     return faces, is_null, all_bboxes
 
-def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder, partialVerify=False, distance_max=30, save_folder_path='', real_frame_numbers=[], saveProb=0.01):
+def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder, partialVerify=False, verifyAll=False, distance_max=30, save_folder_path='', real_frame_numbers=[], saveProb=0.01):
     # Extracts faces using MTCNN from frames
     # Reshapes using letterbox to INPUT_SIZE
     # target_img_folder has the verification target images (JPEGs)
     # partialVerify: if this is true, we don't verify every frame with 2+ faces. We check if there's a face close to the last verified face
+    # verifyAll: if this is true, 
     # distance_max for partialVerify. If nearest face is beyond distance_max, verification occurs again.
     # save_folder_path - only used for partialVerify to randomly save 1% of partially verified faces.
     # real_frame_numbers - only used for partialVerify. If a frame is saved, its number is also saved.

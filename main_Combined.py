@@ -32,6 +32,7 @@ Run_HSE = True
 Run_OpenGraphAU = True
 Do_Verification = True 
 Partial_Verify = True # Verify, then find nearest face within distance max (below)
+Verify_Every_Frame = True # Verify all frames, even if only 1 person is detected. Overrides partial verify if True.
 Face_Detector = 'MTCNN' # Options: ['MTCNN', 'RetinaFace']
 
 # Set the parameters
@@ -130,6 +131,7 @@ for i in unprocessed_videos:
               if Do_Verification:
                 if Face_Detector == 'MTCNN':
                   faces, is_null, all_bboxes = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_FOLDER, partialVerify=Partial_Verify, \
+                                                                         verifyAll=Verify_Every_Frame, \
                                                              distance_max=DISTANCE_MAX_PARTIAL_VERIFY, save_folder_path=save_folder_partial_verify_now, \
                                                               real_frame_numbers=real_frame_numbers, saveProb=SAVE_PROB_PARTIAL_VERIFY)
                 elif Face_Detector == 'RetinaFace':
@@ -209,6 +211,7 @@ for i in unprocessed_videos:
           if Do_Verification:
             if Face_Detector == 'MTCNN':
               faces, is_null, all_bboxes = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_FOLDER, partialVerify=Partial_Verify, \
+                                                                     verifyAll=Verify_Every_Frame, \
                                                          distance_max=DISTANCE_MAX_PARTIAL_VERIFY, save_folder_path=save_folder_partial_verify_now, \
                                                           real_frame_numbers=real_frame_numbers, saveProb=SAVE_PROB_PARTIAL_VERIFY)
             elif Face_Detector == 'RetinaFace':
