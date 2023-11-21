@@ -51,6 +51,12 @@ DISTANCE_MAX_PARTIAL_VERIFY = 30
 SAVE_PROB_PARTIAL_VERIFY = 0.01
 OUTPUT_DIRECTORY_PARTIAL_VERIFY = os.path.abspath('outputs_Combined_PatData') 
 
+# Make output dirs if they don't exist
+if not os.path.exists(OUTPUT_DIRECTORY):
+    os.makedirs(OUTPUT_DIRECTORY)
+if not os.path.exists(OUTPUT_DIRECTORY_PARTIAL_VERIFY):
+    os.makedirs(OUTPUT_DIRECTORY_PARTIAL_VERIFY)
+
 # Function that gets us the output folder for each input video
 SAVE_PATH_FOLDER = lambda video_name: os.path.join(OUTPUT_DIRECTORY, f'{video_name}')
 SAVE_PATH_FOLDER_PARTIAL_VERIFY = lambda video_name: os.path.join(OUTPUT_DIRECTORY_PARTIAL_VERIFY, f'{video_name}')
