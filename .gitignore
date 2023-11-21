@@ -12,6 +12,8 @@ outputs_MMPose/*
 outputs_MMPose_Verify/*
 outputs_Combined/*
 outputs_Combined_PatData/*
+outputs_Combined_Outpt/*
+outputs_Combined_Outpt_PatData/*
 visualizer_Combined/output_videos/*
 outputs_Yolov8/*
 outputs_Yolov8_PatData/*

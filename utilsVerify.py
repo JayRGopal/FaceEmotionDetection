@@ -14,7 +14,7 @@ import numpy as np
 import glob
 import math
 
-def verify_partial_faces_np_data(target_img_folder, np_data, bboxes, distance_max=30):
+def verify_partial_faces_np_data(target_img_folder, np_data, bboxes, distance_max=30, verify_threshold=0.32):
     # Goal: determine which images have any one of the target faces, and get the bboxes of the target face in those images.
     # Returns a pandas df that has an 'index' column indicating index in np_data, and the bbox coordinates for each index
     # Note that our final pandas df won't have all indices in np_data since some frames won't have successful verification of our target face!
@@ -86,7 +86,7 @@ def verify_partial_faces_np_data(target_img_folder, np_data, bboxes, distance_ma
             sys.stdout.close()
             sys.stdout = original_stdout
 
-            if result['verified']:
+            if result['verified'] and result['distance'] < verify_threshold:
                 # DEBUG ONLY
                 # print(f'verified one face! {i}')
 
@@ -121,7 +121,7 @@ def verify_partial_faces_np_data(target_img_folder, np_data, bboxes, distance_ma
 
 
 
-def verify_faces_np_data(target_img_folder, np_data):
+def verify_faces_np_data(target_img_folder, np_data, verify_threshold=0.32):
     # Goal: determine which images have any one of the target faces, and get the bboxes of the target face in those images.
     # Returns a pandas df that has an 'index' column indicating index in np_data, and the bbox coordinates for each index
     # Note that our final pandas df won't have all indices in np_data since some frames won't have successful verification of our target face!
@@ -148,7 +148,7 @@ def verify_faces_np_data(target_img_folder, np_data):
           sys.stdout.close()
           sys.stdout = original_stdout
 
-          if result['verified']:
+          if result['verified'] and result['distance'] < verify_threshold:
               # DEBUG ONLY
               # print(f'verified one face! {i}')
 

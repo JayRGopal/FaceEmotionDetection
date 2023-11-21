@@ -31,13 +31,13 @@ Success column:
 Run_HSE = True
 Run_OpenGraphAU = True
 Do_Verification = True 
-Partial_Verify = True # Verify, then find nearest face within distance max (below)
-Verify_Every_Frame = False # Verify all frames, even if only 1 person is detected
+Partial_Verify = False # Verify, then find nearest face within distance max (below)
+Verify_Every_Frame = True # Verify all frames, even if only 1 person is detected
 VERIFY_THRESHOLD = 0.32 # Maximum distance threshold (below this, faces are deemed "verified")
 Face_Detector = 'MTCNN' # Options: ['MTCNN', 'RetinaFace']
 
 # Set the parameters
-BATCH_SIZE = 2000
+BATCH_SIZE = 20
 HSE_MODEL_TYPE = 'mobilenet_7.h5'
 OPENGRAPHAU_MODEL_TYPE = 'OpenGraphAU'
 OPENGRAPHAU_MODEL_BACKBONE = 'swin_transformer_base'
@@ -45,11 +45,17 @@ OPENGRAPHAU_MODEL_PATH = os.path.abspath('megraphau/checkpoints/OpenGprahAU-Swin
 INPUT_SIZE = (224, 224)
 VIDEO_DIRECTORY = os.path.abspath('inputs/')
 FPS_EXTRACTING = 5 # we'll extract this many fps from the video for analysis
-OUTPUT_DIRECTORY = os.path.abspath('outputs_Combined') 
+OUTPUT_DIRECTORY = os.path.abspath('outputs_Combined_Outpt/Pt1/') 
 SUBJECT_FACE_IMAGE_FOLDER = os.path.abspath('deepface/')
 DISTANCE_MAX_PARTIAL_VERIFY = 30
 SAVE_PROB_PARTIAL_VERIFY = 0.01
-OUTPUT_DIRECTORY_PARTIAL_VERIFY = os.path.abspath('outputs_Combined_PatData') 
+OUTPUT_DIRECTORY_PARTIAL_VERIFY = os.path.abspath('outputs_Combined_OutPt_PatData/Pt1/') 
+
+# Make output dirs if they don't exist
+if not os.path.exists(OUTPUT_DIRECTORY):
+    os.makedirs(OUTPUT_DIRECTORY)
+if not os.path.exists(OUTPUT_DIRECTORY_PARTIAL_VERIFY):
+    os.makedirs(OUTPUT_DIRECTORY_PARTIAL_VERIFY)
 
 # Function that gets us the output folder for each input video
 SAVE_PATH_FOLDER = lambda video_name: os.path.join(OUTPUT_DIRECTORY, f'{video_name}')

@@ -98,7 +98,7 @@ def extract_faces_mtcnn(frames, INPUT_SIZE, real_frame_numbers=[]):
 
     return faces, is_null, all_bboxes
 
-def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder, partialVerify=False, verifyAll=False, distance_max=30, save_folder_path='', real_frame_numbers=[], saveProb=0.01):
+def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder, partialVerify=False, verifyAll=False, distance_max=30, verify_threshold=0.32, save_folder_path='', real_frame_numbers=[], saveProb=0.01):
     # Extracts faces using MTCNN from frames
     # Reshapes using letterbox to INPUT_SIZE
     # target_img_folder has the verification target images (JPEGs)
@@ -106,6 +106,7 @@ def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder, partialVeri
     # partialVerify: if this is true, we don't verify every frame with 2+ faces. We check if there's a face close to the last verified face
     # verifyAll: if this is true, every frame with 1+ person will be verified.
     # distance_max for partialVerify. If nearest face is beyond distance_max, verification occurs again.
+    # verify_threshold: maximum distance between two faces for a face to be deemed verified
     # save_folder_path - only used for partialVerify to randomly save 1% of partially verified faces.
     # real_frame_numbers - only used for partialVerify. If a frame is saved, its number is also saved.
     # saveProb - probability that a partially verified frame is saved
@@ -152,9 +153,9 @@ def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder, partialVeri
     if len(verification_indices) > 0: 
         verify_np_array = frames[verification_indices] 
         if partialVerify:
-            verify_results = verify_partial_faces_np_data(target_img_folder, verify_np_array, verification_bboxes, distance_max=distance_max)
+            verify_results = verify_partial_faces_np_data(target_img_folder, verify_np_array, verification_bboxes, distance_max=distance_max, verify_threshold=verify_threshold)
         else:
-            verify_results = verify_faces_np_data(target_img_folder, verify_np_array)
+            verify_results = verify_faces_np_data(target_img_folder, verify_np_array, verify_threshold=verify_threshold)
         
         if verify_results.shape and verify_results.shape[0] > 0:
             df_copy = verify_results.copy()
