@@ -293,21 +293,14 @@ def load_network(model_type, backbone, path):
   if model_type == 'BP4D':
     net = MEFARG(num_classes=12, backbone=backbone)
     #path = 'megraphau/checkpoints/MEFARG_resnet50_BP4D_fold3.pth'
-    if use_cuda:
-       net.load_state_dict(torch.load(path, map_location=torch.device(device)).get('state_dict'))
-    else:
-        net.load_state_dict(torch.load(path, map_location=torch.device('cpu')).get('state_dict'))
-
+    net.load_state_dict(torch.load(path, map_location=torch.device(device)).get('state_dict'))
+    
   elif model_type == 'OpenGraphAU':
     net = MEFARG_OpenGraphAU(num_main_classes=27, num_sub_classes=14, backbone=backbone, neighbor_num=4, metric='dots')
     
     #path = 'megraphau/checkpoints/OpenGprahAU-ResNet50_first_stage.pth'
     #path = 'megraphau/checkpoints/OpenGprahAU-ResNet50_second_stage.pth'
-    if use_cuda:
-        oau_state_dict = torch.load(path, map_location=torch.device(device)).get('state_dict')
-    else:
-      oau_state_dict = torch.load(path, map_location=torch.device('cpu')).get('state_dict')
-         
+    oau_state_dict = torch.load(path, map_location=torch.device(device)).get('state_dict')
     
     oau_keys = oau_state_dict.keys()
 
