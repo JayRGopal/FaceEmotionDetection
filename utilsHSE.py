@@ -28,7 +28,14 @@ from HSE_facial_analysis import FacialImageProcessing
 def get_emotion_predictor(MODEL_NOW):
     MODEL_PATH = os.path.join(os.path.abspath('HSE_models'), 
                             'affectnet_emotions', MODEL_NOW)
-    with tf.device(device):
+    if use_cuda:
+        if device == 'cuda':
+            device_tf = '/GPU:0'
+        else:
+            device_tf = '/GPU:' + device[-1]
+    else:
+        device_tf = '/CPU:0'
+    with tf.device(device_tf):
         model=load_model(MODEL_PATH)
     return model
 
