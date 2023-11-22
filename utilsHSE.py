@@ -28,14 +28,12 @@ from HSE_facial_analysis import FacialImageProcessing
 def get_emotion_predictor(MODEL_NOW):
     MODEL_PATH = os.path.join(os.path.abspath('HSE_models'), 
                             'affectnet_emotions', MODEL_NOW)
-    model=load_model(MODEL_PATH)
+    with tf.device(device):
+        model=load_model(MODEL_PATH)
     return model
 
 def convert_to_gpu_tensor(faces):
-    # Check if a GPU is available
-    gpus = tf.config.experimental.list_physical_devices('GPU')
-    
-    if gpus:
+    if use_cuda:
         # GPU is available, convert to GPU tensor
         gpu_faces = tf.convert_to_tensor(faces, dtype=tf.float32)
         return gpu_faces
