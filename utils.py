@@ -391,7 +391,6 @@ def temporal_difference(X):
     X_smoothed = np.cumsum(np.vstack((X[0], diff_smoothed)), axis=0)
     return X_smoothed
 
-import tensorflow as tf
 
 def rnn_smoothing(X):
     """Smooth the predictions using a recurrent neural network."""
@@ -415,30 +414,30 @@ def rnn_smoothing(X):
     X_smoothed = model.predict(X)
     return X_smoothed
 
-from tslearn.metrics import dtw
-from tslearn.piecewise import PiecewiseAggregateApproximation
+# from tslearn.metrics import dtw
+# from tslearn.piecewise import PiecewiseAggregateApproximation
 
-def dtw_smoothing(X):
-    """Smooth the predictions using dynamic time warping."""
-    # Compute the piecewise aggregate approximation of the input data
-    n_segments = int(np.sqrt(X.shape[0]))
-    paa = PiecewiseAggregateApproximation(n_segments=n_segments)
-    X_paa = paa.fit_transform(X)
+# def dtw_smoothing(X):
+#     """Smooth the predictions using dynamic time warping."""
+#     # Compute the piecewise aggregate approximation of the input data
+#     n_segments = int(np.sqrt(X.shape[0]))
+#     paa = PiecewiseAggregateApproximation(n_segments=n_segments)
+#     X_paa = paa.fit_transform(X)
     
-    # Compute the distance matrix between all pairs of frames
-    distance_matrix = np.zeros((X.shape[0], X.shape[0]))
-    for i in range(X.shape[0]):
-        for j in range(X.shape[0]):
-            distance_matrix[i, j] = dtw(X_paa[i], X_paa[j])
+#     # Compute the distance matrix between all pairs of frames
+#     distance_matrix = np.zeros((X.shape[0], X.shape[0]))
+#     for i in range(X.shape[0]):
+#         for j in range(X.shape[0]):
+#             distance_matrix[i, j] = dtw(X_paa[i], X_paa[j])
     
-    # Compute the DTW-based similarity matrix
-    similarity_matrix = np.exp(-distance_matrix ** 2 / (2 * np.median(distance_matrix) ** 2))
+#     # Compute the DTW-based similarity matrix
+#     similarity_matrix = np.exp(-distance_matrix ** 2 / (2 * np.median(distance_matrix) ** 2))
     
-    # Smooth the output using the similarity matrix
-    X_smoothed = np.zeros_like(X)
-    for i in range(X.shape[0]):
-        X_smoothed[i] = np.dot(similarity_matrix[i], X) / np.sum(similarity_matrix[i])
-    return X_smoothed
+#     # Smooth the output using the similarity matrix
+#     X_smoothed = np.zeros_like(X)
+#     for i in range(X.shape[0]):
+#         X_smoothed[i] = np.dot(similarity_matrix[i], X) / np.sum(similarity_matrix[i])
+#     return X_smoothed
 
 
 def postprocess_outs(preds, method='RNN'):

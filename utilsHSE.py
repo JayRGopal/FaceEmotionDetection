@@ -23,9 +23,6 @@ mtcnn = MTCNN(keep_all=True, post_process=False, min_face_size=40, device=device
 # sess=tf.compat.v1.Session(config=config)
 # set_session(sess)
 
-from HSE_facial_analysis import FacialImageProcessing
-
-
 def get_emotion_predictor(MODEL_NOW):
     MODEL_PATH = os.path.join(os.path.abspath('HSE_models'), 
                             'affectnet_emotions', MODEL_NOW)
