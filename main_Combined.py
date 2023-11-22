@@ -12,6 +12,8 @@ use_cuda = torch.cuda.is_available()
 device = 'cuda:0' if use_cuda else 'cpu'
 if use_cuda:
   torch.cuda.empty_cache()
+os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
+
 
 """
 

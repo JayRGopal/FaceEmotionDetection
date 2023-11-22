@@ -15,7 +15,9 @@ import random
 use_cuda = torch.cuda.is_available()
 device = 'cuda:0' if use_cuda else 'cpu'
 FORCE_HSE_CPU = False
+os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 
+# MTCNN
 from facenet_pytorch import MTCNN
 mtcnn = MTCNN(keep_all=True, post_process=False, min_face_size=40, device=device)
 
