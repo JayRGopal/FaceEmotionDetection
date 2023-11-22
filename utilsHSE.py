@@ -10,9 +10,11 @@ import csv
 from utilsVerify import *
 from utils import *
 import random
+
+# Device
 use_cuda = torch.cuda.is_available()
 device = 'cuda:0' if use_cuda else 'cpu'
-FORCE_HSE_CPU = True
+FORCE_HSE_CPU = False
 
 from facenet_pytorch import MTCNN
 mtcnn = MTCNN(keep_all=True, post_process=False, min_face_size=40, device=device)
