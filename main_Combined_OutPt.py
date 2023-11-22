@@ -23,6 +23,7 @@ Success column:
 1: Successful!
 0: Failure: Zero faces detected
 -1: Failure: 2+ faces detected, and verification failed (across all images in loop!)
+-2: Failure: 1 face detected, and verification failed (across all images in loop). Only possible with Verify_Every_Frame = True
 
 """
 
