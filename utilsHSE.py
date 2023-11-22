@@ -12,6 +12,7 @@ from utils import *
 import random
 use_cuda = torch.cuda.is_available()
 device = 'cuda:0' if use_cuda else 'cpu'
+FORCE_HSE_CPU = True
 
 from facenet_pytorch import MTCNN
 mtcnn = MTCNN(keep_all=True, post_process=False, min_face_size=40, device=device)
@@ -35,6 +36,8 @@ def get_emotion_predictor(MODEL_NOW):
             device_tf = '/GPU:' + device[-1]
     else:
         device_tf = '/CPU:0'
+    if FORCE_HSE_CPU:
+        device_tf = '/CPU:0'
     with tf.device(device_tf):
         model=load_model(MODEL_PATH)
     return model
@@ -46,6 +49,8 @@ def convert_to_gpu_tensor(faces):
         else:
             device_tf = '/GPU:' + device[-1]
     else:
+        device_tf = '/CPU:0'
+    if FORCE_HSE_CPU:
         device_tf = '/CPU:0'
     with tf.device(device_tf):
         # If GPU is available, convert to GPU tensor
@@ -231,6 +236,8 @@ def hse_preds(faces, model, model_type='mobilenet_7.h5'):
         else:
             device_tf = '/GPU:' + device[-1]
     else:
+        device_tf = '/CPU:0'
+    if FORCE_HSE_CPU:
         device_tf = '/CPU:0'
     with tf.device(device_tf):
         scores = model.predict(faces)
