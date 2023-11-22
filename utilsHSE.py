@@ -41,12 +41,16 @@ def get_emotion_predictor(MODEL_NOW):
 
 def convert_to_gpu_tensor(faces):
     if use_cuda:
-        # GPU is available, convert to GPU tensor
+        if device == 'cuda':
+            device_tf = '/GPU:0'
+        else:
+            device_tf = '/GPU:' + device[-1]
+    else:
+        device_tf = '/CPU:0'
+    with tf.device(device_tf):
+        # If GPU is available, convert to GPU tensor
         gpu_faces = tf.convert_to_tensor(faces, dtype=tf.float32)
         return gpu_faces
-    else:
-        # No GPU available, return the input as is
-        return faces
 
 
 import concurrent.futures
