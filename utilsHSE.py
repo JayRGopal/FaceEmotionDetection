@@ -216,18 +216,19 @@ def draw_bbox_and_save(img, bbox, filepath):
 
 def hse_preds(faces, model, model_type='mobilenet_7.h5'):
     
-    # Check if a GPU is available and use it if possible
-    device_name = tf.test.gpu_device_name()
-
     # If empty, return empty
     if faces.shape[0] == 0:
         return np.array([])
     
     # Device
-    if device_name != '' and '/device:GPU' in device_name:
-        with tf.device('/device:GPU:0'):
-            scores = model.predict(faces)
+    if use_cuda:
+        if device == 'cuda':
+            device_tf = '/GPU:0'
+        else:
+            device_tf = '/GPU:' + device[-1]
     else:
+        device_tf = '/CPU:0'
+    with tf.device(device_tf):
         scores = model.predict(faces)
 
     return scores
