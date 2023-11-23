@@ -36,8 +36,8 @@ def verify_partial_faces_np_data(target_img_folder, np_data, bboxes, distance_ma
     last_x_center = 0
     last_y_center = 0
     for i in range(np_data.shape[0]):
-        # DEBUG ONLY
-        # print(f'Starting verification {i}/{np_data.shape[0]}')
+        if i % 50 == 0:
+          print(f'Starting verification {i}/{np_data.shape[0]}')
         data_now = np_data[i]
         verifyThisFrame = True # By default, we will verify this frame
         if last_frame_was_verified:
@@ -136,6 +136,9 @@ def verify_faces_np_data(target_img_folder, np_data, verify_threshold=0.32):
     # Verifying each image
     results = []
     for i in range(np_data.shape[0]):
+        if i % 50 == 0:
+          print(f'Starting verification {i}/{np_data.shape[0]}')
+        
         data_now = np_data[i]
         # Undo preprocessing
         data_now = cv2.cvtColor(data_now, cv2.COLOR_RGB2BGR) 
