@@ -6,10 +6,34 @@ import time
 import datetime
 import cv2
 import torch
+import argparse
+from facenet_pytorch import MTCNN
 
 # Device
-use_cuda = torch.cuda.is_available()
-device = 'cuda:0' if use_cuda else 'cpu'
+def create_parser():
+    parser = argparse.ArgumentParser(description='Process device information.')
+
+    # Add the 'device' argument
+    # It accepts values like 'gpu:0', 'cpu', or 'gpu:1'
+    parser.add_argument('--device', type=str, required=True,
+                        help='Specify the device to use, e.g., cuda:0, cpu, cuda:1')
+    
+    # Forcing HSE to CPU?
+    parser.add_argument('--force-hse-cpu', action='store_true',
+                        help='Force the use of HSE CPU if set')
+
+    return parser
+
+parser = create_parser()
+args = parser.parse_args()
+device = args.device
+FORCE_HSE_CPU = args.force_hse_cpu
+
+if 'cuda' in device:
+  use_cuda = True
+
+# use_cuda = torch.cuda.is_available()
+# device = 'cuda:0' if use_cuda else 'cpu'
 if use_cuda:
   torch.cuda.empty_cache()
 os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
@@ -71,11 +95,14 @@ start_time = time.time()
 
 TIMING_VERBOSE = True # yes/no do we print times for sub-processes within videos?
 
+# Load models
+mtcnn = MTCNN(keep_all=True, post_process=False, min_face_size=40, device=device)
+
 if Run_HSE:
-  model_hse = get_emotion_predictor(HSE_MODEL_TYPE)
+  model_hse = get_emotion_predictor(HSE_MODEL_TYPE, device=device, FORCE_HSE_CPU=FORCE_HSE_CPU)
 
 if Run_OpenGraphAU:
-  model_ogau = load_network(model_type=OPENGRAPHAU_MODEL_TYPE, backbone=OPENGRAPHAU_MODEL_BACKBONE, path=OPENGRAPHAU_MODEL_PATH)
+  model_ogau = load_network(model_type=OPENGRAPHAU_MODEL_TYPE, backbone=OPENGRAPHAU_MODEL_BACKBONE, path=OPENGRAPHAU_MODEL_PATH, device=device)
 
 if Do_Verification:
   assert has_jpg_or_jpeg_files(SUBJECT_FACE_IMAGE_FOLDER), "No jpg or jpeg files found in SUBJECT_FACE_IMAGE_FOLDER. Can't do facial verification!"
@@ -139,14 +166,14 @@ for i in unprocessed_videos:
               if Do_Verification:
                 if Face_Detector == 'MTCNN':
                   faces, is_null, all_bboxes = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_FOLDER, partialVerify=Partial_Verify, \
-                                                                         verifyAll=Verify_Every_Frame, verify_threshold=VERIFY_THRESHOLD, \
+                                                                         mtcnn=mtcnn, verifyAll=Verify_Every_Frame, verify_threshold=VERIFY_THRESHOLD, \
                                                              distance_max=DISTANCE_MAX_PARTIAL_VERIFY, save_folder_path=save_folder_partial_verify_now, \
                                                               real_frame_numbers=real_frame_numbers, saveProb=SAVE_PROB_PARTIAL_VERIFY)
                 elif Face_Detector == 'RetinaFace':
                   faces, is_null = detect_extract_faces(ims, INPUT_SIZE)
               else:
                 if Face_Detector == 'MTCNN':
-                  faces, is_null, all_bboxes = extract_faces_mtcnn(ims, INPUT_SIZE, real_frame_numbers=real_frame_numbers)
+                  faces, is_null, all_bboxes = extract_faces_mtcnn(ims, INPUT_SIZE, mtcnn=mtcnn, real_frame_numbers=real_frame_numbers)
                 elif Face_Detector == 'RetinaFace':
                   faces, is_null = detect_extract_faces(ims, INPUT_SIZE)
               print(f"Detected Faces")
@@ -156,8 +183,8 @@ for i in unprocessed_videos:
 
               # Get predictions of relevant network
               if Run_HSE:
-                faces_for_hse = convert_to_gpu_tensor(faces)
-                hse_scores_real = hse_preds(faces_for_hse, model_hse, model_type=HSE_MODEL_TYPE)
+                faces_for_hse = convert_to_gpu_tensor(faces, device=device, FORCE_HSE_CPU=FORCE_HSE_CPU)
+                hse_scores_real = hse_preds(faces_for_hse, model_hse, model_type=HSE_MODEL_TYPE, device=device, FORCE_HSE_CPU=FORCE_HSE_CPU)
                 hse_scores_real[is_null > 0] = 0 # clear the predictions from frames w/o faces!
                 print("Got Network Predictions: HSE")
               
@@ -169,7 +196,7 @@ for i in unprocessed_videos:
                 faces_ogau = mtcnn_to_torch(faces)
                 faces_ogau = image_evaluator(faces_ogau)
                 faces_ogau = faces_ogau.to(device)
-                ogau_predictions = get_model_preds(faces_ogau, model_ogau, model_type=OPENGRAPHAU_MODEL_TYPE)
+                ogau_predictions = get_model_preds(faces_ogau, model_ogau, model_type=OPENGRAPHAU_MODEL_TYPE, device=device)
                 ogau_predictions[is_null > 0] = 0 # clear the predictions from frames w/o faces!
                 print("Got Network Predictions: OGAU")
 
@@ -219,14 +246,14 @@ for i in unprocessed_videos:
           if Do_Verification:
             if Face_Detector == 'MTCNN':
               faces, is_null, all_bboxes = extract_faces_with_verify(ims, INPUT_SIZE, SUBJECT_FACE_IMAGE_FOLDER, partialVerify=Partial_Verify, \
-                                                                     verifyAll=Verify_Every_Frame, verify_threshold=VERIFY_THRESHOLD, \
+                                                                     mtcnn=mtcnn, verifyAll=Verify_Every_Frame, verify_threshold=VERIFY_THRESHOLD, \
                                                          distance_max=DISTANCE_MAX_PARTIAL_VERIFY, save_folder_path=save_folder_partial_verify_now, \
                                                           real_frame_numbers=real_frame_numbers, saveProb=SAVE_PROB_PARTIAL_VERIFY)
             elif Face_Detector == 'RetinaFace':
               faces, is_null = detect_extract_faces(ims, INPUT_SIZE)
           else:
             if Face_Detector == 'MTCNN':
-              faces, is_null, all_bboxes = extract_faces_mtcnn(ims, INPUT_SIZE, real_frame_numbers=real_frame_numbers)
+              faces, is_null, all_bboxes = extract_faces_mtcnn(ims, INPUT_SIZE, mtcnn=mtcnn, real_frame_numbers=real_frame_numbers)
             elif Face_Detector == 'RetinaFace':
               faces, is_null = detect_extract_faces(ims, INPUT_SIZE)
           print(f"Detected Faces")
@@ -236,8 +263,8 @@ for i in unprocessed_videos:
           
           # Get predictions of relevant network
           if Run_HSE:
-            faces_for_hse = convert_to_gpu_tensor(faces)
-            hse_scores_real = hse_preds(faces_for_hse, model_hse, model_type=HSE_MODEL_TYPE)    
+            faces_for_hse = convert_to_gpu_tensor(faces, device=device, FORCE_HSE_CPU=FORCE_HSE_CPU)
+            hse_scores_real = hse_preds(faces_for_hse, model_hse, model_type=HSE_MODEL_TYPE, device=device, FORCE_HSE_CPU=FORCE_HSE_CPU)    
             hse_scores_real[is_null > 0] = 0 # clear the predictions from frames w/o faces!
             print("Got Network Predictions: HSE")
 
@@ -249,7 +276,7 @@ for i in unprocessed_videos:
             faces_ogau = mtcnn_to_torch(faces)
             faces_ogau = image_evaluator(faces_ogau)
             faces_ogau = faces_ogau.to(device)
-            ogau_predictions = get_model_preds(faces_ogau, model_ogau, model_type=OPENGRAPHAU_MODEL_TYPE)
+            ogau_predictions = get_model_preds(faces_ogau, model_ogau, model_type=OPENGRAPHAU_MODEL_TYPE, device=device)
             ogau_predictions[is_null > 0] = 0 # clear the predictions from frames w/o faces!
             print("Got Network Predictions: OGAU")
 

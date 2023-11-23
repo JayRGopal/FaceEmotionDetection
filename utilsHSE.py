@@ -12,14 +12,11 @@ from utils import *
 import random
 
 # Device
-use_cuda = torch.cuda.is_available()
-device = 'cuda:0' if use_cuda else 'cpu'
-FORCE_HSE_CPU = False
 os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 
-# MTCNN
-from facenet_pytorch import MTCNN
-mtcnn = MTCNN(keep_all=True, post_process=False, min_face_size=40, device=device)
+# # MTCNN
+# from facenet_pytorch import MTCNN
+# mtcnn = MTCNN(keep_all=True, post_process=False, min_face_size=40, device=device)
 
 
 # config = tf.compat.v1.ConfigProto()
@@ -27,10 +24,10 @@ mtcnn = MTCNN(keep_all=True, post_process=False, min_face_size=40, device=device
 # sess=tf.compat.v1.Session(config=config)
 # set_session(sess)
 
-def get_emotion_predictor(MODEL_NOW):
+def get_emotion_predictor(MODEL_NOW, device, FORCE_HSE_CPU=False):
     MODEL_PATH = os.path.join(os.path.abspath('HSE_models'), 
                             'affectnet_emotions', MODEL_NOW)
-    if use_cuda:
+    if 'cuda' in device:
         if device == 'cuda':
             device_tf = '/GPU:0'
         else:
@@ -43,8 +40,8 @@ def get_emotion_predictor(MODEL_NOW):
         model=load_model(MODEL_PATH)
     return model
 
-def convert_to_gpu_tensor(faces):
-    if use_cuda:
+def convert_to_gpu_tensor(faces, device, FORCE_HSE_CPU=False):
+    if 'cuda' in device:
         if device == 'cuda':
             device_tf = '/GPU:0'
         else:
@@ -62,7 +59,7 @@ def convert_to_gpu_tensor(faces):
 import concurrent.futures
 
 
-def detect_bboxes(frame, confidence_threshold=0.9):
+def detect_bboxes(frame, mtcnn, confidence_threshold=0.9):
     # Detects bboxes of faces in one frame using MTCNN
 
     bounding_boxes, probs = mtcnn.detect(frame, landmarks=False)
@@ -74,8 +71,8 @@ def detect_bboxes(frame, confidence_threshold=0.9):
     return bounding_boxes
 
 
-def process_frame(frame, INPUT_SIZE):
-    bounding_boxes = detect_bboxes(frame)
+def process_frame(frame, INPUT_SIZE, mtcnn):
+    bounding_boxes = detect_bboxes(frame, mtcnn)
     if bounding_boxes.shape[0] == 1: # take only frames w one face!
         box = bounding_boxes[0].astype(int) # take only first face
         x1,y1,x2,y2=box[0:4]    
@@ -90,7 +87,7 @@ def process_frame(frame, INPUT_SIZE):
         return None, True, []
 
 
-def extract_faces_mtcnn(frames, INPUT_SIZE, real_frame_numbers=[]):
+def extract_faces_mtcnn(frames, INPUT_SIZE, mtcnn, real_frame_numbers=[]):
     is_null = np.zeros(frames.shape[0])
     faces = np.zeros([frames.shape[0], INPUT_SIZE[0], INPUT_SIZE[1], 3], dtype=np.uint8)
     all_bboxes = [] # Save the bboxes!
@@ -98,7 +95,7 @@ def extract_faces_mtcnn(frames, INPUT_SIZE, real_frame_numbers=[]):
     with concurrent.futures.ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
         futures = []
         for frame in frames:
-            future = executor.submit(process_frame, frame, INPUT_SIZE)
+            future = executor.submit(process_frame, frame, INPUT_SIZE, mtcnn)
             futures.append(future)
         for enum, future in enumerate(concurrent.futures.as_completed(futures)):
             inp, null, bbox = future.result()
@@ -113,10 +110,11 @@ def extract_faces_mtcnn(frames, INPUT_SIZE, real_frame_numbers=[]):
 
     return faces, is_null, all_bboxes
 
-def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder, partialVerify=False, verifyAll=False, distance_max=30, verify_threshold=0.32, save_folder_path='', real_frame_numbers=[], saveProb=0.01):
+def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder, mtcnn, partialVerify=False, verifyAll=False, distance_max=30, verify_threshold=0.32, save_folder_path='', real_frame_numbers=[], saveProb=0.01):
     # Extracts faces using MTCNN from frames
     # Reshapes using letterbox to INPUT_SIZE
     # target_img_folder has the verification target images (JPEGs)
+    # mtcnn: the pytorch mtcnn model we'll use to detect bounding boxes
     # Default is to verify all frames with 2+ faces
     # partialVerify: if this is true, we don't verify every frame with 2+ faces. We check if there's a face close to the last verified face
     # verifyAll: if this is true, every frame with 1+ person will be verified.
@@ -132,7 +130,7 @@ def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder, partialVeri
     verification_bboxes = []
     all_bboxes = [] # Save the bboxes!
     for enum, frame in enumerate(frames):
-        bounding_boxes = detect_bboxes(frame)
+        bounding_boxes = detect_bboxes(frame, mtcnn)
         if bounding_boxes.shape[0] == 1: # frames with one face
             box = bounding_boxes[0].astype(int)
             x1,y1,x2,y2=box[0:4]    
@@ -224,14 +222,14 @@ def draw_bbox_and_save(img, bbox, filepath):
     cv2.imwrite(filepath, img)
 
 
-def hse_preds(faces, model, model_type='mobilenet_7.h5'):
+def hse_preds(faces, model, device, model_type='mobilenet_7.h5', FORCE_HSE_CPU=False):
     
     # If empty, return empty
     if faces.shape[0] == 0:
         return np.array([])
     
     # Device
-    if use_cuda:
+    if 'cuda' in device:
         if device == 'cuda':
             device_tf = '/GPU:0'
         else:

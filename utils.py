@@ -10,10 +10,10 @@ import random
 
 
 # Device
-use_cuda = torch.cuda.is_available()
-device = 'cuda:0' if use_cuda else 'cpu'
-if use_cuda:
-  torch.cuda.empty_cache()
+# use_cuda = torch.cuda.is_available()
+# device = 'cuda:0' if use_cuda else 'cpu'
+# if use_cuda:
+#   torch.cuda.empty_cache()
 os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 
 
@@ -291,7 +291,7 @@ class image_eval(object):
         return img
 
 
-def load_network(model_type, backbone, path):
+def load_network(model_type, backbone, path, device):
   if model_type == 'BP4D':
     net = MEFARG(num_classes=12, backbone=backbone)
     #path = 'megraphau/checkpoints/MEFARG_resnet50_BP4D_fold3.pth'
@@ -315,8 +315,8 @@ def load_network(model_type, backbone, path):
   return net
 
 
-def get_model_preds(faces, net, model_type):
-  if use_cuda:
+def get_model_preds(faces, net, model_type, device):
+  if 'cuda' in device:
       print('Using GPU for Model Inference!')
       faces = faces.to(device)
       net = net.to(device)
@@ -324,7 +324,7 @@ def get_model_preds(faces, net, model_type):
   # If empty, return empty
   if faces.shape[0] == 0:
       return np.array([])
-
+  
   with torch.no_grad():
     if model_type == 'BP4D':
       pred_ff = net(faces / 255)
