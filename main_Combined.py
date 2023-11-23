@@ -62,7 +62,7 @@ VERIFY_THRESHOLD = 0.32 # Maximum distance threshold (below this, faces are deem
 Face_Detector = 'MTCNN' # Options: ['MTCNN', 'RetinaFace']
 
 # Set the parameters
-BATCH_SIZE = 3500
+BATCH_SIZE = 2000
 HSE_MODEL_TYPE = 'mobilenet_7.h5'
 OPENGRAPHAU_MODEL_TYPE = 'OpenGraphAU'
 OPENGRAPHAU_MODEL_BACKBONE = 'swin_transformer_base'
