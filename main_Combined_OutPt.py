@@ -15,7 +15,7 @@ def create_parser():
     parser = argparse.ArgumentParser(description='Process device information.')
 
     # Add the 'device' argument
-    # It accepts values like 'gpu:0', 'cpu', or 'gpu:1'
+    # It accepts values like 'cuda:0', 'cpu', or 'cuda:1'
     parser.add_argument('--device', type=str, required=True,
                         help='Specify the device to use, e.g., cuda:0, cpu, cuda:1')
     
