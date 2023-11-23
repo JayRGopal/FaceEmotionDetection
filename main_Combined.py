@@ -31,9 +31,9 @@ FORCE_HSE_CPU = args.force_hse_cpu
 
 if 'cuda' in device:
   use_cuda = True
+else:
+  use_cuda = False
 
-# use_cuda = torch.cuda.is_available()
-# device = 'cuda:0' if use_cuda else 'cpu'
 if use_cuda:
   torch.cuda.empty_cache()
 os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
@@ -62,7 +62,7 @@ VERIFY_THRESHOLD = 0.32 # Maximum distance threshold (below this, faces are deem
 Face_Detector = 'MTCNN' # Options: ['MTCNN', 'RetinaFace']
 
 # Set the parameters
-BATCH_SIZE = 4500
+BATCH_SIZE = 4000
 HSE_MODEL_TYPE = 'mobilenet_7.h5'
 OPENGRAPHAU_MODEL_TYPE = 'OpenGraphAU'
 OPENGRAPHAU_MODEL_BACKBONE = 'swin_transformer_base'

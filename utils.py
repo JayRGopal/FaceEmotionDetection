@@ -9,11 +9,6 @@ from torchvision import transforms
 import random
 
 
-# Device
-# use_cuda = torch.cuda.is_available()
-# device = 'cuda:0' if use_cuda else 'cpu'
-# if use_cuda:
-#   torch.cuda.empty_cache()
 os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 
 
@@ -298,7 +293,7 @@ def load_network(model_type, backbone, path, device):
     net.load_state_dict(torch.load(path, map_location=torch.device(device)).get('state_dict'))
     
   elif model_type == 'OpenGraphAU':
-    net = MEFARG_OpenGraphAU(num_main_classes=27, num_sub_classes=14, backbone=backbone, neighbor_num=4, metric='dots')
+    net = MEFARG_OpenGraphAU(device=device, num_main_classes=27, num_sub_classes=14, backbone=backbone, neighbor_num=4, metric='dots')
     
     #path = 'megraphau/checkpoints/OpenGprahAU-ResNet50_first_stage.pth'
     #path = 'megraphau/checkpoints/OpenGprahAU-ResNet50_second_stage.pth'

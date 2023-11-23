@@ -14,15 +14,7 @@ import random
 # Device
 os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 
-# # MTCNN
-# from facenet_pytorch import MTCNN
-# mtcnn = MTCNN(keep_all=True, post_process=False, min_face_size=40, device=device)
 
-
-# config = tf.compat.v1.ConfigProto()
-# config.gpu_options.allow_growth = True
-# sess=tf.compat.v1.Session(config=config)
-# set_session(sess)
 
 def get_emotion_predictor(MODEL_NOW, device, FORCE_HSE_CPU=False):
     MODEL_PATH = os.path.join(os.path.abspath('HSE_models'), 
