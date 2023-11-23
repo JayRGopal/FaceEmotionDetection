@@ -9,9 +9,6 @@ from torchvision import transforms
 import random
 
 
-os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
-
-
 # Hyperparameters - Post-Processing for OpenGraphAU
 EMA_ALPHA = 0.9
 SMA_WINDOW_SIZE = 10

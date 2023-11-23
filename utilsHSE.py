@@ -11,10 +11,6 @@ from utilsVerify import *
 from utils import *
 import random
 
-# Device
-os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
-
-
 
 def get_emotion_predictor(MODEL_NOW, device, FORCE_HSE_CPU=False):
     MODEL_PATH = os.path.join(os.path.abspath('HSE_models'), 
