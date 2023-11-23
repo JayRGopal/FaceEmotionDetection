@@ -37,7 +37,7 @@ else:
 
 if use_cuda:
   torch.cuda.empty_cache()
-os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'false'
+os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 
 """
 
