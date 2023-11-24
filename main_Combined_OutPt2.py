@@ -9,6 +9,12 @@ import torch
 import argparse
 from facenet_pytorch import MTCNN
 
+# Main parameters
+VIDEO_DIRECTORY = os.path.abspath('inputs/')
+SUBJECT_FACE_IMAGE_FOLDER = os.path.abspath('deepface/')
+OUTPUT_DIRECTORY = os.path.abspath('outputs_Combined_Outpt/Pt1/') 
+OUTPUT_DIRECTORY_PARTIAL_VERIFY = os.path.abspath('outputs_Combined_OutPt_PatData/Pt1/') 
+
 
 # Device
 def create_parser():
@@ -62,20 +68,16 @@ Verify_Every_Frame = True # Verify all frames, even if only 1 person is detected
 VERIFY_THRESHOLD = 0.32 # Maximum distance threshold (below this, faces are deemed "verified")
 Face_Detector = 'MTCNN' # Options: ['MTCNN', 'RetinaFace']
 
-# Set the parameters
+# Additional parameters
 BATCH_SIZE = 2000
 HSE_MODEL_TYPE = 'mobilenet_7.h5'
 OPENGRAPHAU_MODEL_TYPE = 'OpenGraphAU'
 OPENGRAPHAU_MODEL_BACKBONE = 'swin_transformer_base'
 OPENGRAPHAU_MODEL_PATH = os.path.abspath('megraphau/checkpoints/OpenGprahAU-SwinB_first_stage.pth')
 INPUT_SIZE = (224, 224)
-VIDEO_DIRECTORY = os.path.abspath('inputs/')
 FPS_EXTRACTING = 5 # we'll extract this many fps from the video for analysis
-OUTPUT_DIRECTORY = os.path.abspath('outputs_Combined_Outpt/Pt1/') 
-SUBJECT_FACE_IMAGE_FOLDER = os.path.abspath('deepface/')
 DISTANCE_MAX_PARTIAL_VERIFY = 30
 SAVE_PROB_PARTIAL_VERIFY = 0.01
-OUTPUT_DIRECTORY_PARTIAL_VERIFY = os.path.abspath('outputs_Combined_OutPt_PatData/Pt1/') 
 
 # Make output dirs if they don't exist
 if not os.path.exists(OUTPUT_DIRECTORY):
