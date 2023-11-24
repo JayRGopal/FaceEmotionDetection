@@ -308,23 +308,25 @@ def load_network(model_type, backbone, path, device):
 
 
 def get_model_preds(faces, net, model_type, device):
-  if 'cuda' in device:
-      print('Using GPU for Model Inference!')
-      faces = faces.to(device)
-      net = net.to(device)
-  
-  # If empty, return empty
-  if faces.shape[0] == 0:
-      return np.array([])
-  
-  with torch.no_grad():
-    if model_type == 'BP4D':
-      pred_ff = net(faces / 255)
-      real_preds_ff = pred_ff[0].cpu().numpy()
-    elif model_type == 'OpenGraphAU':
-      pred_ff = net(faces)
-      real_preds_ff = pred_ff.cpu().numpy()
-  return real_preds_ff
+    if 'cuda' in device:
+        print('Using GPU for Model Inference!')
+        faces = faces.to(device)
+        net = net.to(device)
+    
+    # If empty, return empty
+    if faces.shape[0] == 0:
+        return np.array([])
+    
+    with torch.no_grad():
+        if model_type == 'BP4D':
+            pred_ff = net(faces / 255)
+            real_preds_ff = pred_ff[0].cpu().numpy()
+        elif model_type == 'OpenGraphAU':
+            pred_ff = net(faces)
+            real_preds_ff = pred_ff.cpu().numpy()
+
+    del pred_ff
+    return real_preds_ff
 
 
 

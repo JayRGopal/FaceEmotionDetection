@@ -8,6 +8,8 @@ import cv2
 import torch
 import argparse
 from facenet_pytorch import MTCNN
+import gc
+
 
 # Main parameters
 VIDEO_DIRECTORY = os.path.abspath('inputs/')
@@ -140,6 +142,9 @@ for i in unprocessed_videos:
 
   if TIMING_VERBOSE: 
     time1 = time.time()
+  
+  # Garbage collector
+  gc.collect()
 
   # Extract video frames
   capture = cv2.VideoCapture(video_path)
@@ -239,6 +244,9 @@ for i in unprocessed_videos:
               # Reset timing
               if TIMING_VERBOSE: 
                 time1 = time.time()
+              
+              # Garbage collector
+              gc.collect()
       else:
           # We're out of frames!
           running = False
@@ -324,6 +332,10 @@ for i in unprocessed_videos:
           # Reset timing
           if TIMING_VERBOSE: 
             time1 = time.time()
+          
+          # Garbage collector
+          gc.collect()
+          
       frameNr = frameNr + 1
   capture.release()
 

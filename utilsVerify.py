@@ -114,6 +114,7 @@ def verify_partial_faces_np_data(target_img_folder, np_data, bboxes, distance_ma
 
     # Getting a pandas df
     df = pd.DataFrame(results)
+    del results
     if df.shape and df.shape[0] > 0:
       df.columns = ['Index', 'Partial Verify', 'Distance', 'Facial Box X', 'Facial Box Y', 'Facial Box W', 'Facial Box H']
     
@@ -173,6 +174,7 @@ def verify_faces_np_data(target_img_folder, np_data, verify_threshold=0.32):
 
     # Getting a pandas df
     df = pd.DataFrame(results)
+    del results
     if df.shape and df.shape[0] > 0:
       df.columns = ['Index', 'Partial Verify', 'Distance', 'Facial Box X', 'Facial Box Y', 'Facial Box W', 'Facial Box H']
     

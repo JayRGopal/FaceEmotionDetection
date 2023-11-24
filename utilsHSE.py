@@ -194,6 +194,9 @@ def extract_faces_with_verify(frames, INPUT_SIZE, target_img_folder, mtcnn, part
                 faces[real_index] = face_img
                 is_null[real_index] = 0 # it's been verified, so it is not null
 
+    del verification_indices
+    del verification_bboxes
+    
     return faces, is_null, all_bboxes
 
 
