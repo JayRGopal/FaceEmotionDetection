@@ -2,9 +2,11 @@ import os
 
 def initial_setup():
 
+    # Run this when setting up from scratch!
+
     # requirements
-    os.system("pip install --user -r requirements.txt")
-    os.system("pip3 install --user -r requirements.txt")
+    os.system("pip install --user -r requirements_all.txt")
+    os.system("pip3 install --user -r requirements_all.txt")
     
     # ME-GraphAU Install
     if not(os.path.exists('megraphau')):
@@ -52,13 +54,42 @@ def initial_setup():
 
     return
 
+def partial_setup():
+    # Run this when completing setup of an environment with TF, Torch, and cuda all installed
+
+    # requirements
+    os.system("pip install --user -r requirements_partial.txt")
+    os.system("pip3 install --user -r requirements_partial.txt")
+    
+    # MMPose Install
+    os.system('pip install numpy==1.23.5')
+    os.system("pip install -U openmim")
+    os.system("pip3 install mmpose")
+    os.system("python3 -m mim install mmengine")
+    os.system('python3 -m mim install "mmcv>=2.0.0"')
+    os.system('python3 -m mim install "mmdet>=3.0.0"')
+    os.system('python3 -m mim install "mmcls>=1.0.0rc5"')
+    os.system('python3 -m mim install "mmpretrain>=1.0.0"') # for ViT Pose
+    os.system('cd mmpose')
+    os.system('pip install -r requirements.txt')
+    os.system('pip install -v -e .')
+    os.system('cd ..')
+    os.system('pip install numpy==1.23.5')
+
+    return
+
+
+
 def gpu_setup():
     # May need to adjust this based on workstation
     os.system("pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118")
     return
 
 if __name__ == '__main__':
-    initial_setup()
+    # Uncomment for initial setup
+    #initial_setup()
+
+    partial_setup()
 
     # Uncomment for GPU
     #gpu_setup()
