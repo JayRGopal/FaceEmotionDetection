@@ -187,6 +187,7 @@ for i in unprocessed_videos:
                 faces_for_hse = convert_to_gpu_tensor(faces, device=device, FORCE_HSE_CPU=FORCE_HSE_CPU)
                 hse_scores_real = hse_preds(faces_for_hse, model_hse, model_type=HSE_MODEL_TYPE, device=device)
                 hse_scores_real[is_null > 0] = 0 # clear the predictions from frames w/o faces!
+                del faces_for_hse
                 print("Got Network Predictions: HSE")
               
               if use_cuda:
@@ -214,6 +215,7 @@ for i in unprocessed_videos:
 
               if Run_HSE:
                 csv_save_HSE(labels=hse_scores_real, is_null=is_null, frames=frames, save_path=save_path_hse, fps=real_fps)
+                del hse_scores_real
                 print(f"Saved HSE CSV to {save_path_hse}!")
               
               if Run_OpenGraphAU:
@@ -267,6 +269,7 @@ for i in unprocessed_videos:
             faces_for_hse = convert_to_gpu_tensor(faces, device=device, FORCE_HSE_CPU=FORCE_HSE_CPU)
             hse_scores_real = hse_preds(faces_for_hse, model_hse, model_type=HSE_MODEL_TYPE, device=device)    
             hse_scores_real[is_null > 0] = 0 # clear the predictions from frames w/o faces!
+            del faces_for_hse
             print("Got Network Predictions: HSE")
 
           if use_cuda:
@@ -294,6 +297,7 @@ for i in unprocessed_videos:
 
           if Run_HSE:
             csv_save_HSE(labels=hse_scores_real, is_null=is_null, frames=frames, save_path=save_path_hse, fps=real_fps)
+            del hse_scores_real
             print(f"Saved HSE CSV to {save_path_hse}!")
 
           if Run_OpenGraphAU:
