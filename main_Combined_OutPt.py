@@ -229,6 +229,9 @@ for i in unprocessed_videos:
               frame_now = frameNr
 
               # Reset ims for the next batch!
+              del ims
+              del frames
+              del faces
               ims = []
 
               # Reset timing
@@ -311,6 +314,9 @@ for i in unprocessed_videos:
           frame_now = frameNr
 
           # Reset ims to save space
+          del ims
+          del frames
+          del faces
           ims = []
 
           # Reset timing
