@@ -230,7 +230,7 @@ def hse_preds(faces, model, device, model_type='mobilenet_7.h5', FORCE_HSE_CPU=F
     if FORCE_HSE_CPU:
         device_tf = '/CPU:0'
     with tf.device(device_tf):
-        scores = model.predict(faces)
+        scores = model.predict_on_batch(faces)
 
     return scores
 
