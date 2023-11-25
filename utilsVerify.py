@@ -14,6 +14,7 @@ import numpy as np
 import glob
 import math
 import torch
+import gc
 
 def verify_partial_faces_np_data(target_img_folder, np_data, bboxes, distance_max=30, verify_threshold=0.32):
     # Goal: determine which images have any one of the target faces, and get the bboxes of the target face in those images.
@@ -122,6 +123,7 @@ def verify_partial_faces_np_data(target_img_folder, np_data, bboxes, distance_ma
     # Cache
     if torch.cuda.is_available():
        torch.cuda.empty_cache()
+    gc.collect()
 
     return df
 
@@ -186,6 +188,7 @@ def verify_faces_np_data(target_img_folder, np_data, verify_threshold=0.32):
     # Cache
     if torch.cuda.is_available():
        torch.cuda.empty_cache()
+    gc.collect()
 
     return df
 
@@ -225,7 +228,7 @@ def verify_one_face_folder_np_data(target_img_folder, np_data):
           face_h = result['facial_areas']['img2']['h']
           return_tuple = (face_x, face_y, face_w, face_h)
           return return_tuple
-  
+
     return None
 
 
