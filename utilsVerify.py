@@ -15,6 +15,7 @@ import glob
 import math
 import torch
 import gc
+import tensorflow as tf
 
 def verify_partial_faces_np_data(target_img_folder, np_data, bboxes, distance_max=30, verify_threshold=0.32):
     # Goal: determine which images have any one of the target faces, and get the bboxes of the target face in those images.
@@ -124,6 +125,7 @@ def verify_partial_faces_np_data(target_img_folder, np_data, bboxes, distance_ma
     if torch.cuda.is_available():
        torch.cuda.empty_cache()
     gc.collect()
+    tf.keras.backend.clear_session()
 
     return df
 
@@ -189,6 +191,7 @@ def verify_faces_np_data(target_img_folder, np_data, verify_threshold=0.32):
     if torch.cuda.is_available():
        torch.cuda.empty_cache()
     gc.collect()
+    tf.keras.backend.clear_session()
 
     return df
 
