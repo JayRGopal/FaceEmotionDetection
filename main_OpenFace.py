@@ -18,6 +18,7 @@ If you're on Windows, use this link: https://github.com/TadasBaltrusaitis/OpenFa
 # Set the parameters
 VIDEO_DIRECTORY = os.path.abspath('inputs/')
 OUTPUT_DIRECTORY = os.path.abspath('outputs_OpenFace/')
+JUST_AU = True
 
 
 # Get the list of all videos in the given directory
@@ -39,7 +40,10 @@ for i in all_videos:
   if os.path.exists(save_file):
     print(f'Skipping Video {i}: Output File Already Exists!')
   elif os.path.isfile(video_path):
-    cmd = f'/home/klab/Desktop/OpenFace/build/bin/FeatureExtraction -f "{video_path}" -out_dir "{OUTPUT_DIRECTORY}" -aus -2Dfp -3Dfp -pdmparams -pose -gaze'
+    if JUST_AU:
+      cmd = f'/home/klab/Desktop/OpenFace/build/bin/FeatureExtraction -f "{video_path}" -out_dir "{OUTPUT_DIRECTORY}" -aus'
+    else:
+      cmd = f'/home/klab/Desktop/OpenFace/build/bin/FeatureExtraction -f "{video_path}" -out_dir "{OUTPUT_DIRECTORY}" -aus -2Dfp -3Dfp -pdmparams -pose -gaze'
     subprocess.run(cmd, shell=True)
 
 
