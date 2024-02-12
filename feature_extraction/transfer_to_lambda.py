@@ -31,9 +31,9 @@ def calculate_pearsons_r(features_dict, y):
     return correlations
 
 
-def filter_features_by_correlation(features_dict, correlations, threshold):
+def filter_features_by_correlation_and_get_labels(features_dict, correlations, threshold):
     """
-    Filter features based on Pearson's R correlation threshold.
+    Filter features based on Pearson's R correlation threshold and return selected feature labels.
 
     Parameters:
     - features_dict: Dictionary with numerical keys for time_windows, each mapping to a (num_answers, num_features) array.
@@ -42,16 +42,22 @@ def filter_features_by_correlation(features_dict, correlations, threshold):
 
     Returns:
     - A modified features_dict that only includes features with Pearson's R correlation >= threshold.
+    - An array of strings indicating the names of the selected features across all time windows.
     """
     filtered_features_dict = {}
+    selected_feature_indices = set()
 
     for time_window, pearsons_r_values in correlations.items():
         # Identify features that meet or exceed the correlation threshold
         features_to_keep = np.where(pearsons_r_values >= threshold)[0]
+        selected_feature_indices.update(features_to_keep)
 
         # Filter the original features based on the identified indices
         filtered_features = features_dict[time_window][:, features_to_keep]
 
         filtered_features_dict[time_window] = filtered_features
 
-    return filtered_features_dict
+    # Get the labels for the selected features
+    selected_feature_labels = [get_label_from_index(index) for index in sorted(selected_feature_indices)]
+
+    return filtered_features_dict, selected_feature_labels
