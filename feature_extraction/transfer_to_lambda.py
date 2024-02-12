@@ -1,66 +1,57 @@
 
-def linRegOneMetricCustom(vectors_dict, y, randShuffle=False, do_lasso=False, do_ridge=False, alpha=1.0):
-    # runs simple linear regression via one-left-out
-    # vectors_dict -- dictionary mapping time radius (in minutes) to features
-    # y -- a numpy array with labels (self-reported metrics)
-    # randShuffle -- do we shuffle the self-report labels?
-    # if do_lasso, does lasso regression
-    # if do_ridge, does ridge regression. Overrides do_lasso
-    # alpha - this is the weighting of either lasso or ridge
+def calculate_pearsons_r(features_dict, y):
+    """
+    Calculate Pearson's R correlation coefficient for each feature in each time window with the answers.
 
-    # returns a dictionary with several results:
-    # scores -- dictionary mapping each time radius to list of MSEs from each one-left-out
-    # preds -- dictionary mapping each time radius to a list of each one-left-out model's prediction
-    # y -- returns y again for convenience
-    # models -- dictionary mapping each time radius to a list of each one-left-out trained model (simple linear regression)
+    Parameters:
+    - features_dict: Dictionary with numerical keys for time_windows, each mapping to a (num_answers, num_features) array.
+    - y: Numpy array of answers with shape (num_answers,).
+
+    Returns:
+    - A dictionary with the same time_window keys, where each key maps to a (num_features,) numpy array of Pearson's R values.
+    """
+    correlations = {}
+
+    for time_window, features in features_dict.items():
+        # Check if the dimensions match between features and answers
+        if features.shape[0] != y.shape[0]:
+            raise ValueError(f"Number of answers ({y.shape[0]}) does not match number of samples ({features.shape[0]}) in time window {time_window}.")
+
+        # Initialize an array to store Pearson's R values for each feature
+        pearsons_r_values = np.zeros(features.shape[1])
+
+        # Calculate Pearson's R for each feature
+        for feature_idx in range(features.shape[1]):
+            feature_data = features[:, feature_idx]
+            r, _ = pearsonr(feature_data, y)
+            pearsons_r_values[feature_idx] = r
+
+        correlations[time_window] = pearsons_r_values
+
+    return correlations
 
 
+def filter_features_by_correlation(features_dict, correlations, threshold):
+    """
+    Filter features based on Pearson's R correlation threshold.
 
-    # Custom implementation without cross_val_score
-    scores = {}
-    preds = {}
-    models = {}
+    Parameters:
+    - features_dict: Dictionary with numerical keys for time_windows, each mapping to a (num_answers, num_features) array.
+    - correlations: Dictionary with the same time_window keys, mapping to (num_features,) numpy array of Pearson's R values.
+    - threshold: Minimum Pearson's R correlation required to keep a feature.
 
-    if randShuffle:
-        y_using = np.random.permutation(y)
-    else:
-        y_using = y
+    Returns:
+    - A modified features_dict that only includes features with Pearson's R correlation >= threshold.
+    """
+    filtered_features_dict = {}
 
-    for i in vectors_dict.keys():
-        # Initialize appropriate model based on input flags
-        model = LinearRegression()
-        if do_lasso:
-            if USING_CONTROLBURN:
-                model = ControlBurnClassifier(alpha=alpha)
-            else:
-                model = Lasso(alpha=alpha)
-        if do_ridge:
-            model = Ridge(alpha=alpha)
+    for time_window, pearsons_r_values in correlations.items():
+        # Identify features that meet or exceed the correlation threshold
+        features_to_keep = np.where(pearsons_r_values >= threshold)[0]
 
-        scores[i] = []
-        preds[i] = np.zeros(y_using.shape)
-        models_i_building = []
+        # Filter the original features based on the identified indices
+        filtered_features = features_dict[time_window][:, features_to_keep]
 
-        # Manual leave-one-out cross-validation
-        for test_index in range(vectors_dict[i].shape[0]):
-            # Split the data into training and testing sets
-            X_train = np.delete(vectors_dict[i], test_index, axis=0)
-            y_train = np.delete(y_using, test_index, axis=0)
-            X_test = vectors_dict[i][test_index:test_index+1]  # Keep the test sample in 2D
-            y_test = y_using[test_index]
+        filtered_features_dict[time_window] = filtered_features
 
-            # Fit the model and make predictions
-            model.fit(X_train, y_train)
-            y_pred = model.predict(X_test)
-            preds[i][test_index] = y_pred
-
-            # Compute and store the MSE for this fold
-            mse = mean_squared_error(y_test, y_pred)
-            scores[i].append(mse)
-
-            models_i_building.append(model)  # Save the trained model for this fold
-
-        models[i] = models_i_building
-
-    return scores, preds, y_using, models
-
+    return filtered_features_dict
