@@ -1,11 +1,27 @@
 
 
 def filter_by_timestamp_optimized(facedx_df, openface_df):
-    # This is the optimized filtering function we defined earlier
-    timestamp_ranges = pd.concat([facedx_df['timestamp'] - 0.2, facedx_df['timestamp'] + 0.2], axis=1)
-    mask = openface_df['timestamp'].apply(lambda x: any((timestamp_ranges[0] <= x) & (x <= timestamp_ranges[1])))
-    filtered_openface_df = openface_df[mask].copy()
+    # Ensure the timestamp columns are of type float
+    facedx_df['timestamp'] = pd.to_numeric(facedx_df['timestamp'], errors='coerce')
+    openface_df['timestamp'] = pd.to_numeric(openface_df['timestamp'], errors='coerce')
+
+    # Initialize an empty DataFrame to store filtered rows
+    filtered_openface_df = pd.DataFrame()
+
+    # Ensure no error from empty DataFrames
+    if not facedx_df.empty and not openface_df.empty:
+        # Expand the timestamp range in facedx by 0.2 in both directions and create a range series
+        timestamp_ranges = pd.concat([facedx_df['timestamp'] - 0.2, facedx_df['timestamp'] + 0.2], axis=1)
+
+        # For each row in openface, check if the timestamp falls within any range in facedx
+        mask = openface_df['timestamp'].apply(lambda x: any((timestamp_ranges[0] <= x) & (x <= timestamp_ranges[1])))
+        
+        # Filter openface using the mask
+        filtered_openface_df = openface_df[mask].copy()
+
+    # Reset index of the resulting DataFrame
     filtered_openface_df.reset_index(drop=True, inplace=True)
+    
     return filtered_openface_df
 
 
