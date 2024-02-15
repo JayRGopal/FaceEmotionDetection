@@ -1,63 +1,23 @@
 
-def calculate_pearsons_r(features_dict, y):
-    """
-    Calculate Pearson's R correlation coefficient for each feature in each time window with the answers.
 
-    Parameters:
-    - features_dict: Dictionary with numerical keys for time_windows, each mapping to a (num_answers, num_features) array.
-    - y: Numpy array of answers with shape (num_answers,).
-
-    Returns:
-    - A dictionary with the same time_window keys, where each key maps to a (num_features,) numpy array of Pearson's R values.
-    """
-    correlations = {}
-
-    for time_window, features in features_dict.items():
-        # Check if the dimensions match between features and answers
-        if features.shape[0] != y.shape[0]:
-            raise ValueError(f"Number of answers ({y.shape[0]}) does not match number of samples ({features.shape[0]}) in time window {time_window}.")
-
-        # Initialize an array to store Pearson's R values for each feature
-        pearsons_r_values = np.zeros(features.shape[1])
-
-        # Calculate Pearson's R for each feature
-        for feature_idx in range(features.shape[1]):
-            feature_data = features[:, feature_idx]
-            r, _ = pearsonr(feature_data, y)
-            pearsons_r_values[feature_idx] = r
-
-        correlations[time_window] = pearsons_r_values
-
-    return correlations
+def filter_by_timestamp_optimized(facedx_df, openface_df):
+    # This is the optimized filtering function we defined earlier
+    timestamp_ranges = pd.concat([facedx_df['timestamp'] - 0.2, facedx_df['timestamp'] + 0.2], axis=1)
+    mask = openface_df['timestamp'].apply(lambda x: any((timestamp_ranges[0] <= x) & (x <= timestamp_ranges[1])))
+    filtered_openface_df = openface_df[mask].copy()
+    filtered_openface_df.reset_index(drop=True, inplace=True)
+    return filtered_openface_df
 
 
-def filter_features_by_correlation_and_get_labels(features_dict, correlations, threshold):
-    """
-    Filter features based on Pearson's R correlation threshold and return selected feature labels.
+def filter_dictionaries(facedx_dict, openface_dict):
+    filtered_openface_dict = {}
+    for key in facedx_dict.keys():
+        # Assuming both dictionaries have the same keys
+        facedx_df = facedx_dict[key]
+        openface_df = openface_dict[key]
+        # Apply the optimized filtering function to each pair of DataFrames
+        filtered_openface_df = filter_by_timestamp_optimized(facedx_df, openface_df)
+        # Store the filtered DataFrame in the new dictionary with the same key
+        filtered_openface_dict[key] = filtered_openface_df
+    return filtered_openface_dict
 
-    Parameters:
-    - features_dict: Dictionary with numerical keys for time_windows, each mapping to a (num_answers, num_features) array.
-    - correlations: Dictionary with the same time_window keys, mapping to (num_features,) numpy array of Pearson's R values.
-    - threshold: Minimum Pearson's R correlation required to keep a feature.
-
-    Returns:
-    - A modified features_dict that only includes features with Pearson's R correlation >= threshold.
-    - An array of strings indicating the names of the selected features across all time windows.
-    """
-    filtered_features_dict = {}
-    selected_feature_indices = set()
-
-    for time_window, pearsons_r_values in correlations.items():
-        # Identify features that meet or exceed the correlation threshold
-        features_to_keep = np.where(pearsons_r_values >= threshold)[0]
-        selected_feature_indices.update(features_to_keep)
-
-        # Filter the original features based on the identified indices
-        filtered_features = features_dict[time_window][:, features_to_keep]
-
-        filtered_features_dict[time_window] = filtered_features
-
-    # Get the labels for the selected features
-    selected_feature_labels = [get_label_from_index(index) for index in sorted(selected_feature_indices)]
-
-    return filtered_features_dict, selected_feature_labels
