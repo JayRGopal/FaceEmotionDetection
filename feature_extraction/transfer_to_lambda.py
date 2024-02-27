@@ -14,3 +14,47 @@ elements = [
     "eye_lmk_y_40", "eye_lmk_y_41", "eye_lmk_y_42", "eye_lmk_y_43", "eye_lmk_y_44", "eye_lmk_y_45", "eye_lmk_y_46", "eye_lmk_y_47",
     "eye_lmk_y_48", "eye_lmk_y_49", "eye_lmk_y_50", "eye_lmk_y_51", "eye_lmk_y_52", "eye_lmk_y_53", "eye_lmk_y_54", "eye_lmk_y_55"
 ]
+
+import pandas as pd
+import numpy as np
+from scipy.spatial.distance import euclidean
+
+def compute_ear(row):
+    # Right eye
+    d1 = euclidean((row['eye_lmk_x_10'], row['eye_lmk_y_10']), (row['eye_lmk_x_18'], row['eye_lmk_y_18']))
+    d2 = euclidean((row['eye_lmk_x_12'], row['eye_lmk_y_12']), (row['eye_lmk_x_16'], row['eye_lmk_y_16']))
+    d3 = euclidean((row['eye_lmk_x_8'], row['eye_lmk_y_8']), (row['eye_lmk_x_14'], row['eye_lmk_y_14']))
+    right_ear = (d1 + d2) / (2.0 * d3)
+    
+    # Left eye
+    d4 = euclidean((row['eye_lmk_x_38'], row['eye_lmk_y_38']), (row['eye_lmk_x_46'], row['eye_lmk_y_46']))
+    d5 = euclidean((row['eye_lmk_x_40'], row['eye_lmk_y_40']), (row['eye_lmk_x_44'], row['eye_lmk_y_44']))
+    d6 = euclidean((row['eye_lmk_x_36'], row['eye_lmk_y_36']), (row['eye_lmk_x_42'], row['eye_lmk_y_42']))
+    left_ear = (d4 + d5) / (2.0 * d6)
+    
+    # Overall EAR
+    return (right_ear + left_ear) / 2.0
+
+def process_video_df(df):
+    # Calculate EAR for each frame
+    df['EAR'] = df.apply(compute_ear, axis=1)
+    
+    # Identify blinks
+    df['blink'] = (df['EAR'] < 0.2) & (df['EAR'].shift(1) >= 0.2)
+    df['mov_blinkframe'] = df.index[df['blink']].tolist()
+    df['mov_blink_ear'] = df.loc[df['blink'], 'EAR']
+    
+    # Calculate durations between blinks using the 'timestamp' column
+    blink_timestamps = df.loc[df['blink'], 'timestamp']
+    df.loc[df['blink'], 'mov_blinkdur'] = blink_timestamps.diff().fillna(0)
+    
+    # Aggregate results
+    features = {
+        'mov_blink_ear_mean': df.loc[df['blink'], 'EAR'].mean(),
+        'mov_blink_ear_std': df.loc[df['blink'], 'EAR'].std(),
+        'mov_blink_count': df['blink'].sum(),
+        'mov_blinkdur_mean': blink_timestamps.diff().mean(),
+        'mov_blinkdur_std': blink_timestamps.diff().std(),
+    }
+    
+    return pd.DataFrame([features])
