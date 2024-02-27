@@ -44,17 +44,29 @@ def process_video_df(df):
     df['mov_blinkframe'] = df.index[df['blink']].tolist()
     df['mov_blink_ear'] = df.loc[df['blink'], 'EAR']
     
-    # Calculate durations between blinks using the 'timestamp' column
-    blink_timestamps = df.loc[df['blink'], 'timestamp']
-    df.loc[df['blink'], 'mov_blinkdur'] = blink_timestamps.diff().fillna(0)
+    # Identify blink frames
+    df['is_blink'] = (df['EAR'] < 0.2) & (df['EAR'].shift(1) >= 0.2)
+    blinks = df[df['is_blink']].copy()
     
-    # Aggregate results
-    features = {
-        'mov_blink_ear_mean': df.loc[df['blink'], 'EAR'].mean(),
-        'mov_blink_ear_std': df.loc[df['blink'], 'EAR'].std(),
-        'mov_blink_count': df['blink'].sum(),
-        'mov_blinkdur_mean': blink_timestamps.diff().mean(),
-        'mov_blinkdur_std': blink_timestamps.diff().std(),
-    }
+    # Calculate blink-related features
+    if not blinks.empty:
+        blinks['mov_blinkdur'] = blinks['timestamp'].diff().fillna(0)
+        features = {
+            'mov_blink_ear_mean': blinks['EAR'].mean(),
+            'mov_blink_ear_std': blinks['EAR'].std(),
+            'mov_blink_count': blinks['is_blink'].sum(),
+            'mov_blinkdur_mean': blinks['mov_blinkdur'].mean(),
+            'mov_blinkdur_std': blinks['mov_blinkdur'].std(),
+        }
+    else:
+        # Handle case with no blinks
+        features = {
+            'mov_blink_ear_mean': 0,
+            'mov_blink_ear_std': 0,
+            'mov_blink_count': 0,
+            'mov_blinkdur_mean': 0,
+            'mov_blinkdur_std': 0,
+        }
+
     
     return pd.DataFrame([features])
