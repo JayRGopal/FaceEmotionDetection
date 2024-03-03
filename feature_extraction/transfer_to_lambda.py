@@ -1,25 +1,34 @@
-
-elements = [f"eye_lmk_x_{i}" for i in range(56)] + [f"eye_lmk_y_{i}" for i in range(56)] + [f"x_{i}" for i in range(68)] + [f"y_{i}" for i in range(68)]
-
-def calculate_landmark_displacement(df):
-    # Preparing the column names for X, Y, Z coordinates
-    x_cols = [f'X_{i}' for i in range(68)]
-    y_cols = [f'Y_{i}' for i in range(68)]
-    z_cols = [f'Z_{i}' for i in range(68)]
+def calculate_fac_tremor(df, window_size=5):
+    # Pad the DataFrame at the beginning and end to handle edge cases
+    df_padded = pd.concat([df.iloc[:window_size-1].copy(), df, df.iloc[-window_size+1:].copy()]).reset_index(drop=True)
     
-    # Calculating the displacement for each landmark across frames
-    disp_cols = []
-    for x_col, y_col, z_col in zip(x_cols, y_cols, z_cols):
-        disp_col = f'{x_col}_disp'
-        df[disp_col] = np.sqrt((df[x_col].diff() ** 2) + (df[y_col].diff() ** 2) + (df[z_col].diff() ** 2))
-        disp_cols.append(disp_col)
+    # Initialize a DataFrame to hold the median tremor values for each landmark
+    tremor_medians = pd.DataFrame()
     
-    # Calculating the mean and standard deviation of displacements for each landmark
-    output_df = pd.DataFrame()
-    for col in disp_cols:
-        landmark_num = col.split('_')[1]
-        output_df[f'fac_lmk{landmark_num}disp_mean'] = [df[col].mean()]
-        output_df[f'fac_lmk{landmark_num}disp_std'] = [df[col].std()]
+    for i in range(68):  # For each landmark
+        # Prepare column names
+        x_col = f'X_{i}'
+        y_col = f'Y_{i}'
+        z_col = f'Z_{i}'
+        
+        # Calculate rolling mean positions
+        rolling_means = df_padded[[x_col, y_col, z_col]].rolling(window=window_size, center=True).mean()
+        
+        # Calculate Euclidean distance from each frame's position to the rolling mean position
+        distances = np.sqrt((df_padded[x_col] - rolling_means[x_col])**2 + 
+                            (df_padded[y_col] - rolling_means[y_col])**2 + 
+                            (df_padded[z_col] - rolling_means[z_col])**2)
+        
+        # Calculate median of distances for each window
+        tremor_median = distances.rolling(window=window_size, center=True).median()
+        
+        # Append the median tremor value for the landmark to the tremor_medians DataFrame
+        tremor_medians[f'fac_tremor_median_{i+1:02d}'] = tremor_median
+        
+    # Calculate the mean of median tremors across all frames for each landmark
+    output_df = tremor_medians.mean().rename(lambda x: f'{x}_mean').to_frame().transpose()
     
-    # Return a DataFrame with calculated mean and standard deviation for each landmark displacement
+    # Adjust the DataFrame to start from the original index
+    output_df.index = [0]
+    
     return output_df
