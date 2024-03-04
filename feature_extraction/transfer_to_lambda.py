@@ -1,34 +1,23 @@
-def calculate_fac_tremor(df, window_size=5):
-    # Pad the DataFrame at the beginning and end to handle edge cases
-    df_padded = pd.concat([df.iloc[:window_size-1].copy(), df, df.iloc[-window_size+1:].copy()]).reset_index(drop=True)
+def calculate_pain_expressivity(df):
+    # Calculate fac_paiintsoft for each frame
+    soft_columns = ["AU04_r", "AU06_r", "AU07_r", "AU09_r", "AU10_r", "AU12_r", "AU20_r", "AU26_r"]
+    df['fac_paiintsoft'] = df[soft_columns].mean(axis=1) / 5
     
-    # Initialize a DataFrame to hold the median tremor values for each landmark
-    tremor_medians = pd.DataFrame()
+    # Calculate fac_paiinthard for each frame
+    hard_columns = ["AU04_c", "AU06_c", "AU07_c", "AU09_c", "AU10_c", "AU12_c", "AU20_c", "AU26_c"]
+    df['fac_paiinthard'] = df[hard_columns].apply(lambda row: 0 if 0 in row.values else row['fac_paiintsoft'], axis=1)
     
-    for i in range(68):  # For each landmark
-        # Prepare column names
-        x_col = f'X_{i}'
-        y_col = f'Y_{i}'
-        z_col = f'Z_{i}'
-        
-        # Calculate rolling mean positions
-        rolling_means = df_padded[[x_col, y_col, z_col]].rolling(window=window_size, center=True).mean()
-        
-        # Calculate Euclidean distance from each frame's position to the rolling mean position
-        distances = np.sqrt((df_padded[x_col] - rolling_means[x_col])**2 + 
-                            (df_padded[y_col] - rolling_means[y_col])**2 + 
-                            (df_padded[z_col] - rolling_means[z_col])**2)
-        
-        # Calculate median of distances for each window
-        tremor_median = distances.rolling(window=window_size, center=True).median()
-        
-        # Append the median tremor value for the landmark to the tremor_medians DataFrame
-        tremor_medians[f'fac_tremor_median_{i+1:02d}'] = tremor_median
-        
-    # Calculate the mean of median tremors across all frames for each landmark
-    output_df = tremor_medians.mean().rename(lambda x: f'{x}_mean').to_frame().transpose()
-    
-    # Adjust the DataFrame to start from the original index
-    output_df.index = [0]
-    
-    return output_df
+    # Calculate overall features
+    results = {
+        'fac_paiintsoft_pct': (df[hard_columns] > 0).any(axis=1).mean(),
+        'fac_paiintsoft_mean': df['fac_paiintsoft'].mean(),
+        'fac_paiintsoft_std': df['fac_paiintsoft'].std(),
+        'fac_paiinthard_mean': df['fac_paiinthard'].mean(),
+        'fac_paiinthard_std': df['fac_paiinthard'].std()
+    }
+
+    # Ensure no NaNs - replace NaNs with 0 for aggregation metrics
+    results = {k: 0 if pd.isna(v) else v for k, v in results.items()}
+
+    # Return results as a DataFrame
+    return pd.DataFrame([results])
