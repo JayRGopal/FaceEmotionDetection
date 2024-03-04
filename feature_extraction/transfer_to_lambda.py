@@ -1,23 +1,35 @@
-def calculate_pain_expressivity(df):
-    # Calculate fac_paiintsoft for each frame
-    soft_columns = ["AU04_r", "AU06_r", "AU07_r", "AU09_r", "AU10_r", "AU12_r", "AU20_r", "AU26_r"]
-    df['fac_paiintsoft'] = df[soft_columns].mean(axis=1) / 5
-    
-    # Calculate fac_paiinthard for each frame
-    hard_columns = ["AU04_c", "AU06_c", "AU07_c", "AU09_c", "AU10_c", "AU12_c", "AU20_c", "AU26_c"]
-    df['fac_paiinthard'] = df[hard_columns].apply(lambda row: 0 if 0 in row.values else row['fac_paiintsoft'], axis=1)
-    
-    # Calculate overall features
-    results = {
-        'fac_paiintsoft_pct': (df[hard_columns] > 0).any(axis=1).mean(),
-        'fac_paiintsoft_mean': df['fac_paiintsoft'].mean(),
-        'fac_paiintsoft_std': df['fac_paiintsoft'].std(),
-        'fac_paiinthard_mean': df['fac_paiinthard'].mean(),
-        'fac_paiinthard_std': df['fac_paiinthard'].std()
-    }
+from sklearn.linear_model import LogisticRegressionCV
+from sklearn.preprocessing import binarize
+from scipy.stats import pearsonr
+import numpy as np
 
-    # Ensure no NaNs - replace NaNs with 0 for aggregation metrics
-    results = {k: 0 if pd.isna(v) else v for k, v in results.items()}
-
-    # Return results as a DataFrame
-    return pd.DataFrame([results])
+def find_optimal_alpha_and_correlation(vectors_return, y):
+    # Step 1: Binarize y
+    y_binarized = binarize(y.reshape(-1, 1), threshold=8, copy=True).reshape(-1)
+    
+    results = {}
+    
+    # Step 2: Loop through each key in vectors_return
+    for key, X in vectors_return.items():
+        # Step 4: Find the ideal alpha for LASSO logistic regression model
+        # Note: Cs are the inverse of regularization strength; smaller values specify stronger regularization.
+        # Using Leave-One-Out cross-validation
+        clf = LogisticRegressionCV(
+            Cs=10, cv=len(X), penalty='l1', solver='liblinear', scoring='accuracy', max_iter=1000
+        ).fit(X, y_binarized)
+        
+        # Print the ideal alpha value (regularization strength) used
+        optimal_alpha = 1 / clf.C_[0]
+        print(f'Key {key}: Optimal alpha value is {optimal_alpha}')
+        
+        # Step 5: Use that alpha value to train a logistic regression model with LASSO
+        predictions = clf.predict(X)
+        
+        # Step 7: Get the Pearson's R correlation and p-value
+        R_val, p_val = pearsonr(predictions, y_binarized)
+        
+        # Update results dictionary
+        results[key] = (R_val, p_val)
+    
+    # Step 8: Output the dictionary mapping each key to (Pearson_R_val, p_val)
+    return results
