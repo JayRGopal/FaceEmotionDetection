@@ -1,11 +1,12 @@
 from sklearn.linear_model import LogisticRegressionCV
+from sklearn.model_selection import LeaveOneOut
 from sklearn.preprocessing import binarize
-from scipy.stats import pearsonr
 import numpy as np
+from sklearn.metrics import roc_auc_score, accuracy_score
 
-def find_optimal_alpha_and_correlation(vectors_return, y):
+def find_optimal_alpha_and_binary_pred(vectors_return, y):
     # Step 1: Binarize y
-    y_binarized = binarize(y.reshape(-1, 1), threshold=8, copy=True).reshape(-1)
+    y_binarized = binarize(y.reshape(-1, 1), threshold=9.99, copy=True).reshape(-1)
     
     results = {}
     
@@ -15,21 +16,26 @@ def find_optimal_alpha_and_correlation(vectors_return, y):
         # Note: Cs are the inverse of regularization strength; smaller values specify stronger regularization.
         # Using Leave-One-Out cross-validation
         clf = LogisticRegressionCV(
-            Cs=10, cv=len(X), penalty='l1', solver='liblinear', scoring='accuracy', max_iter=1000
+            Cs=10, cv=LeaveOneOut(), penalty='l1', solver='liblinear', scoring='accuracy', max_iter=1000
         ).fit(X, y_binarized)
         
         # Print the ideal alpha value (regularization strength) used
         optimal_alpha = 1 / clf.C_[0]
-        print(f'Key {key}: Optimal alpha value is {optimal_alpha}')
+        print(f'Time Window {key} Minutes: Optimal alpha value is {optimal_alpha}')
         
-        # Step 5: Use that alpha value to train a logistic regression model with LASSO
+        # Step 5: AUROC and accuracy
+        proba = clf.predict_proba(X)[:, 1]
         predictions = clf.predict(X)
-        
-        # Step 7: Get the Pearson's R correlation and p-value
-        R_val, p_val = pearsonr(predictions, y_binarized)
+
+        accuracy = accuracy_score(y_binarized, predictions)
+
+        auroc = roc_auc_score(y_binarized, proba)
         
         # Update results dictionary
-        results[key] = (R_val, p_val)
+        results[key] = (accuracy, auroc)
+
+        print(f"Time Window {key} Minutes -- Accuracy: {accuracy}, AUROC: {auroc}")
     
-    # Step 8: Output the dictionary mapping each key to (Pearson_R_val, p_val)
+    # Step 6: Output the dictionary mapping each key to (accuracy, auroc)
     return results
+
