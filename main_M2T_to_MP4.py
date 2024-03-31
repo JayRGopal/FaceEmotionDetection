@@ -5,9 +5,8 @@ import moviepy.editor as moviepy
 import shutil
 
 # Define patient directory
-ptDir = Path('J:\\S23_203\\NKT')
-target = 'E:\\S203_MP4'
-
+ptDir = os.path.abspath('/home/klab/NAS/SEEG-RAW-DATA/S24_217')
+target = os.path.abspath('/home/klab/NAS/Analysis/MP4/S24_217_MP4')
 
 # Convert M2T files to MP4
 def convert_to_mp4(m2t_file):
@@ -34,16 +33,19 @@ for path, folder, files in os.walk(start_dir):
 
 # Copy MP4 files to another destination
 
-source = ptDir
-start_dir = source
+start_dir = ptDir
 for path, folder, files in os.walk(start_dir):
     for file in files:
         if file.endswith('.mp4'):
             if os.path.isfile(os.path.join(target,file)):
                 print("Already copied: %s" % file)
             else:
-                shutil.copy(os.path.join(path, file), os.path.join(target,file))
-                print("Copying and deleting: %s" % file)
-                os.remove(os.path.join(path, file))
+                try:
+                    shutil.copy(os.path.join(path, file), os.path.join(target,file))
+                    print("Copying and deleting: %s" % file)
+                    os.remove(os.path.join(path, file))
+                except:
+                    print("Error with copying process for this file: %s" % file)
         else:
             pass
+
