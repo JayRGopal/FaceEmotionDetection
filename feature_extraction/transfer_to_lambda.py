@@ -1,10 +1,10 @@
 
-def plot_au_presence(data_list):
+def plot_au_presence_scatterplots(data_list):
     # Assuming data_list is a list of dictionaries in the order: Filtered, Reverse Filtered, Unfiltered
     
     conditions = ['Filtered', 'Reverse Filtered', 'Unfiltered']
     
-    # Step 1: Extract unique AUs and video filenames
+    # Extract unique AUs and video filenames
     AUs = set()
     video_filenames = set()
     for data in data_list:
@@ -12,32 +12,46 @@ def plot_au_presence(data_list):
             for video_filename, df in video_df_map.items():
                 video_filenames.add(video_filename)
                 AUs.update(df['AU'].unique())
-    
-    # Step 2: Plotting
+
+    # Plotting
     for AU in AUs:
-        fig, ax = plt.subplots(figsize=(len(video_filenames) * 1.5, 8))
+        fig, axs = plt.subplots(1, 2, figsize=(15, 6), sharex='none', sharey='none')
         
-        # Collecting pres_pct values for each condition and video for the current AU
-        pres_pct_values = []
-        for data in data_list:
-            values_for_videos = []
+        pres_pct_values = {condition: [] for condition in conditions}
+        for condition, data in zip(conditions, data_list):
             for video_filename in sorted(video_filenames):
                 df = data[next(iter(data))][video_filename]
-                pres_pct = df[df['AU'] == AU]['pres_pct'].mean()  # Average if there are multiple rows for the AU
-                values_for_videos.append(pres_pct)
-            pres_pct_values.append(values_for_videos)
-        
-        # Plotting
-        x = range(len(video_filenames))
-        width = 0.2  # Width of the bars
-        for i, condition_values in enumerate(pres_pct_values):
-            ax.bar([p + i*width for p in x], condition_values, width, label=conditions[i])
-        
-        ax.set_ylabel('AU Presence Percentage')
-        ax.set_title(f'AU {AU} Presence Percentage by Video and Condition')
-        ax.set_xticks([p + width for p in x])
-        ax.set_xticklabels(sorted(video_filenames), rotation=45, ha='right')
-        ax.legend(title='Condition')
-        
+                if df[df['AU'] == AU].empty:
+                    pres_pct = 0
+                else:
+                    pres_pct = df[df['AU'] == AU]['pres_pct'].mean()
+                pres_pct_values[condition].append(pres_pct)
+
+        # Scatterplot 1: Reverse Filtered on y-axis, Filtered on x-axis
+        r_value, p_value = pearsonr(pres_pct_values['Filtered'], pres_pct_values['Reverse Filtered'])
+        sns.regplot(ax=axs[0], x=pres_pct_values['Filtered'], y=pres_pct_values['Reverse Filtered'], ci=None, label=f"Pearson's r: {r_value:.2f}, p: {p_value:.2e}")
+        axs[0].set_title('Filtered vs Reverse Filtered AU Pres Pct')
+        axs[0].set_xlabel('Filtered AU Pres Pct')
+        axs[0].set_ylabel('Reverse Filtered AU Pres Pct')
+        axs[0].legend()
+
+        # Adjust y-axis limits based on Reverse Filtered data
+        axs[0].set_ylim(bottom=min(pres_pct_values['Reverse Filtered']) - 5, top=max(pres_pct_values['Reverse Filtered']) + 5)
+
+        # Scatterplot 2: Unfiltered on y-axis, Filtered on x-axis
+        r_value, p_value = pearsonr(pres_pct_values['Filtered'], pres_pct_values['Unfiltered'])
+        sns.regplot(ax=axs[1], x=pres_pct_values['Filtered'], y=pres_pct_values['Unfiltered'], ci=None, label=f"Pearson's r: {r_value:.2f}, p: {p_value:.2e}")
+        axs[1].set_title('Filtered vs Unfiltered AU Pres Pct')
+        axs[1].set_xlabel('Filtered AU Pres Pct')
+        axs[1].set_ylabel('Unfiltered AU Pres Pct')
+        axs[1].legend()
+
+        # Adjust y-axis limits based on Unfiltered data
+        axs[1].set_ylim(bottom=min(pres_pct_values['Unfiltered']) - 5, top=max(pres_pct_values['Unfiltered']) + 5)
+
+        # Adjusting x-axis limits based on Filtered data
+        for ax in axs:
+            ax.set_xlim(left=min(pres_pct_values['Filtered']) - 5, right=max(pres_pct_values['Filtered']) + 5)
+
         plt.tight_layout()
         plt.show()
