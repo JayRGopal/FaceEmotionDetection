@@ -20,7 +20,7 @@ VIDEO_DIRECTORY = os.path.abspath('/home/klab/NAS/OutpatientVideos/S12/')
 OUTPUT_DIRECTORY = os.path.abspath('/home/klab/NAS/Analysis/outputs_OpenFace/S12/') 
 
 
-JUST_AU = False
+JUST_AU = True
 AU_STATIC = True
 
 

@@ -12,10 +12,10 @@ import gc
 
 
 # Main parameters
-VIDEO_DIRECTORY = os.path.abspath('/run/user/1000/gvfs/smb-share:server=moss_klab.local,share=mossdrive/OutpatientVideos/S36')
-SUBJECT_FACE_IMAGE_FOLDER = os.path.abspath('/run/user/1000/gvfs/smb-share:server=moss_klab.local,share=mossdrive/OutpatientVideos/S36/targetFace')
-OUTPUT_DIRECTORY = os.path.abspath('/home/klab/NAS/Analysis/outputs_Combined_Outpt/S36/') 
-OUTPUT_DIRECTORY_PARTIAL_VERIFY = os.path.abspath('/home/klab/NAS/Analysis/outputs_Combined_OutPt_PatData/S36/') 
+VIDEO_DIRECTORY = os.path.abspath('/run/user/1000/gvfs/smb-share:server=moss_klab.local,share=mossdrive/OutpatientVideos/S35')
+SUBJECT_FACE_IMAGE_FOLDER = os.path.abspath('/run/user/1000/gvfs/smb-share:server=moss_klab.local,share=mossdrive/OutpatientVideos/S35/targetFace')
+OUTPUT_DIRECTORY = os.path.abspath('/home/klab/NAS/Analysis/outputs_Combined_Outpt/S35/') 
+OUTPUT_DIRECTORY_PARTIAL_VERIFY = os.path.abspath('/home/klab/NAS/Analysis/outputs_Combined_OutPt_PatData/S35/') 
 
 
 
@@ -71,7 +71,7 @@ Verify_Every_Frame = True # Verify all frames, even if only 1 person is detected
 VERIFY_THRESHOLD = 0.32 # Maximum distance threshold (below this, faces are deemed "verified")
 Face_Detector = 'MTCNN' # Options: ['MTCNN', 'RetinaFace']
 
-# Set the parameters
+# Additional parameters
 BATCH_SIZE = 2000
 HSE_MODEL_TYPE = 'mobilenet_7.h5'
 OPENGRAPHAU_MODEL_TYPE = 'OpenGraphAU'

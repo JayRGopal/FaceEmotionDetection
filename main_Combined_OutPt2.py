@@ -12,10 +12,11 @@ import gc
 
 
 # Main parameters
-VIDEO_DIRECTORY = os.path.abspath('inputs/')
-SUBJECT_FACE_IMAGE_FOLDER = os.path.abspath('deepface/')
-OUTPUT_DIRECTORY = os.path.abspath('outputs_Combined_Outpt/Pt1/') 
-OUTPUT_DIRECTORY_PARTIAL_VERIFY = os.path.abspath('outputs_Combined_OutPt_PatData/Pt1/') 
+VIDEO_DIRECTORY = os.path.abspath('/run/user/1000/gvfs/smb-share:server=moss_klab.local,share=mossdrive/OutpatientVideos/S39')
+SUBJECT_FACE_IMAGE_FOLDER = os.path.abspath('/run/user/1000/gvfs/smb-share:server=moss_klab.local,share=mossdrive/OutpatientVideos/S39/targetFace')
+OUTPUT_DIRECTORY = os.path.abspath('/home/klab/NAS/Analysis/outputs_Combined_Outpt/S39/') 
+OUTPUT_DIRECTORY_PARTIAL_VERIFY = os.path.abspath('/home/klab/NAS/Analysis/outputs_Combined_OutPt_PatData/S39/') 
+
 
 
 # Device
