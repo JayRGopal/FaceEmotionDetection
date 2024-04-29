@@ -12,10 +12,11 @@ import gc
 
 
 # Main parameters
-VIDEO_DIRECTORY = os.path.abspath('/run/user/1000/gvfs/smb-share:server=moss_klab.local,share=mossdrive/OutpatientVideos/S36')
-SUBJECT_FACE_IMAGE_FOLDER = os.path.abspath('/run/user/1000/gvfs/smb-share:server=moss_klab.local,share=mossdrive/OutpatientVideos/S36/targetFace')
-OUTPUT_DIRECTORY = os.path.abspath('/home/klab/NAS/Analysis/outputs_Combined_Outpt/S36/') 
-OUTPUT_DIRECTORY_PARTIAL_VERIFY = os.path.abspath('/home/klab/NAS/Analysis/outputs_Combined_OutPt_PatData/S36/') 
+PAT_NOW = "S36"
+VIDEO_DIRECTORY = os.path.abspath(f'/run/user/1000/gvfs/smb-share:server=moss_klab.local,share=mossdrive/OutpatientVideos/{PAT_NOW}')
+SUBJECT_FACE_IMAGE_FOLDER = os.path.abspath(f'/run/user/1000/gvfs/smb-share:server=moss_klab.local,share=mossdrive/OutpatientVideos/{PAT_NOW}/targetFace')
+OUTPUT_DIRECTORY = os.path.abspath(f'/home/klab/NAS/Analysis/outputs_Combined_Outpt/{PAT_NOW}/') 
+OUTPUT_DIRECTORY_PARTIAL_VERIFY = os.path.abspath(f'/home/klab/NAS/Analysis/outputs_Combined_OutPt_PatData/{PAT_NOW}/') 
 
 
 

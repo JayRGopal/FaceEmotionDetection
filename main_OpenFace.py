@@ -16,8 +16,9 @@ If you're on Windows, use this link: https://github.com/TadasBaltrusaitis/OpenFa
 
 
 # Set the parameters
-VIDEO_DIRECTORY = os.path.abspath('/home/klab/NAS/OutpatientVideos/S12/')
-OUTPUT_DIRECTORY = os.path.abspath('/home/klab/NAS/Analysis/outputs_OpenFace/S12/') 
+PAT_NOW = "S12"
+VIDEO_DIRECTORY = os.path.abspath(f'/home/klab/NAS/OutpatientVideos/{PAT_NOW}/')
+OUTPUT_DIRECTORY = os.path.abspath(f'/home/klab/NAS/Analysis/outputs_OpenFace/{PAT_NOW}/') 
 
 
 JUST_AU = True
