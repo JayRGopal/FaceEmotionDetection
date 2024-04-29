@@ -25,6 +25,7 @@ def process_videos(video_dir, csv_dir, cut_video_folder):
                 if os.path.exists(out_path):
                     print(f'Skipping {out_path}: cut video already exists!')
                 else:
+                  print(f'Starting to cut video to save to {out_path}')
                   df = pd.read_csv(csv_path)
                   successful_frames = df[df['success'] == 1]['frame'].to_numpy()
                   frames_to_include = set(successful_frames)
