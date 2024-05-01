@@ -35,9 +35,10 @@ def process_videos(video_dir, csv_dir, cut_video_folder):
                   for frame in successful_frames:
                     next_frame = int(frame) + 5
                     if next_frame in successful_frames:
-                        for i in range(int(frame), int(frame) + 6):
-                            frames_to_include.update(i)
-
+                        frames_to_include.update(range(int(frame), int(frame) + 6))
+                  
+                  print(frames_to_include)
+                  
                   cap = cv2.VideoCapture(video_path)
                   fourcc = cv2.VideoWriter_fourcc(*'mp4v')
                   out = cv2.VideoWriter(out_path, fourcc, cap.get(cv2.CAP_PROP_FPS), 
