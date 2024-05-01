@@ -36,7 +36,7 @@ def process_videos(video_dir, csv_dir, cut_video_folder):
                   # Check pairs of frames at 0 and 5, 10 and 15, etc.
                   for frame in successful_frames:
                     if (frame % 10 == 0) and (frame + 5 in successful_frames):
-                        frames_to_include.update(range(frame, frame + 6))
+                        frames_to_include.update(range(int(frame), int(frame) + 6))
 
 
                   cap = cv2.VideoCapture(video_path)
