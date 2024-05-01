@@ -30,14 +30,10 @@ def process_videos(video_dir, csv_dir, cut_video_folder):
                   successful_frames = df[df['success'] == 1]['frame'].to_numpy()
                   frames_to_include = set()
 
-                  #   for i in range(1, 5):
-                  #       frames_to_include.update(successful_frames + i)
                   for frame in successful_frames:
                     next_frame = int(frame) + 5
                     if next_frame in successful_frames:
                         frames_to_include.update(range(int(frame), int(frame) + 6))
-                  
-                  print(frames_to_include)
                   
                   cap = cv2.VideoCapture(video_path)
                   fourcc = cv2.VideoWriter_fourcc(*'mp4v')
