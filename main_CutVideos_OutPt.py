@@ -3,12 +3,6 @@ import pandas as pd
 import cv2
 import numpy as np
 
-# Set the directories
-PAT_NOW = 'S12'
-VIDEO_DIRECTORY = os.path.abspath(f'/home/klab/NAS/OutpatientVideos/{PAT_NOW}/')
-CSV_DIRECTORY = os.path.abspath(f'/home/klab/NAS/Analysis/outputs_Combined_Outpt/{PAT_NOW}/') 
-CUT_VIDEO_FOLDER = os.path.abspath(f'/home/klab/NAS/OutpatientVideos_PatientOnly/{PAT_NOW}/')
-
 
 def process_videos(video_dir, csv_dir, cut_video_folder):
     if not os.path.exists(cut_video_folder):
@@ -56,4 +50,11 @@ def process_videos(video_dir, csv_dir, cut_video_folder):
             else:
                 print(f"No CSV found for {video_path}")
 
-process_videos(VIDEO_DIRECTORY, CSV_DIRECTORY, CUT_VIDEO_FOLDER)
+# Set the directories
+PATIENT_LIST = ["S09", "S11", "S12", "S15a", "S16", "S19", "S20", "S22"]
+for PAT_NOW in PATIENT_LIST:
+    VIDEO_DIRECTORY = os.path.abspath(f'/home/klab/NAS/OutpatientVideos/{PAT_NOW}/')
+    CSV_DIRECTORY = os.path.abspath(f'/home/klab/NAS/Analysis/outputs_Combined_Outpt/{PAT_NOW}/') 
+    CUT_VIDEO_FOLDER = os.path.abspath(f'/home/klab/NAS/OutpatientVideos_PatientOnly/{PAT_NOW}/')
+
+    process_videos(VIDEO_DIRECTORY, CSV_DIRECTORY, CUT_VIDEO_FOLDER)
