@@ -1,1 +1,2 @@
-Danny_Labels.replace({col: r'(\d{2}):(\d):(\d{2})$' for col in Danny_Labels.columns if 'Time' in col}, {'Time': r'\1:0\2:\3'}, regex=True, inplace=True)
+import re
+Danny_Labels.loc[:, Danny_Labels.columns.str.contains('Time')] = Danny_Labels.loc[:, Danny_Labels.columns.str.contains('Time')].applymap(lambda x: re.sub(r'(?<=:)(\d)(?=:)', r'0\1', x) if isinstance(x, str) else x)
