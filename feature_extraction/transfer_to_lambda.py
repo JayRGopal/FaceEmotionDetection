@@ -1,7 +1,4 @@
 def convert_time(df1, df2):
-    # df1 has time start and time end for behavior
-    # df2 has mapping from filename to video start
-
     # Create a copy of the first DataFrame
     modified_df = df1.copy()
 
@@ -14,10 +11,14 @@ def convert_time(df1, df2):
         if isinstance(video_start, datetime.time):
             # If it's a datetime.time object, format it to a string and convert to timedelta
             video_start_timedelta = pd.to_timedelta(video_start.strftime('%H:%M:%S'))
+        elif isinstance(video_start, pd.Timestamp):
+            # If it's a Timestamp, convert to timedelta since midnight
+            video_start_timedelta = pd.to_timedelta(video_start.time().strftime('%H:%M:%S'))
         else:
-            # Otherwise, assume it's already in a format that can be converted directly to timedelta
+            # Otherwise, directly use it as a timedelta (assuming it's either a string or timedelta)
             video_start_timedelta = pd.to_timedelta(video_start)
 
+        # Convert time fields based on specific format for different patients
         if PAT_SHORT_NAME == 'S_150':
             # For this patient, the manual labels are in format mm:ss.
             time_delta = pd.to_timedelta('00:' + row[time_field])
