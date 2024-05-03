@@ -15,38 +15,41 @@ def convert_time(df1, df2):
             return pd.NaT  # Handling missing video start times
 
         if isinstance(video_start, datetime.time):
-            # If it's a datetime.time object, format it to a string and convert to timedelta
             video_start_timedelta = pd.to_timedelta(video_start.strftime('%H:%M:%S'))
         elif isinstance(video_start, pd.Timestamp):
-            # If it's a Timestamp, convert to timedelta since midnight
             video_start_timedelta = pd.to_timedelta(video_start.time().strftime('%H:%M:%S'))
         else:
-            # Otherwise, directly use it as a timedelta (assuming it's either a string or timedelta)
-            video_start_timedelta = pd.to_timedelta(video_start)
+            try:
+                video_start_timedelta = pd.to_timedelta(video_start)
+            except ValueError:
+                return pd.NaT  # If conversion fails, return NaT
 
-        # Handling time fields correctly based on their type
+        # Extracting and converting the time field, handling potential NaN values
         time_value = row[time_field]
+        if pd.isna(time_value):
+            return pd.NaT  # Handle NaN values gracefully
+        
         if isinstance(time_value, datetime.time):
             time_str = time_value.strftime('%H:%M:%S')
         else:
-            time_str = time_value
+            time_str = str(time_value)  # Ensure conversion to string if not datetime.time
 
-        if PAT_SHORT_NAME == 'S_150':
-            # For this patient, the manual labels are in format mm:ss.
-            time_delta = pd.to_timedelta('00:' + time_str)
-        else:
-            # For all other patients, manual labels are in format mm:ss:00.
-            time_delta = pd.to_timedelta('00:' + time_str[:-3])
+        try:
+            if PAT_SHORT_NAME == 'S_150':
+                time_delta = pd.to_timedelta('00:' + time_str)
+            else:
+                time_delta = pd.to_timedelta('00:' + time_str[:-3])
+        except ValueError:
+            return pd.NaT  # Handle errors in time conversion
 
         return video_start_timedelta + time_delta
 
     # Apply the conversion function to the 'Time Start' and 'Time End'
-    try:
-        modified_df['Time Start'] = modified_df.apply(lambda row: handle_time_conversion(row, 'Time Start'), axis=1)
-        modified_df['Time End'] = modified_df.apply(lambda row: handle_time_conversion(row, 'Time End'), axis=1)
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        # Optionally, return None or handle the error as needed
+    modified_df['Time Start'] = modified_df.apply(lambda row: handle_time_conversion(row, 'Time Start'), axis=1)
+    modified_df['Time End'] = modified_df.apply(lambda row: handle_time_conversion(row, 'Time End'), axis=1)
 
     # Return the modified DataFrame
     return modified_df
+
+# Example usage
+# Ensure df1 and df2 are properly prepared and PAT_SHORT_NAME is defined.
