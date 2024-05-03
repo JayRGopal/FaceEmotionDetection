@@ -1,55 +1,36 @@
-import pandas as pd
-import datetime
+def buffer_neither(smiles_df, sleep_df):
+    # returns a single-column pandas df with times when:
+    # the surrounding 2 minutes (buffer) have neither a smile event nor a sleep event
+    # note: you can replace smiles_df with any df that has events (e.g. yawns).
+    # For random sampling, it's looking at a discrete list of datetimes separated by 10 seconds
 
-def convert_time(df1, df2):
-    # Create a copy of the first DataFrame
-    modified_df = df1.copy()
+    # Find the earliest and latest times from smiles_df
+    smiles_earliest = smiles_df['Time Start'].min()
+    smiles_latest = smiles_df['Time End'].max()
 
-    # Create a dictionary mapping 'Filename' to 'VideoStart'
-    filename_to_videostart = dict(zip(df2['Filename'], df2['VideoStart']))
+    # Find the earliest and latest times from sleep_df
+    sleep_earliest = sleep_df['Time Start'].min()
+    sleep_latest = sleep_df['Time End'].max()
 
-    # Define a function to handle time conversion based on the type of VideoStart and time fields
-    def handle_time_conversion(row, time_field):
-        video_start = filename_to_videostart.get(row['Filename'], None)
-        if video_start is None:
-            return pd.NaT  # Handling missing video start times
+    # Determine the start and end times
+    start_time = min(smiles_earliest, sleep_earliest)
+    end_time = max(smiles_latest, sleep_latest)
 
-        if isinstance(video_start, datetime.time):
-            video_start_timedelta = pd.to_timedelta(video_start.strftime('%H:%M:%S'))
-        elif isinstance(video_start, pd.Timestamp):
-            video_start_timedelta = pd.to_timedelta(video_start.time().strftime('%H:%M:%S'))
-        else:
-            try:
-                video_start_timedelta = pd.to_timedelta(video_start)
-            except ValueError:
-                return pd.NaT  # If conversion fails, return NaT
+    # Create a DataFrame with fixed frequency for the time range
+    time_range = pd.date_range(start=start_time, end=end_time, freq='10S')
+    tracking_df = pd.DataFrame({'Time': time_range, 'BufferSafe': False})
 
-        # Extracting and converting the time field, handling potential NaN values
-        time_value = row[time_field]
-        if pd.isna(time_value):
-            return pd.NaT  # Handle NaN values gracefully
-        
-        if isinstance(time_value, datetime.time):
-            time_str = time_value.strftime('%H:%M:%S')
-        else:
-            time_str = str(time_value)  # Ensure conversion to string if not datetime.time
+    # Determine the BufferSafe column values
+    for i in range(len(tracking_df)):
+        time = tracking_df.loc[i, 'Time']
+        buffer_before = time - pd.Timedelta(minutes=1)
+        buffer_after = time + pd.Timedelta(minutes=1)
 
-        try:
-            if PAT_SHORT_NAME == 'S_150':
-                time_delta = pd.to_timedelta('00:' + time_str)
-            else:
-                time_delta = pd.to_timedelta('00:' + time_str[:-3])
-        except ValueError:
-            return pd.NaT  # Handle errors in time conversion
+        has_smile_within_buffer = smiles_df[((smiles_df['Time Start'] <= buffer_after) & (smiles_df['Time End'] >= buffer_before))].shape[0] > 0
+        has_sleep_within_buffer = sleep_df[((sleep_df['Time Start'] <= buffer_after) & (sleep_df['Time End'] >= buffer_before))].shape[0] > 0
+        tracking_df.loc[i, 'BufferSafe'] = not (has_smile_within_buffer or has_sleep_within_buffer)
 
-        return video_start_timedelta + time_delta
+    # Filter the BufferSafe time intervals
+    non_smile_non_sleep_buffer_times = tracking_df[tracking_df['BufferSafe']]['Time'].reset_index(drop=True)
 
-    # Apply the conversion function to the 'Time Start' and 'Time End'
-    modified_df['Time Start'] = modified_df.apply(lambda row: handle_time_conversion(row, 'Time Start'), axis=1)
-    modified_df['Time End'] = modified_df.apply(lambda row: handle_time_conversion(row, 'Time End'), axis=1)
-
-    # Return the modified DataFrame
-    return modified_df
-
-# Example usage
-# Ensure df1 and df2 are properly prepared and PAT_SHORT_NAME is defined.
+    return non_smile_non_sleep_buffer_times
