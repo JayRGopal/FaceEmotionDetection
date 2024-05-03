@@ -1,3 +1,6 @@
+import pandas as pd
+import datetime
+
 def convert_time(df1, df2):
     # Create a copy of the first DataFrame
     modified_df = df1.copy()
@@ -5,7 +8,7 @@ def convert_time(df1, df2):
     # Create a dictionary mapping 'Filename' to 'VideoStart'
     filename_to_videostart = dict(zip(df2['Filename'], df2['VideoStart']))
 
-    # Define a function to handle time conversion based on the type of VideoStart
+    # Define a function to handle time conversion based on the type of VideoStart and time fields
     def handle_time_conversion(row, time_field):
         video_start = filename_to_videostart[row['Filename']]
         if isinstance(video_start, datetime.time):
@@ -18,13 +21,19 @@ def convert_time(df1, df2):
             # Otherwise, directly use it as a timedelta (assuming it's either a string or timedelta)
             video_start_timedelta = pd.to_timedelta(video_start)
 
-        # Convert time fields based on specific format for different patients
+        # Handling time fields correctly based on their type
+        time_value = row[time_field]
+        if isinstance(time_value, datetime.time):
+            time_str = time_value.strftime('%H:%M:%S')
+        else:
+            time_str = time_value
+
         if PAT_SHORT_NAME == 'S_150':
             # For this patient, the manual labels are in format mm:ss.
-            time_delta = pd.to_timedelta('00:' + row[time_field])
+            time_delta = pd.to_timedelta('00:' + time_str)
         else:
             # For all other patients, manual labels are in format mm:ss:00.
-            time_delta = pd.to_timedelta('00:' + row[time_field][:-3])
+            time_delta = pd.to_timedelta('00:' + time_str[:-3])
 
         return video_start_timedelta + time_delta
 
