@@ -10,7 +10,10 @@ def convert_time(df1, df2):
 
     # Define a function to handle time conversion based on the type of VideoStart and time fields
     def handle_time_conversion(row, time_field):
-        video_start = filename_to_videostart[row['Filename']]
+        video_start = filename_to_videostart.get(row['Filename'], None)
+        if video_start is None:
+            return pd.NaT  # Handling missing video start times
+
         if isinstance(video_start, datetime.time):
             # If it's a datetime.time object, format it to a string and convert to timedelta
             video_start_timedelta = pd.to_timedelta(video_start.strftime('%H:%M:%S'))
@@ -38,8 +41,12 @@ def convert_time(df1, df2):
         return video_start_timedelta + time_delta
 
     # Apply the conversion function to the 'Time Start' and 'Time End'
-    modified_df['Time Start'] = modified_df.apply(lambda row: handle_time_conversion(row, 'Time Start'), axis=1)
-    modified_df['Time End'] = modified_df.apply(lambda row: handle_time_conversion(row, 'Time End'), axis=1)
+    try:
+        modified_df['Time Start'] = modified_df.apply(lambda row: handle_time_conversion(row, 'Time Start'), axis=1)
+        modified_df['Time End'] = modified_df.apply(lambda row: handle_time_conversion(row, 'Time End'), axis=1)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        # Optionally, return None or handle the error as needed
 
     # Return the modified DataFrame
     return modified_df
