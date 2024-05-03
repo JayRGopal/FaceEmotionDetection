@@ -8,39 +8,28 @@ def convert_time(df1, df2):
     # Create a dictionary mapping 'Filename' to 'VideoStart'
     filename_to_videostart = dict(zip(df2['Filename'], df2['VideoStart']))
 
-    # Convert 'Time Start' and 'Time End' columns to datetime based on the filename
-    if PAT_SHORT_NAME == 'S_150':
-      # For this patient, the manual labels are in format mm:ss.
+    # Define a function to handle time conversion based on the type of VideoStart
+    def handle_time_conversion(row, time_field):
+        video_start = filename_to_videostart[row['Filename']]
+        if isinstance(video_start, datetime.time):
+            # If it's a datetime.time object, format it to a string and convert to timedelta
+            video_start_timedelta = pd.to_timedelta(video_start.strftime('%H:%M:%S'))
+        else:
+            # Otherwise, assume it's already in a format that can be converted directly to timedelta
+            video_start_timedelta = pd.to_timedelta(video_start)
 
-      modified_df['Time Start'] = modified_df.apply(
-          lambda row: pd.to_datetime(filename_to_videostart[row['Filename']]) +
-                      pd.to_timedelta('00:' + row['Time Start'] + ' minutes'),
-          axis=1
-      )
-      modified_df['Time End'] = modified_df.apply(
-          lambda row: pd.to_datetime(filename_to_videostart[row['Filename']]) +
-                      pd.to_timedelta('00:' + row['Time End'] + ' minutes'),
-          axis=1
-      )
-    else:
-      # For all other patients, manual labels are in format mm:ss:00.
+        if PAT_SHORT_NAME == 'S_150':
+            # For this patient, the manual labels are in format mm:ss.
+            time_delta = pd.to_timedelta('00:' + row[time_field])
+        else:
+            # For all other patients, manual labels are in format mm:ss:00.
+            time_delta = pd.to_timedelta('00:' + row[time_field][:-3])
 
-      modified_df['Time Start'] = modified_df.apply(
-          lambda row: pd.to_datetime(filename_to_videostart[row['Filename']]) +
-                      pd.to_timedelta('00:' + row['Time Start'][:-3] + ' minutes'),
-          axis=1
-      )
-      modified_df['Time End'] = modified_df.apply(
-          lambda row: pd.to_datetime(filename_to_videostart[row['Filename']]) +
-                      pd.to_timedelta('00:' + row['Time End'][:-3] + ' minutes'),
-          axis=1
-      )
+        return video_start_timedelta + time_delta
+
+    # Apply the conversion function to the 'Time Start' and 'Time End'
+    modified_df['Time Start'] = modified_df.apply(lambda row: handle_time_conversion(row, 'Time Start'), axis=1)
+    modified_df['Time End'] = modified_df.apply(lambda row: handle_time_conversion(row, 'Time End'), axis=1)
 
     # Return the modified DataFrame
     return modified_df
-
-
-
-
-TypeError: 'datetime.time' object is not subscriptable
-
