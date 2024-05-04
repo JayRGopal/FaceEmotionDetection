@@ -17,7 +17,6 @@ import datetime
 def add_time_strings(t1, t2):
     total_seconds = sum(x.total_seconds() for x in [pd.to_timedelta(t) for t in [t1, t2]])
     return str(pd.to_timedelta(total_seconds, unit='s'))
-
 def convert_time(df1, df2):
     if df1.empty:
         return df1
@@ -28,18 +27,31 @@ def convert_time(df1, df2):
 
     def handle_time_conversion(row, time_field):
         video_start = filename_to_videostart.get(row['Filename'], pd.NaT)
+        print(f"Video start for {row['Filename']}: {video_start}")
+
         if pd.isna(video_start):
             return pd.NaT
 
-        video_start_timedelta = pd.to_timedelta(video_start.strftime('%H:%M:%S') if isinstance(video_start, datetime.datetime) else video_start)
+        try:
+            video_start_timedelta = pd.to_timedelta(video_start.strftime('%H:%M:%S') if isinstance(video_start, datetime.datetime) else video_start)
+        except Exception as e:
+            print(f"Failed to convert video start to timedelta: {e}")
+            return pd.NaT
 
         time_value = row[time_field]
+        print(f"Original time value for {time_field}: {time_value}")
+
         if pd.isna(time_value):
             return pd.NaT
 
-        time_str = time_value.strftime('%H:%M:%S') if isinstance(time_value, datetime.time) else time_value
-
-        return add_time_strings(video_start_timedelta, pd.to_timedelta(time_str))
+        try:
+            time_str = time_value.strftime('%H:%M:%S') if isinstance(time_value, datetime.time) else time_value
+            final_time = add_time_strings(video_start_timedelta, pd.to_timedelta(time_str))
+            print(f"Converted time for {time_field}: {final_time}")
+            return final_time
+        except Exception as e:
+            print(f"Failed to process time field {time_field}: {e}")
+            return pd.NaT
 
     modified_df['Time Start'] = modified_df.apply(lambda row: handle_time_conversion(row, 'Time Start'), axis=1)
     modified_df['Time End'] = modified_df.apply(lambda row: handle_time_conversion(row, 'Time End'), axis=1)
