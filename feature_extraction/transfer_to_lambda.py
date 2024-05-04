@@ -33,8 +33,8 @@ def convert_time(df1, df2):
             return None
 
         try:
-            # Convert video start to a timedelta for consistent operation.
-            video_start_timedelta = pd.to_timedelta(video_start.strftime('%H:%M:%S') if isinstance(video_start, datetime.datetime) else video_start)
+            # Get the base date from the video start datetime.
+            base_date = video_start.date() if isinstance(video_start, datetime.datetime) else pd.to_datetime(video_start).date()
         except Exception:
             return None
 
@@ -43,10 +43,11 @@ def convert_time(df1, df2):
             return None
 
         try:
-            # Convert time value to a string and then to a timedelta.
+            # Convert the time value to a string and then to a timedelta.
             time_str = time_value.strftime('%H:%M:%S') if isinstance(time_value, datetime.time) else time_value
             final_timedelta = pd.to_timedelta(time_str)
-            final_time = (pd.Timestamp('today').normalize() + video_start_timedelta + final_timedelta)
+            # Create a complete datetime object using the base date and the time from the timedelta.
+            final_time = pd.Timestamp(base_date) + final_timedelta
             return final_time
         except Exception:
             return None
