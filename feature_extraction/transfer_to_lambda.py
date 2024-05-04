@@ -31,27 +31,20 @@ def convert_time(df1, df2):
         if pd.isna(video_start):
             return pd.NaT
 
-        try:
-            video_start_timedelta = pd.to_timedelta(video_start.strftime('%H:%M:%S'))
-        except AttributeError:
-            video_start_timedelta = pd.to_timedelta(video_start)
+        video_start_timedelta = pd.to_timedelta(video_start.strftime('%H:%M:%S') if isinstance(video_start, datetime.datetime) else video_start)
 
         time_value = row[time_field]
         if pd.isna(time_value):
             return pd.NaT
 
-        try:
-            time_str = time_value.strftime('%H:%M:%S')
-        except AttributeError:
-            time_str = str(time_value)
-        
+        time_str = time_value.strftime('%H:%M:%S') if isinstance(time_value, datetime.time) else time_value
+
         return add_time_strings(video_start_timedelta, pd.to_timedelta(time_str))
 
     modified_df['Time Start'] = modified_df.apply(lambda row: handle_time_conversion(row, 'Time Start'), axis=1)
     modified_df['Time End'] = modified_df.apply(lambda row: handle_time_conversion(row, 'Time End'), axis=1)
 
     return modified_df
-
 
 import pandas as pd
 
