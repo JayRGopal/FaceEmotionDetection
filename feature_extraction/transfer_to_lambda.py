@@ -1,15 +1,18 @@
 def correct_time_format(time_str):
+    time_str = time_str.strip()
     
-    # Convert to datetime to easily manipulate hour and minute
-    time_str = str(time_str).replace(' ', '')
+    # Try parsing the time as "HH:MM:SS" first
     time_val = pd.to_datetime(time_str, format='%H:%M:%S', errors='coerce')
-    if time_val.hour == 0 and time_val.minute < 60:
-        # This indicates the format was mm:ss, wrongly read as hh:mm
-        corrected_time = pd.to_datetime(f"{time_val.minute}:{time_val.second}", format='%M:%S').time()
+    if pd.isna(time_val):
+        # If parsing failed, try "M:SS" or "MM:SS" next
+        time_val = pd.to_datetime(time_str, format='%M:%S', errors='coerce')
+        if pd.isna(time_val):
+            # If still fails, handle or raise error
+            raise ValueError("Invalid time format")
+        else:
+            # Adjust for "M:SS" or "MM:SS" as "00:M:SS"
+            corrected_time = pd.to_datetime(f"00:{time_str}", format='%H:%M:%S').time()
     else:
-        # Correct time format
-        try:
-            corrected_time = time_val.time()
-        except:
-            import pdb; pdb.set_trace()
+        corrected_time = time_val.time()
+
     return corrected_time
