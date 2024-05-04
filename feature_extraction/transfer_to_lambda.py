@@ -19,49 +19,39 @@ def add_time_strings(t1, t2):
     return str(pd.to_timedelta(total_seconds, unit='s'))
 
 def convert_time(df1, df2):
-    # Create a copy of the first DataFrame
+    if df1.empty:
+        return df1
+    
     modified_df = df1.copy()
 
-    # Create a dictionary mapping 'Filename' to 'VideoStart'
     filename_to_videostart = dict(zip(df2['Filename'], df2['VideoStart']))
 
-    # Define a function to handle time conversion based on the type of VideoStart and time fields
     def handle_time_conversion(row, time_field):
-        video_start = filename_to_videostart.get(row['Filename'], None)
-        
-        if video_start is None:
-            import pdb; pdb.set_trace()
-            return pd.NaT  # Handling missing video start times
+        video_start = filename_to_videostart.get(row['Filename'], pd.NaT)
+        if pd.isna(video_start):
+            return pd.NaT
 
-        if isinstance(video_start, datetime.time):
-            video_start_timedelta = video_start.strftime('%H:%M:%S')
-        elif isinstance(video_start, pd.Timestamp):
-            video_start_timedelta = video_start.time().strftime('%H:%M:%S')
-        else:
-            try:
-                video_start_timedelta = video_start
-            except ValueError:
-                return pd.NaT  # If conversion fails, return NaT
+        try:
+            video_start_timedelta = pd.to_timedelta(video_start.strftime('%H:%M:%S'))
+        except AttributeError:
+            video_start_timedelta = pd.to_timedelta(video_start)
 
-        # Extracting and converting the time field, handling potential NaN values
         time_value = row[time_field]
         if pd.isna(time_value):
-            return pd.NaT  # Handle NaN values gracefully
-        
-        if isinstance(time_value, datetime.time):
-            time_str = time_value.strftime('%H:%M:%S')
-        else:
-            time_str = str(time_value)  # Ensure conversion to string if not datetime.time
-            
-        return add_time_strings(video_start_timedelta, time_str)
+            return pd.NaT
 
-    # Apply the conversion function to the 'Time Start' and 'Time End'
-    print(modified_df)
+        try:
+            time_str = time_value.strftime('%H:%M:%S')
+        except AttributeError:
+            time_str = str(time_value)
+        
+        return add_time_strings(video_start_timedelta, pd.to_timedelta(time_str))
+
     modified_df['Time Start'] = modified_df.apply(lambda row: handle_time_conversion(row, 'Time Start'), axis=1)
     modified_df['Time End'] = modified_df.apply(lambda row: handle_time_conversion(row, 'Time End'), axis=1)
 
-    # Return the modified DataFrame
     return modified_df
+
 
 import pandas as pd
 
