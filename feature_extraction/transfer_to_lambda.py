@@ -28,34 +28,35 @@ def convert_time(df1, df2):
     filename_to_videostart = dict(zip(df2['Filename'], df2['VideoStart']))
 
     def handle_time_conversion(row, time_field):
-        video_start = filename_to_videostart.get(row['Filename'], pd.NaT)
-        if pd.isna(video_start):
-            return pd.NaT
+        video_start = filename_to_videostart.get(row['Filename'], None)
+        if video_start is None:
+            return None
 
         try:
+            # Convert video start to a timedelta for consistent operation.
             video_start_timedelta = pd.to_timedelta(video_start.strftime('%H:%M:%S') if isinstance(video_start, datetime.datetime) else video_start)
-        except Exception as e:
-            return pd.NaT
+        except Exception:
+            return None
 
         time_value = row[time_field]
-        if pd.isna(time_value):
-            return pd.NaT
+        if time_value is None:
+            return None
 
         try:
+            # Convert time value to a string and then to a timedelta.
             time_str = time_value.strftime('%H:%M:%S') if isinstance(time_value, datetime.time) else time_value
-            final_time = add_time_strings(video_start_timedelta, pd.to_timedelta(time_str))
+            final_timedelta = pd.to_timedelta(time_str)
+            final_time = (pd.Timestamp('today').normalize() + video_start_timedelta + final_timedelta)
             return final_time
-        except Exception as e:
-            return pd.NaT
+        except Exception:
+            return None
 
-    modified_df['Time Start'] = modified_df.apply(lambda row: handle_time_conversion(row, 'Time Start'), axis=1).astype('object')
-    modified_df['Time End'] = modified_df.apply(lambda row: handle_time_conversion(row, 'Time End'), axis=1).astype('object')
-
-    # To avoid automatic conversion to datetime64[ns], ensure dtype remains as object
-    modified_df['Time Start'] = modified_df['Time Start'].apply(lambda x: pd.NaT if pd.isna(x) else x)
-    modified_df['Time End'] = modified_df['Time End'].apply(lambda x: pd.NaT if pd.isna(x) else x)
+    # Apply time conversion and maintain the output as Timestamps.
+    modified_df['Time Start'] = modified_df.apply(lambda row: handle_time_conversion(row, 'Time Start'), axis=1)
+    modified_df['Time End'] = modified_df.apply(lambda row: handle_time_conversion(row, 'Time End'), axis=1)
 
     return modified_df
+
 
 
 
