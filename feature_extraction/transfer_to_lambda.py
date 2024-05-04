@@ -164,3 +164,32 @@ def get_labels(smile_string, sleep_string):
 Final_Smile_Labels = get_labels('smile', 'sleep')
 
 
+
+
+
+
+
+   Filename Time Start Time End            Behavior
+0  18928N00        NaT      NaT  smile with chuckle
+1  1892BM00        NaT      NaT               smile
+2  1892BM00        NaT      NaT               smile
+3  1892BM00        NaT      NaT  smile with chuckle
+4  1892BM00        NaT      NaT  smile with chuckle
+5  1892BM00        NaT      NaT  smile with chuckle
+6  1892BM00        NaT      NaT  smile with chuckle
+7  1892BM00        NaT      NaT  smile with chuckle
+8  1892DA00        NaT      NaT  smile with chuckle
+9  1892DA00        NaT      NaT               smile
+
+
+   Filename Time Start  Time End            Behavior
+0  18928N00   00:27:37  00:27:42  smile with chuckle
+1  1892BM00   00:00:20  00:00:23               smile
+2  1892BM00   00:00:40  00:00:46               smile
+3  1892BM00   00:01:07  00:01:17  smile with chuckle
+4  1892BM00   00:23:41  00:23:48  smile with chuckle
+5  1892BM00   00:24:08  00:24:27  smile with chuckle
+6  1892BM00   00:35:04  00:35:08  smile with chuckle
+7  1892BM00   00:38:26  00:38:30  smile with chuckle
+8  1892DA00   00:09:59  00:10:08  smile with chuckle
+9  1892DA00   00:13:46  00:13:51               smile
