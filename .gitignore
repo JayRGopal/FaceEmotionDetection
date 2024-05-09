@@ -28,3 +28,8 @@ MMPose_inputs/*
 **/.DS_Store
 tmp_save_deepface/*
 __pycache__/
+feature_extraction/.ipynb_checkpoints/*
+feature_extraction/.ipynb_checkpoints/
+feature_extraction/Inpatient\ Mood/.ipynb_checkpoints/
+feature_extraction/Outpatient\ Mood/.ipynb_checkpoints/
+feature_extraction/Pain/.ipynb_checkpoints/

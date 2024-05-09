@@ -16,13 +16,13 @@ If you're on Windows, use this link: https://github.com/TadasBaltrusaitis/OpenFa
 
 
 # Set the parameters
-PAT_NOW = "S12"
-VIDEO_DIRECTORY = os.path.abspath(f'/home/klab/NAS/OutpatientVideos/{PAT_NOW}/')
-OUTPUT_DIRECTORY = os.path.abspath(f'/home/klab/NAS/Analysis/outputs_OpenFace/{PAT_NOW}/') 
+PAT_NOW = "S09"
+VIDEO_DIRECTORY = os.path.abspath(f'/home/klab/NAS/OutpatientVideos_PatientOnly/{PAT_NOW}/')
+OUTPUT_DIRECTORY = os.path.abspath(f'/home/klab/NAS/Analysis/outputs_OpenFace_PatientOnly/{PAT_NOW}/') 
 
 
-JUST_AU = True
-AU_STATIC = True
+JUST_AU = False
+AU_STATIC = False
 
 
 # Get the list of all videos in the given directory

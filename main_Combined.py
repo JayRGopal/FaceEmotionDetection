@@ -10,11 +10,13 @@ import argparse
 from facenet_pytorch import MTCNN
 import gc
 
+
 # Main parameters
-VIDEO_DIRECTORY = os.path.abspath('inputs/')
-SUBJECT_FACE_IMAGE_FOLDER = os.path.abspath('deepface/')
-OUTPUT_DIRECTORY = os.path.abspath('outputs_Combined') 
-OUTPUT_DIRECTORY_PARTIAL_VERIFY = os.path.abspath('outputs_Combined_PatData') 
+PAT_NOW = "S23_174"
+VIDEO_DIRECTORY = os.path.abspath(f'/home/klab/NAS/Analysis/MP4/{PAT_NOW}_MP4')
+SUBJECT_FACE_IMAGE_FOLDER = os.path.abspath(f'/home/klab/NAS/Analysis/MP4/{PAT_NOW}_MP4/targetFace')
+OUTPUT_DIRECTORY = os.path.abspath(f'/home/klab/NAS/Analysis/outputs_Combined/{PAT_NOW}/') 
+OUTPUT_DIRECTORY_PARTIAL_VERIFY = os.path.abspath(f'/home/klab/NAS/Analysis/outputs_Combined_PatData/{PAT_NOW}/') 
 
 
 # Device
