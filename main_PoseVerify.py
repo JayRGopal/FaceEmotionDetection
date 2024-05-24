@@ -19,7 +19,7 @@ Full Pipeline - MMPose
 VIDEO_DIRECTORY = os.path.abspath('inputs/')
 OUTPUT_DIRECTORY = os.path.abspath('outputs_MMPose_Verify/') # This is where json results go
 OUTPUT_VIDEO_DIRECTORY = os.path.abspath('outputs_MMPose_Verify/') # This is where videos/images with overlay go 
-TOP_DOWN = True
+TOP_DOWN = False
 CONFIGS_BASE = os.path.abspath('mmpose/configs/body_2d_keypoint')
 WHOLEBODY_CONFIGS_BASE = os.path.abspath('mmpose/configs/wholebody_2d_keypoint') 
 MMPOSE_MODEL_BASE = os.path.abspath('MMPose_models/')
@@ -39,22 +39,23 @@ DEBUG = False # If debug is true, it stops verification & you can see all poses 
 # ]
 
 # # FOR TOP DOWN BODY 2D
-model_setup_list = [
-  # (f'{CONFIGS_BASE}/topdown_heatmap/coco/td-hm_ViTPose-huge_8xb64-210e_coco-256x192.py', 'https://download.openmmlab.com/mmpose/v1/body_2d_keypoint/topdown_heatmap/coco/td-hm_ViTPose-huge_8xb64-210e_coco-256x192-e32adcd4_20230314.pth', f'{MMPOSE_MODEL_BASE}/td-hm_ViTPose-huge_8xb64-210e_coco-256x192-e32adcd4_20230314.pth', 'MM'),
-  (f'{CONFIGS_BASE}/topdown_heatmap/coco/td-hm_ViTPose-large_8xb64-210e_coco-256x192.py', 'https://download.openmmlab.com/mmpose/v1/body_2d_keypoint/topdown_heatmap/coco/td-hm_ViTPose-large_8xb64-210e_coco-256x192-53609f55_20230314.pth', f'{MMPOSE_MODEL_BASE}/td-hm_ViTPose-large_8xb64-210e_coco-256x192-53609f55_20230314.pth', 'MM'),
-  # (f'{CONFIGS_BASE}/topdown_heatmap/coco/td-hm_hrformer-base_8xb32-210e_coco-384x288.py', 'https://download.openmmlab.com/mmpose/top_down/hrformer/hrformer_base_coco_384x288-ecf0758d_20220316.pth', f'{MMPOSE_MODEL_BASE}/hrformer_base_coco_384x288-ecf0758d_20220316.pth', 'MM'),
-  # (f'{CONFIGS_BASE}/topdown_heatmap/coco/td-hm_hrnet-w48_udp-8xb32-210e_coco-384x288.py', 'https://download.openmmlab.com/mmpose/v1/body_2d_keypoint/topdown_heatmap/coco/td-hm_hrnet-w48_udp-8xb32-210e_coco-384x288-70d7ab01_20220913.pth', f'{MMPOSE_MODEL_BASE}/td-hm_hrnet-w48_udp-8xb32-210e_coco-384x288-70d7ab01_20220913.pth', 'MM'),
-  (f'{CONFIGS_BASE}/rtmpose/coco/rtmpose-l_8xb256-420e_aic-coco-384x288.py', 'https://download.openmmlab.com/mmpose/v1/projects/rtmposev1/rtmpose-l_simcc-aic-coco_pt-aic-coco_420e-384x288-97d6cb0f_20230228.pth', f'{MMPOSE_MODEL_BASE}/rtmpose-l_simcc-aic-coco_pt-aic-coco_420e-384x288-97d6cb0f_20230228.pth', 'RTM'),
-  # (f'{CONFIGS_BASE}/rtmpose/coco/rtmpose-m_8xb256-420e_aic-coco-384x288.py', 'https://download.openmmlab.com/mmpose/v1/projects/rtmposev1/rtmpose-m_simcc-aic-coco_pt-aic-coco_420e-384x288-a62a0b32_20230228.pth', f'{MMPOSE_MODEL_BASE}/rtmpose-m_simcc-aic-coco_pt-aic-coco_420e-384x288-a62a0b32_20230228.pth', 'RTM'),
-  (f'{CONFIGS_BASE}/rtmpose/coco/rtmpose-l_8xb256-420e_aic-coco-256x192.py', 'https://download.openmmlab.com/mmpose/v1/projects/rtmposev1/rtmpose-l_simcc-aic-coco_pt-aic-coco_420e-256x192-f016ffe0_20230126.pth', f'{MMPOSE_MODEL_BASE}/rtmpose-l_simcc-aic-coco_pt-aic-coco_420e-256x192-f016ffe0_20230126.pth', 'RTM')
-]
-
-# # FOR BOTTOM UP BODY 2D
 # model_setup_list = [
+#   # (f'{CONFIGS_BASE}/topdown_heatmap/coco/td-hm_ViTPose-huge_8xb64-210e_coco-256x192.py', 'https://download.openmmlab.com/mmpose/v1/body_2d_keypoint/topdown_heatmap/coco/td-hm_ViTPose-huge_8xb64-210e_coco-256x192-e32adcd4_20230314.pth', f'{MMPOSE_MODEL_BASE}/td-hm_ViTPose-huge_8xb64-210e_coco-256x192-e32adcd4_20230314.pth', 'MM'),
+#   (f'{CONFIGS_BASE}/topdown_heatmap/coco/td-hm_ViTPose-large_8xb64-210e_coco-256x192.py', 'https://download.openmmlab.com/mmpose/v1/body_2d_keypoint/topdown_heatmap/coco/td-hm_ViTPose-large_8xb64-210e_coco-256x192-53609f55_20230314.pth', f'{MMPOSE_MODEL_BASE}/td-hm_ViTPose-large_8xb64-210e_coco-256x192-53609f55_20230314.pth', 'MM'),
+#   # (f'{CONFIGS_BASE}/topdown_heatmap/coco/td-hm_hrformer-base_8xb32-210e_coco-384x288.py', 'https://download.openmmlab.com/mmpose/top_down/hrformer/hrformer_base_coco_384x288-ecf0758d_20220316.pth', f'{MMPOSE_MODEL_BASE}/hrformer_base_coco_384x288-ecf0758d_20220316.pth', 'MM'),
+#   # (f'{CONFIGS_BASE}/topdown_heatmap/coco/td-hm_hrnet-w48_udp-8xb32-210e_coco-384x288.py', 'https://download.openmmlab.com/mmpose/v1/body_2d_keypoint/topdown_heatmap/coco/td-hm_hrnet-w48_udp-8xb32-210e_coco-384x288-70d7ab01_20220913.pth', f'{MMPOSE_MODEL_BASE}/td-hm_hrnet-w48_udp-8xb32-210e_coco-384x288-70d7ab01_20220913.pth', 'MM'),
 #   (f'{CONFIGS_BASE}/rtmpose/coco/rtmpose-l_8xb256-420e_aic-coco-384x288.py', 'https://download.openmmlab.com/mmpose/v1/projects/rtmposev1/rtmpose-l_simcc-aic-coco_pt-aic-coco_420e-384x288-97d6cb0f_20230228.pth', f'{MMPOSE_MODEL_BASE}/rtmpose-l_simcc-aic-coco_pt-aic-coco_420e-384x288-97d6cb0f_20230228.pth', 'RTM'),
-#   (f'{CONFIGS_BASE}/rtmpose/coco/rtmpose-m_8xb256-420e_aic-coco-384x288.py', 'https://download.openmmlab.com/mmpose/v1/projects/rtmposev1/rtmpose-m_simcc-aic-coco_pt-aic-coco_420e-384x288-a62a0b32_20230228.pth', f'{MMPOSE_MODEL_BASE}/rtmpose-m_simcc-aic-coco_pt-aic-coco_420e-384x288-a62a0b32_20230228.pth', 'RTM'),
+#   # (f'{CONFIGS_BASE}/rtmpose/coco/rtmpose-m_8xb256-420e_aic-coco-384x288.py', 'https://download.openmmlab.com/mmpose/v1/projects/rtmposev1/rtmpose-m_simcc-aic-coco_pt-aic-coco_420e-384x288-a62a0b32_20230228.pth', f'{MMPOSE_MODEL_BASE}/rtmpose-m_simcc-aic-coco_pt-aic-coco_420e-384x288-a62a0b32_20230228.pth', 'RTM'),
 #   (f'{CONFIGS_BASE}/rtmpose/coco/rtmpose-l_8xb256-420e_aic-coco-256x192.py', 'https://download.openmmlab.com/mmpose/v1/projects/rtmposev1/rtmpose-l_simcc-aic-coco_pt-aic-coco_420e-256x192-f016ffe0_20230126.pth', f'{MMPOSE_MODEL_BASE}/rtmpose-l_simcc-aic-coco_pt-aic-coco_420e-256x192-f016ffe0_20230126.pth', 'RTM')
 # ]
+
+# FOR BOTTOM UP BODY 2D
+model_setup_list = [
+  # (f'{CONFIGS_BASE}/rtmpose/coco/rtmpose-l_8xb256-420e_aic-coco-384x288.py', 'https://download.openmmlab.com/mmpose/v1/projects/rtmposev1/rtmpose-l_simcc-aic-coco_pt-aic-coco_420e-384x288-97d6cb0f_20230228.pth', f'{MMPOSE_MODEL_BASE}/rtmpose-l_simcc-aic-coco_pt-aic-coco_420e-384x288-97d6cb0f_20230228.pth', 'RTM'),
+  # (f'{CONFIGS_BASE}/rtmpose/coco/rtmpose-m_8xb256-420e_aic-coco-384x288.py', 'https://download.openmmlab.com/mmpose/v1/projects/rtmposev1/rtmpose-m_simcc-aic-coco_pt-aic-coco_420e-384x288-a62a0b32_20230228.pth', f'{MMPOSE_MODEL_BASE}/rtmpose-m_simcc-aic-coco_pt-aic-coco_420e-384x288-a62a0b32_20230228.pth', 'RTM'),
+  # (f'{CONFIGS_BASE}/rtmpose/coco/rtmpose-l_8xb256-420e_aic-coco-256x192.py', 'https://download.openmmlab.com/mmpose/v1/projects/rtmposev1/rtmpose-l_simcc-aic-coco_pt-aic-coco_420e-256x192-f016ffe0_20230126.pth', f'{MMPOSE_MODEL_BASE}/rtmpose-l_simcc-aic-coco_pt-aic-coco_420e-256x192-f016ffe0_20230126.pth', 'RTM'),
+  (f'{CONFIGS_BASE}/rtmo/body7/rtmo-l_16xb16-600e_body7-640x640.py', 'https://download.openmmlab.com/mmpose/v1/projects/rtmo/rtmo-l_16xb16-600e_body7-640x640-b37118ce_20231211.pth', f'{MMPOSE_MODEL_BASE}/rtmo-l_16xb16-600e_body7-640x640-b37118ce_20231211.pth', 'RTM')
+]
 
 # Detector mapping
 # {detector_setting: (det_config_file, det_model_download, det_model_path)}
