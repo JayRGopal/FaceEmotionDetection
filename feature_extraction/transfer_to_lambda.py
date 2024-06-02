@@ -1,29 +1,15 @@
-def time_splitter(input_dict, splitter_times):
-    # Initialize the output dictionary
-    output_dict = {}
+def apply_function_to_dict_list(dictionary, func, **kwargs):
+    """
+    Apply a function to each DataFrame in a dictionary where values are LISTS of dfs and return a modified copy of the dictionary.
+
+    Args:
+        dictionary (dict): The dictionary containing DataFrames.
+        func (function): The function to apply to each DataFrame.
+        **kwargs: Additional keyword arguments to pass to the function.
+
+    Returns:
+        dict: A modified copy of the dictionary with the function applied to each DataFrame.
+    """
+    return {key: [func(df, **kwargs) for df in df_list] for key, df_list in dictionary.items()}
+
     
-    # Frame rate: 5 frames per second
-    frame_rate = 5
-    
-    # Iterate over each split time
-    for split_time in splitter_times:
-        # Initialize the dictionary for the current split time
-        output_dict[split_time] = {}
-        
-        # Calculate the number of rows per split
-        rows_per_split = split_time * 60 * frame_rate
-        
-        # Iterate over the outer dictionary
-        for outer_key, inner_dict in input_dict.items():
-            # Initialize the dictionary for the current outer key
-            output_dict[split_time][outer_key] = {}
-            
-            # Iterate over the inner dictionary
-            for timestamp, df in inner_dict.items():
-                # Split the DataFrame into chunks of the specified size
-                split_dfs = [df.iloc[i:i+rows_per_split] for i in range(0, len(df), rows_per_split)]
-                
-                # Assign the list of split DataFrames to the appropriate location in the output dictionary
-                output_dict[split_time][outer_key][timestamp] = split_dfs
-    
-    return output_dict
