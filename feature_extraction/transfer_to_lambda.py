@@ -1,7 +1,7 @@
 def average_inner_dfs(dictionary):
     """
     Replace each list of DataFrames in a nested dictionary with the average of the DataFrames in each list.
-    For columns with strings, take the string from the first DataFrame.
+    For columns with strings, convert to numbers if possible and take the string from the first DataFrame otherwise.
 
     Args:
         dictionary (dict): The dictionary containing lists of DataFrames.
@@ -13,15 +13,25 @@ def average_inner_dfs(dictionary):
         """
         Process columns to calculate averages for numeric columns and keep strings from the first DataFrame.
         """
-        combined_df = pd.concat(df_list)
-        avg_df = combined_df.groupby(level=0).mean()
-        
-        # Handle string columns
+        combined_df = pd.concat(df_list, ignore_index=True)
+        avg_df = pd.DataFrame()
+
         for column in combined_df.columns:
-            if combined_df[column].dtype == object:
-                first_strings = df_list[0][column]
-                avg_df[column] = first_strings
-        
+            # Try to convert the column to numeric
+            numeric_series = pd.to_numeric(combined_df[column], errors='coerce')
+            
+            if numeric_series.notna().all():
+                # If all values can be converted to numeric, calculate the mean
+                avg_df[column] = numeric_series.mean()
+            else:
+                # If any value is non-numeric, preserve the first value from the original DataFrame
+                if numeric_series.notna().sum() == 0:
+                    # If all are non-numeric, preserve the original strings
+                    avg_df[column] = combined_df[column].iloc[0]
+                else:
+                    # Mix of numeric and non-numeric, handle accordingly
+                    avg_df[column] = numeric_series.fillna(combined_df[column]).iloc[0]
+
         return avg_df
 
     new_dict = {}
