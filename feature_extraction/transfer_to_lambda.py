@@ -1,12 +1,12 @@
-def force_convert_to_float(dictionary):
+def average_inner_dfs(dictionary):
     """
-    Forcefully convert all DataFrames in a nested dictionary structure to have their columns as floats.
+    Replace each list of DataFrames in a nested dictionary with the average of the DataFrames in each list.
 
     Args:
-        dictionary (dict): The dictionary containing nested dictionaries with lists of DataFrames.
+        dictionary (dict): The dictionary containing lists of DataFrames.
 
     Returns:
-        dict: A modified copy of the dictionary with all DataFrames converted to float.
+        dict: A modified copy of the dictionary with the average of each list of DataFrames.
     """
     new_dict = {}
     for split_time, outer_dict in dictionary.items():
@@ -14,6 +14,7 @@ def force_convert_to_float(dictionary):
         for outer_key, inner_dict in outer_dict.items():
             new_dict[split_time][outer_key] = {}
             for timestamp, df_list in inner_dict.items():
-                new_df_list = [df.astype(float) for df in df_list]
-                new_dict[split_time][outer_key][timestamp] = new_df_list
+                # Calculate the average of the DataFrames in the list
+                avg_df = pd.concat(df_list).groupby(level=0).mean()
+                new_dict[split_time][outer_key][timestamp] = avg_df
     return new_dict
