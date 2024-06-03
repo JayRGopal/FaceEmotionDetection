@@ -22,18 +22,12 @@ def average_inner_dfs(dictionary):
             
             if numeric_series.notna().all():
                 # If all values can be converted to numeric, calculate the mean
-                avg_df[column] = numeric_series.mean()
+                avg_df[column] = [numeric_series.mean()]
             else:
-                # If any value is non-numeric, preserve the first value from the original DataFrame
-                if numeric_series.notna().sum() == 0:
-                    # If all are non-numeric, preserve the original strings
-                    avg_df[column] = combined_df[column].iloc[0]
-                else:
-                    # Mix of numeric and non-numeric, handle accordingly
-                    avg_df[column] = numeric_series.fillna(combined_df[column]).iloc[0]
-
+                avg_df[column] = [df_list[0][column].iloc[0]]
+        
         return avg_df
-
+    
     new_dict = {}
     for split_time, outer_dict in dictionary.items():
         new_dict[split_time] = {}
