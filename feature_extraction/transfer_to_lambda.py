@@ -1,51 +1,19 @@
-def fill_empty_dfs_lists(dictionary):
+def force_convert_to_float(dictionary):
     """
-    Fill empty DataFrames in a nested dictionary structure with a DataFrame of zeros.
-    
+    Forcefully convert all DataFrames in a nested dictionary structure to have their columns as floats.
+
     Args:
         dictionary (dict): The dictionary containing nested dictionaries with lists of DataFrames.
-    
+
     Returns:
-        dict: A modified copy of the dictionary with empty DataFrames filled with zeros.
+        dict: A modified copy of the dictionary with all DataFrames converted to float.
     """
-    # Find the first non-empty DataFrame to use as a template for filling empty DataFrames
-    non_empty_df = None
+    new_dict = {}
     for split_time, outer_dict in dictionary.items():
+        new_dict[split_time] = {}
         for outer_key, inner_dict in outer_dict.items():
+            new_dict[split_time][outer_key] = {}
             for timestamp, df_list in inner_dict.items():
-                for df in df_list:
-                    if not df.empty:
-                        non_empty_df = df
-                        break
-                if non_empty_df is not None:
-                    break
-            if non_empty_df is not None:
-                break
-        if non_empty_df is not None:
-            break
-    
-    # If no non-empty DataFrame is found, return the original dictionary
-    if non_empty_df is None:
-        return dictionary
-
-    # Create the modified dictionary
-    modified_dictionary = {}
-    for split_time, outer_dict in dictionary.items():
-        modified_dictionary[split_time] = {}
-        for outer_key, inner_dict in outer_dict.items():
-            modified_dictionary[split_time][outer_key] = {}
-            for timestamp, df_list in inner_dict.items():
-                modified_df_list = []
-                for df in df_list:
-                    if df.empty:
-                        modified_df = pd.DataFrame(0, index=non_empty_df.index, columns=non_empty_df.columns)
-                        # Preserve string columns from the non-empty DataFrame
-                        for column in non_empty_df.columns:
-                            if non_empty_df[column].dtype == object:
-                                modified_df[column] = non_empty_df[column]
-                    else:
-                        modified_df = df.copy()
-                    modified_df_list.append(modified_df)
-                modified_dictionary[split_time][outer_key][timestamp] = modified_df_list
-
-    return modified_dictionary
+                new_df_list = [df.astype(float) for df in df_list]
+                new_dict[split_time][outer_key][timestamp] = new_df_list
+    return new_dict
