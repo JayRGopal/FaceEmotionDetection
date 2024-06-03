@@ -1,41 +1,30 @@
-def apply_function_to_dict_list(dictionary, func, **kwargs):
-    """
-    Apply a function to each DataFrame in a dictionary where values are LISTS of dfs and return a modified copy of the dictionary.
+def fill_empty_dfs_lists(dictionary):
+  # when we do emotion processing, some dfs will have ZERO successful frames,
+  # leading to ZERO events, and an empty df.
+  # we need to fill the empty dfs with a df with all 0s
 
-    Args:
-        dictionary (dict): The dictionary containing DataFrames.
-        func (function): The function to apply to each DataFrame.
-        **kwargs: Additional keyword arguments to pass to the function.
+  non_empty_dfs = [[df for df in df_list if not df.empty] for df_list in dictionary.values()]
 
-    Returns:
-        dict: A modified copy of the dictionary with the function applied to each DataFrame.
-    """
-    new_dict = {}
-    for split_time, outer_dict in dictionary.items():
-        new_dict[split_time] = {}
-        for outer_key, inner_dict in outer_dict.items():
-            new_dict[split_time][outer_key] = {}
-            for timestamp, df_list in inner_dict.items():
-                new_dict[split_time][outer_key][timestamp] = [func(df, **kwargs) for df in df_list]
-    return new_dict
+  if not non_empty_dfs:
+      return dictionary  # Return the original dictionary if all DataFrames are empty
 
-def average_inner_dfs(dictionary):
-    """
-    Replace each list of DataFrames in a nested dictionary with the average of the DataFrames in each list.
+  non_empty_df = non_empty_dfs[0][0]  # Choose the first non-empty DataFrame as replacement
 
-    Args:
-        dictionary (dict): The dictionary containing lists of DataFrames.
+  modified_dictionary = {}
+  for key, df_list in dictionary.items():
+      modified_df_list = []
+      for df in df_list:
+        if df.empty:
+            modified_df = pd.DataFrame(0, index=non_empty_df.index, columns=non_empty_df.columns)
+            # Preserve string columns from non-empty DataFrame
+            for column in non_empty_df.columns:
+                if non_empty_df[column].dtype == object:
+                    modified_df[column] = non_empty_df[column]
+        else:
+            modified_df = df.copy()
 
-    Returns:
-        dict: A modified copy of the dictionary with the average of each list of DataFrames.
-    """
-    new_dict = {}
-    for split_time, outer_dict in dictionary.items():
-        new_dict[split_time] = {}
-        for outer_key, inner_dict in outer_dict.items():
-            new_dict[split_time][outer_key] = {}
-            for timestamp, df_list in inner_dict.items():
-                # Calculate the average of the DataFrames in the list
-                avg_df = pd.concat(df_list).groupby(level=0).mean()
-                new_dict[split_time][outer_key][timestamp] = avg_df
-    return new_dict
+        modified_df_list.append(modified_df)
+
+      modified_dictionary[key] = modified_df_list
+
+  return modified_dictionary
