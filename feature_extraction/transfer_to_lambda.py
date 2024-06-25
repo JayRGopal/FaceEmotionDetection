@@ -1,42 +1,59 @@
-def average_inner_dfs(dictionary):
-    """
-    Replace each list of DataFrames in a nested dictionary with the average of the DataFrames in each list.
-    For columns with strings, convert to numbers if possible and take the string from the first DataFrame otherwise.
 
-    Args:
-        dictionary (dict): The dictionary containing lists of DataFrames.
 
-    Returns:
-        dict: A modified copy of the dictionary with the average of each list of DataFrames.
-    """
-    def process_columns(df_list):
-        """
-        Process columns to calculate averages for numeric columns and keep strings from the first DataFrame.
-        """
-        combined_df = pd.concat(df_list, ignore_index=True)
-        avg_df = pd.DataFrame()
 
-        for column in combined_df.columns:
-            # Try to convert the column to numeric
-            numeric_series = pd.to_numeric(combined_df[column], errors='coerce')
-            
-            if numeric_series.notna().all():
-                # If all values can be converted to numeric, calculate the mean
-                avg_df[column] = numeric_series.groupby(combined_df.index).mean()
-            else:
-                avg_df[column] = df_list[0][column].values
-        
-        return avg_df
+import pandas as pd
+
+# Path to the Excel file
+file_path = 'path_to_your_file.xlsx'
+
+# Load the Excel file
+excel_file = pd.ExcelFile(file_path)
+
+# Initialize report dictionary
+report = {}
+
+# Loop through each sheet except those ending in _MONITOR
+for sheet_name in excel_file.sheet_names:
+    if sheet_name.endswith('_MONITOR'):
+        continue
     
-    new_dict = {}
-    for split_time, outer_dict in dictionary.items():
-        new_dict[split_time] = {}
-        for outer_key, inner_dict in outer_dict.items():
-            new_dict[split_time][outer_key] = {}
-            for timestamp, df_list in inner_dict.items():
-                try:
-                    avg_df = process_columns(df_list)
-                except:
-                    import pdb; pdb.set_trace()
-                new_dict[split_time][outer_key][timestamp] = avg_df
-    return new_dict
+    # Load the sheet into a DataFrame
+    df = pd.read_excel(file_path, sheet_name=sheet_name)
+    
+    # Check if 'Behavior' column exists
+    if 'Behavior' not in df.columns:
+        continue
+    
+    # Get the Behavior column (case insensitive match for 'smile', 'sad', 'discomfort', 'yawn')
+    behavior_column = df['Behavior'].dropna().astype(str)
+    
+    # Count occurrences
+    smile_count = behavior_column.str.contains('smile', case=False).sum()
+    sad_count = behavior_column.str.contains('sad', case=False).sum()
+    discomfort_count = behavior_column.str.contains('discomfort', case=False).sum()
+    yawn_count = behavior_column.str.contains('yawn', case=False).sum()
+    sleep_count = behavior_column.str.contains('sleep', case=False).sum()
+    non_empty_count = behavior_column.shape[0]
+    
+    # Update report
+    report[sheet_name] = {
+        'smile_count': smile_count,
+        'sad_count': sad_count,
+        'discomfort_count': discomfort_count,
+        'yawn_count': yawn_count,
+        'sleep_count': sleep_count,
+        'non_empty_count': non_empty_count
+    }
+
+# Print the report
+for patient, counts in report.items():
+    print(f"Patient: {patient}")
+    print(f"  Number of 'smile': {counts['smile_count']}")
+    print(f"  Number of 'sad': {counts['sad_count']}")
+    print(f"  Number of 'discomfort': {counts['discomfort_count']}")
+    print(f"  Number of 'yawn': {counts['yawn_count']}")
+    print(f"  Number of 'sleep': {counts['sleep_count']}")
+    print(f"  Total non-empty behavior rows: {counts['non_empty_count']}")
+    print()
+
+
