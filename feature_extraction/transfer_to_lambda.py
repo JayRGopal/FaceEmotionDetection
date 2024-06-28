@@ -1,56 +1,55 @@
 import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
 
-# Path to the Excel file
-file_path = 'path_to_your_file.xlsx'
+# Path to the xlsx file
+MOOD_TRACKING_SHEET_PATH = 'path/to/your/mood_tracking_sheet.xlsx'
 
-# Load the Excel file
-excel_file = pd.ExcelFile(file_path)
+# Read the Excel file
+xls = pd.ExcelFile(MOOD_TRACKING_SHEET_PATH)
 
-# Initialize report dictionary
-report = {
-    'Patient': [],
-    'smile_count': [],
-    'sad_count': [],
-    'discomfort_count': [],
-    'yawn_count': [],
-    'sleep_count': [],
-    'non_empty_count': []
-}
+# Get all sheet names that start with "S_"
+sheet_names = [sheet for sheet in xls.sheet_names if sheet.startswith("S_")]
 
-# Loop through each sheet except those ending in _MONITOR
-for sheet_name in excel_file.sheet_names:
-    if sheet_name.endswith('_MONITOR'):
-        continue
+# Set up the plot grid
+num_sheets = len(sheet_names)
+num_cols = 3  # Number of columns in the grid
+num_rows = int(np.ceil(num_sheets / num_cols))
+
+fig, axs = plt.subplots(num_rows, num_cols, figsize=(20, num_rows * 6))
+fig.suptitle('Mood Tracking Over Time', fontsize=36)
+
+# Iterate through the sheets and plot
+for idx, sheet_name in enumerate(sheet_names):
+    df = pd.read_excel(xls, sheet_name=sheet_name)
+
+    # Filter rows where 'Mood' is not empty and not NaN
+    df = df.dropna(subset=['Mood'])
+    df = df[df['Mood'].astype(bool)]
+
+    # Convert the first column to datetime
+    df[df.columns[0]] = pd.to_datetime(df[df.columns[0]], errors='coerce')
+
+    # Remove rows with invalid datetime
+    df = df.dropna(subset=[df.columns[0]])
+
+    # Extract the datetime and mood
+    time_data = df[df.columns[0]]
+    mood_data = df['Mood']
+
+    # Determine subplot position
+    ax = axs[idx // num_cols, idx % num_cols]
     
-    # Load the sheet into a DataFrame
-    df = pd.read_excel(file_path, sheet_name=sheet_name)
-    
-    # Check if 'Behavior' column exists
-    if 'Behavior' not in df.columns:
-        continue
-    
-    # Get the Behavior column (case insensitive match for 'smile', 'sad', 'discomfort', 'yawn', 'sleep')
-    behavior_column = df['Behavior'].dropna().astype(str)
-    
-    # Count occurrences
-    smile_count = behavior_column.str.contains('smile', case=False).sum()
-    sad_count = behavior_column.str.contains('sad', case=False).sum()
-    discomfort_count = behavior_column.str.contains('discomfort', case=False).sum()
-    yawn_count = behavior_column.str.contains('yawn', case=False).sum()
-    sleep_count = behavior_column.str.contains('sleep', case=False).sum()
-    non_empty_count = behavior_column.shape[0]
-    
-    # Update report
-    report['Patient'].append(sheet_name)
-    report['smile_count'].append(smile_count)
-    report['sad_count'].append(sad_count)
-    report['discomfort_count'].append(discomfort_count)
-    report['yawn_count'].append(yawn_count)
-    report['sleep_count'].append(sleep_count)
-    report['non_empty_count'].append(non_empty_count)
+    # Plot the data
+    ax.plot(time_data, mood_data, marker='o')
+    ax.set_title(f'Sheet: {sheet_name}', fontsize=20)
+    ax.set_xlabel('Time', fontsize=18)
+    ax.set_ylabel('Mood', fontsize=18)
+    ax.tick_params(axis='both', which='major', labelsize=16)
 
-# Create a DataFrame from the report
-report_df = pd.DataFrame(report)
+# Hide any empty subplots
+for idx in range(num_sheets, num_rows * num_cols):
+    fig.delaxes(axs.flatten()[idx])
 
-# Display the DataFrame
-import ace_tools as tools; tools.display_dataframe_to_user(name="Patient Behavior Report", dataframe=report_df)
+plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+plt.show()
