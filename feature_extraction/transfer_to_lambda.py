@@ -5,16 +5,16 @@ import matplotlib.dates as mdates
 
 # Path to the xlsx file
 MOOD_TRACKING_SHEET_PATH = f'/home/klab/NAS/Analysis/AudioFacialEEG/Behavioral Labeling/Mood_Tracking_new.xlsx'
-
-
 MISC_FIGURE_PATH = f'/home/klab/NAS/Analysis/Misc_Figures/'
-
 
 # Read the Excel file
 xls = pd.ExcelFile(MOOD_TRACKING_SHEET_PATH)
 
 # Get all sheet names that start with "S_"
 sheet_names = [sheet for sheet in xls.sheet_names if sheet.startswith("S_")]
+
+# Define sheets to use
+sheets_to_use = ['S_01', 'S_02', 'S_03']  # Example list, replace with actual sheet names
 
 # Set up the plot grid
 num_sheets = len(sheet_names)
@@ -45,12 +45,22 @@ for idx, sheet_name in enumerate(sheet_names):
     time_data = df[df.columns[0]]
     mood_data = df['Mood']
 
+    # Calculate additional title information
+    num_datapoints = len(mood_data)
+    percent_variation = mood_data.std() / mood_data.mean() * 100 if mood_data.mean() != 0 else 0
+    days_span = (time_data.max() - time_data.min()).days
+
     # Determine subplot position
     ax = axs[idx // num_cols, idx % num_cols]
     
     # Plot the data
-    ax.plot(time_data, mood_data, marker='o')
-    ax.set_title(f'{sheet_name}', fontsize=20)
+    color = 'blue' if sheet_name in sheets_to_use else 'red'
+    ax.plot(time_data, mood_data, marker='o', color=color)
+    
+    # Set the title with additional information
+    title_color = 'black' if sheet_name in sheets_to_use else 'red'
+    ax.set_title(f'{sheet_name}: N={num_datapoints}, Var={percent_variation:.2f}%, Days={days_span}', fontsize=20, color=title_color)
+    
     ax.set_xlabel('Datetime', fontsize=18)
     ax.set_ylabel('Mood', fontsize=18)
     ax.tick_params(axis='both', which='major', labelsize=16)
@@ -66,5 +76,3 @@ plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 plt.savefig(MISC_FIGURE_PATH + 'Mood_Over_Time.png', dpi=300)
 
 plt.show()
-
-
