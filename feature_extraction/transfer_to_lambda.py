@@ -1,56 +1,39 @@
-import pandas as pd
-import numpy as np
-from sklearn.metrics import accuracy_score, roc_auc_score
-
-# Sample rule function with averaging
-def smile_rule(df, threshold):
-    avg_features = df.mean()
-    return (avg_features['AU6'] + avg_features['AU12']) >= threshold
-
-# Function to calculate accuracy and AUROC
-def evaluate_rule(rule_func, data_dict, labels_df, threshold):
-    y_true = []
-    y_pred = []
-
-    for timestamp, df in data_dict.items():
-        if timestamp in labels_df['Datetime'].values:
-            y_true.append(labels_df[labels_df['Datetime'] == timestamp]['EventDetected'].values[0])
-            y_pred.append(int(rule_func(df, threshold)))
-
-    accuracy = accuracy_score(y_true, y_pred)
-    auroc = roc_auc_score(y_true, y_pred)
+# Function to sample data and calculate feature correlations
+def sample_and_correlate(data_dict, labels_df, sample_fraction=0.8):
+    sample_keys = np.random.choice(list(data_dict.keys()), size=int(len(data_dict) * sample_fraction), replace=False)
+    sample_labels = labels_df[labels_df['Datetime'].isin(sample_keys)]
     
-    return accuracy, auroc
-
-# Function to tune threshold
-def tune_threshold(rule_func, data_dict, labels_df, thresholds):
-    results = []
+    combined_df = pd.DataFrame()
+    for key in sample_keys:
+        df = data_dict[key]
+        df['Datetime'] = key
+        combined_df = pd.concat([combined_df, df])
     
-    for threshold in thresholds:
-        accuracy, auroc = evaluate_rule(rule_func, data_dict, labels_df, threshold)
-        results.append({'Threshold': threshold, 'Accuracy': accuracy, 'AUROC': auroc})
+    combined_df = combined_df.merge(sample_labels, on='Datetime')
     
-    return pd.DataFrame(results)
+    correlations = combined_df.drop(columns=['Datetime', 'EventDetected']).apply(lambda x: x.corr(combined_df['EventDetected']))
+    return correlations.abs().sort_values(ascending=False)
 
-# Example usage
-if __name__ == "__main__":
-    # Assuming opengraphau_smile and Final_Smile_Labels are already defined
-    # Example data
-    opengraphau_smile = {
-        '2024-07-05 10:00:00': pd.DataFrame({'AU6': [0.5, 0.3, 0.2, 0.4, 0.1], 'AU12': [0.7, 0.6, 0.8, 0.5, 0.9]}),
-        '2024-07-05 10:05:00': pd.DataFrame({'AU6': [0.6, 0.4, 0.3, 0.5, 0.2], 'AU12': [0.6, 0.5, 0.7, 0.6, 0.8]}),
-    }
+# Function to derive the optimal rule
+def derive_optimal_rule(data_dict, labels_df):
+    # Sample data and calculate feature correlations
+    correlations = sample_and_correlate(data_dict, labels_df)
     
-    Final_Smile_Labels = pd.DataFrame({
-        'Datetime': ['2024-07-05 10:00:00', '2024-07-05 10:05:00', '2024-07-05 10:10:00'],
-        'EventDetected': [1, 0, 1]
-    })
+    # Select top correlated features
+    top_features = correlations.index[:2]
 
-    # Define thresholds to test
+    def optimal_rule(df, threshold):
+        avg_features = df.mean()
+        return (avg_features[top_features[0]] + avg_features[top_features[1]]) >= threshold
+    
+    # Tune threshold for the optimal rule
     thresholds = np.linspace(0, 2, 21)
+    best_threshold, best_accuracy, best_auroc = tune_threshold(optimal_rule, data_dict, labels_df, thresholds)
+    
+    return optimal_rule, top_features, best_threshold, best_accuracy, best_auroc
 
-    # Tune threshold
-    results_df = tune_threshold(smile_rule, opengraphau_smile, Final_Smile_Labels, thresholds)
+best_rule, top_features, best_threshold, best_accuracy, best_auroc = derive_optimal_rule(opengraphau_smile, Final_Smile_Labels)
 
-    # Display results
-    print(results_df)
+print(f"Best Rule: Using features {top_features} with Threshold: {best_threshold}")
+print(f"Best Accuracy: {best_accuracy}")
+print(f"Best AUROC: {best_auroc}")
