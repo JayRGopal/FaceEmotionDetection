@@ -1,8 +1,8 @@
 import pandas as pd
 
 def detect_events(data_dict, clf, datetime_df):
-    # Create a DataFrame to store the results
-    results = pd.DataFrame(columns=['Datetime', 'EventDetected'])
+    # Create a list to store the results
+    results = []
     
     for timestamp in datetime_df['Datetime']:
         # Check if the timestamp is in the data dictionary
@@ -16,10 +16,13 @@ def detect_events(data_dict, clf, datetime_df):
             # If timestamp is not found in the data_dict, assume no event detected
             event_detected = 0
         
-        # Append the result to the results DataFrame
-        results = results.append({'Datetime': timestamp, 'EventDetected': event_detected}, ignore_index=True)
+        # Append the result to the results list
+        results.append({'Datetime': timestamp, 'EventDetected': event_detected})
     
-    return results
+    # Convert the results list to a DataFrame
+    results_df = pd.DataFrame(results)
+    
+    return results_df
 
 # Example usage
 # Assuming openface_smile, clf, and random_timestamps_df are already defined
