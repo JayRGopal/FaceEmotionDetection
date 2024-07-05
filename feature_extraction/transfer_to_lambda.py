@@ -1,9 +1,14 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.dates as mdates
 
 # Path to the xlsx file
-MOOD_TRACKING_SHEET_PATH = 'path/to/your/mood_tracking_sheet.xlsx'
+MOOD_TRACKING_SHEET_PATH = f'/home/klab/NAS/Analysis/AudioFacialEEG/Behavioral Labeling/Mood_Tracking_new.xlsx'
+
+
+MISC_FIGURE_PATH = f'/home/klab/NAS/Analysis/Misc_Figures/'
+
 
 # Read the Excel file
 xls = pd.ExcelFile(MOOD_TRACKING_SHEET_PATH)
@@ -33,6 +38,9 @@ for idx, sheet_name in enumerate(sheet_names):
     # Remove rows with invalid datetime
     df = df.dropna(subset=[df.columns[0]])
 
+    # Sort for chronological order
+    df = df.sort_values(by=df.columns[0])
+
     # Extract the datetime and mood
     time_data = df[df.columns[0]]
     mood_data = df['Mood']
@@ -42,14 +50,21 @@ for idx, sheet_name in enumerate(sheet_names):
     
     # Plot the data
     ax.plot(time_data, mood_data, marker='o')
-    ax.set_title(f'Sheet: {sheet_name}', fontsize=20)
-    ax.set_xlabel('Time', fontsize=18)
+    ax.set_title(f'{sheet_name}', fontsize=20)
+    ax.set_xlabel('Datetime', fontsize=18)
     ax.set_ylabel('Mood', fontsize=18)
     ax.tick_params(axis='both', which='major', labelsize=16)
+    ax.tick_params(axis='x', rotation=45)
+
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%Y %H:%M'))
 
 # Hide any empty subplots
 for idx in range(num_sheets, num_rows * num_cols):
     fig.delaxes(axs.flatten()[idx])
 
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+plt.savefig(MISC_FIGURE_PATH + 'Mood_Over_Time.png', dpi=300)
+
 plt.show()
+
+
