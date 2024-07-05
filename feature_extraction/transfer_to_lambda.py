@@ -1,78 +1,56 @@
 import pandas as pd
-import matplotlib.pyplot as plt
 import numpy as np
-import matplotlib.dates as mdates
+from sklearn.metrics import accuracy_score, roc_auc_score
 
-# Path to the xlsx file
-MOOD_TRACKING_SHEET_PATH = f'/home/klab/NAS/Analysis/AudioFacialEEG/Behavioral Labeling/Mood_Tracking_new.xlsx'
-MISC_FIGURE_PATH = f'/home/klab/NAS/Analysis/Misc_Figures/'
+# Sample rule function with averaging
+def smile_rule(df, threshold):
+    avg_features = df.mean()
+    return (avg_features['AU6'] + avg_features['AU12']) >= threshold
 
-# Read the Excel file
-xls = pd.ExcelFile(MOOD_TRACKING_SHEET_PATH)
+# Function to calculate accuracy and AUROC
+def evaluate_rule(rule_func, data_dict, labels_df, threshold):
+    y_true = []
+    y_pred = []
 
-# Get all sheet names that start with "S_"
-sheet_names = [sheet for sheet in xls.sheet_names if sheet.startswith("S_")]
+    for timestamp, df in data_dict.items():
+        if timestamp in labels_df['Datetime'].values:
+            y_true.append(labels_df[labels_df['Datetime'] == timestamp]['EventDetected'].values[0])
+            y_pred.append(int(rule_func(df, threshold)))
 
-# Define sheets to use
-sheets_to_use = ['S_01', 'S_02', 'S_03']  # Example list, replace with actual sheet names
-
-# Set up the plot grid
-num_sheets = len(sheet_names)
-num_cols = 3  # Number of columns in the grid
-num_rows = int(np.ceil(num_sheets / num_cols))
-
-fig, axs = plt.subplots(num_rows, num_cols, figsize=(20, num_rows * 6))
-fig.suptitle('Mood Tracking Over Time', fontsize=36)
-
-# Iterate through the sheets and plot
-for idx, sheet_name in enumerate(sheet_names):
-    df = pd.read_excel(xls, sheet_name=sheet_name)
-
-    # Filter rows where 'Mood' is not empty and not NaN
-    df = df.dropna(subset=['Mood'])
-    df = df[df['Mood'].astype(bool)]
-
-    # Convert the first column to datetime
-    df[df.columns[0]] = pd.to_datetime(df[df.columns[0]], errors='coerce')
-
-    # Remove rows with invalid datetime
-    df = df.dropna(subset=[df.columns[0]])
-
-    # Sort for chronological order
-    df = df.sort_values(by=df.columns[0])
-
-    # Extract the datetime and mood
-    time_data = df[df.columns[0]]
-    mood_data = df['Mood']
-
-    # Calculate additional title information
-    num_datapoints = len(mood_data)
-    percent_variation = mood_data.std() / mood_data.mean() * 100 if mood_data.mean() != 0 else 0
-    days_span = (time_data.max() - time_data.min()).days
-
-    # Determine subplot position
-    ax = axs[idx // num_cols, idx % num_cols]
+    accuracy = accuracy_score(y_true, y_pred)
+    auroc = roc_auc_score(y_true, y_pred)
     
-    # Plot the data
-    color = 'blue' if sheet_name in sheets_to_use else 'red'
-    ax.plot(time_data, mood_data, marker='o', color=color)
+    return accuracy, auroc
+
+# Function to tune threshold
+def tune_threshold(rule_func, data_dict, labels_df, thresholds):
+    results = []
     
-    # Set the title with additional information
-    title_color = 'black' if sheet_name in sheets_to_use else 'red'
-    ax.set_title(f'{sheet_name}: N={num_datapoints}, Var={percent_variation:.2f}%, Days={days_span}', fontsize=20, color=title_color)
+    for threshold in thresholds:
+        accuracy, auroc = evaluate_rule(rule_func, data_dict, labels_df, threshold)
+        results.append({'Threshold': threshold, 'Accuracy': accuracy, 'AUROC': auroc})
     
-    ax.set_xlabel('Datetime', fontsize=18)
-    ax.set_ylabel('Mood', fontsize=18)
-    ax.tick_params(axis='both', which='major', labelsize=16)
-    ax.tick_params(axis='x', rotation=45)
+    return pd.DataFrame(results)
 
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%Y %H:%M'))
+# Example usage
+if __name__ == "__main__":
+    # Assuming opengraphau_smile and Final_Smile_Labels are already defined
+    # Example data
+    opengraphau_smile = {
+        '2024-07-05 10:00:00': pd.DataFrame({'AU6': [0.5, 0.3, 0.2, 0.4, 0.1], 'AU12': [0.7, 0.6, 0.8, 0.5, 0.9]}),
+        '2024-07-05 10:05:00': pd.DataFrame({'AU6': [0.6, 0.4, 0.3, 0.5, 0.2], 'AU12': [0.6, 0.5, 0.7, 0.6, 0.8]}),
+    }
+    
+    Final_Smile_Labels = pd.DataFrame({
+        'Datetime': ['2024-07-05 10:00:00', '2024-07-05 10:05:00', '2024-07-05 10:10:00'],
+        'EventDetected': [1, 0, 1]
+    })
 
-# Hide any empty subplots
-for idx in range(num_sheets, num_rows * num_cols):
-    fig.delaxes(axs.flatten()[idx])
+    # Define thresholds to test
+    thresholds = np.linspace(0, 2, 21)
 
-plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-plt.savefig(MISC_FIGURE_PATH + 'Mood_Over_Time.png', dpi=300)
+    # Tune threshold
+    results_df = tune_threshold(smile_rule, opengraphau_smile, Final_Smile_Labels, thresholds)
 
-plt.show()
+    # Display results
+    print(results_df)
