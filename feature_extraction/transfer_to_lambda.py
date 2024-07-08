@@ -1,115 +1,50 @@
-from sklearn.metrics import accuracy_score, roc_auc_score
-import numpy as np
-import pandas as pd
-
-# Rule functions for OpenFace
-def smile_rule_openface_au6(df, threshold):
-    avg_features = df.mean()
-    return avg_features['AU06_r'] >= threshold
-
-def smile_rule_openface_au12(df, threshold):
-    avg_features = df.mean()
-    return avg_features['AU12_r'] >= threshold
-
-def smile_rule_openface_au6_au12(df, threshold):
-    avg_features = df.mean()
-    return (avg_features['AU06_r'] + avg_features['AU12_r']) >= threshold
-
-# Rule functions for OpenGraph
-def smile_rule_opengraph_au6(df, threshold):
-    avg_features = df.mean()
-    return avg_features['AU6'] >= threshold
-
-def smile_rule_opengraph_au12(df, threshold):
-    avg_features = df.mean()
-    return avg_features['AU12'] >= threshold
-
-def smile_rule_opengraph_au6_au12(df, threshold):
-    avg_features = df.mean()
-    return (avg_features['AU6'] + avg_features['AU12']) >= threshold
-
-# Rule function for HSE
-def smile_rule_hse(df, threshold):
-    avg_features = df.mean()
-    return avg_features['Happiness'] >= threshold
-
-# Function to calculate accuracy and AUROC
-def evaluate_rule(rule_func, data_dict, labels_df, threshold):
-    y_true = []
-    y_pred = []
-
+# Function to get average values of relevant columns for positive and negative examples
+def get_average_values(data_dict, labels_df, columns):
+    positive_values = {col: [] for col in columns}
+    negative_values = {col: [] for col in columns}
+    
     for timestamp, df in data_dict.items():
         if timestamp in labels_df['Datetime'].values:
-            y_true.append(labels_df[labels_df['Datetime'] == timestamp]['EventDetected'].values[0])
-            y_pred.append(int(rule_func(df, threshold)))
+            label = labels_df[labels_df['Datetime'] == timestamp]['EventDetected'].values[0]
+            avg_features = df.mean()
+            if label == 1:
+                for col in columns:
+                    positive_values[col].append(avg_features[col])
+            else:
+                for col in columns:
+                    negative_values[col].append(avg_features[col])
     
-    accuracy = accuracy_score(y_true, y_pred)
-    auroc = roc_auc_score(y_true, y_pred)
+    avg_positive = {col: np.mean(positive_values[col]) for col in columns}
+    avg_negative = {col: np.mean(negative_values[col]) for col in columns}
     
-    return accuracy, auroc
+    return avg_positive, avg_negative
 
-# Function to tune threshold
-def tune_threshold(rule_func, data_dict, labels_df, thresholds):
-    best_threshold = None
-    best_accuracy = 0
-    best_auroc = 0
-    
-    for threshold in thresholds:
-        accuracy, auroc = evaluate_rule(rule_func, data_dict, labels_df, threshold)
-        if accuracy > best_accuracy or (accuracy == best_accuracy and auroc > best_auroc):
-            best_threshold = threshold
-            best_accuracy = accuracy
-            best_auroc = auroc
-    
-    return best_threshold, best_accuracy, best_auroc
-
-# Define thresholds to test
-thresholds = np.linspace(0, 1, 21)
-
-# Dictionary of data sources and their corresponding rule functions
-data_sources = {
-    'openface_smile': {
-        'data': openface_smile,
-        'rules': {
-            'AU6': smile_rule_openface_au6,
-            'AU12': smile_rule_openface_au12,
-            'AU6_AU12': smile_rule_openface_au6_au12
-        }
-    },
-    'opengraphau_smile': {
-        'data': opengraphau_smile,
-        'rules': {
-            'AU6': smile_rule_opengraph_au6,
-            'AU12': smile_rule_opengraph_au12,
-            'AU6_AU12': smile_rule_opengraph_au6_au12
-        }
-    },
-    'hsemotion_smile': {
-        'data': hsemotion_smile,
-        'rules': {
-            'Happiness': smile_rule_hse
-        }
-    }
+# Define relevant columns for each data source
+relevant_columns = {
+    'openface_smile': ['AU06_r', 'AU12_r'],
+    'opengraphau_smile': ['AU6', 'AU12'],
+    'hsemotion_smile': ['Happiness']
 }
 
-# DataFrame to store results
-results = []
+# Dictionary to store average values
+average_values = []
 
-# Loop through each data source and rule, tune thresholds and evaluate
+# Loop through each data source and calculate average values
 for source, source_info in data_sources.items():
     data_dict = source_info['data']
-    for rule_name, rule_func in source_info['rules'].items():
-        best_threshold, best_accuracy, best_auroc = tune_threshold(rule_func, data_dict, Final_Smile_Labels, thresholds)
-        results.append({
+    columns = relevant_columns[source]
+    avg_positive, avg_negative = get_average_values(data_dict, Final_Smile_Labels, columns)
+    
+    for col in columns:
+        average_values.append({
             'Source': source,
-            'Rule': rule_name,
-            'Best Threshold': best_threshold,
-            'Accuracy': best_accuracy,
-            'AUROC': best_auroc
+            'Column': col,
+            'Positive Average': avg_positive[col],
+            'Negative Average': avg_negative[col]
         })
 
-# Create DataFrame
-results_df = pd.DataFrame(results)
+# Create DataFrame for average values
+average_values_df = pd.DataFrame(average_values)
 
-# Display results
-print(results_df)
+# Display average values
+print(average_values_df)
