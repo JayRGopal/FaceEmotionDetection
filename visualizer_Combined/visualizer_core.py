@@ -28,7 +28,7 @@ def visualize_analysis(video_path, au_csv_path, emotion_csv_path, bbox_csv_path,
         max_items_per_column = 8
         num_cols = ((len(list(data.columns)) - 3) + max_items_per_column - 1 ) // max_items_per_column
         col_width = width // num_cols
-        for idx, (col, val) in enumerate(data.drop(columns=['frame', 'timestamp', 'success']).iteritems()):
+        for idx, (col, val) in enumerate(data.drop(columns=['frame', 'timestamp', 'success']).items()):
             color = (0, 0, 255) if val.values[0] > threshold else (0, 0, 0)
             text = f"{col}: {round(val.values[0], 3)}"
             x_offset = (idx // max_items_per_column) * col_width
@@ -39,7 +39,7 @@ def visualize_analysis(video_path, au_csv_path, emotion_csv_path, bbox_csv_path,
         max_items_per_column = 11
         num_cols = ((len(list(data.columns)) - 3) + max_items_per_column - 1 ) // max_items_per_column
         col_width = width // num_cols
-        for idx, (col, val) in enumerate(data.drop(columns=['frame', 'timestamp', 'success']).iteritems()):
+        for idx, (col, val) in enumerate(data.drop(columns=['frame', 'timestamp', 'success']).items()):
             color = (0, 0, 255) if val.values[0] > threshold else (0, 0, 0)
             text = f"{col}: {round(val.values[0], 3)}"
             x_offset = (idx // max_items_per_column) * col_width
