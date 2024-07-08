@@ -1,50 +1,39 @@
-# Function to get average values of relevant columns for positive and negative examples
-def get_average_values(data_dict, labels_df, columns):
-    positive_values = {col: [] for col in columns}
-    negative_values = {col: [] for col in columns}
+# Function to get example timestamps of positive and negative predicted smiles
+def get_example_predictions(rule_func, data_dict, threshold):
+    positive_predictions = []
+    negative_predictions = []
     
     for timestamp, df in data_dict.items():
-        if timestamp in labels_df['Datetime'].values:
-            label = labels_df[labels_df['Datetime'] == timestamp]['EventDetected'].values[0]
-            avg_features = df.mean()
-            if label == 1:
-                for col in columns:
-                    positive_values[col].append(avg_features[col])
-            else:
-                for col in columns:
-                    negative_values[col].append(avg_features[col])
+        prediction = int(rule_func(df, threshold))
+        if prediction == 1:
+            positive_predictions.append(timestamp)
+        else:
+            negative_predictions.append(timestamp)
     
-    avg_positive = {col: np.mean(positive_values[col]) for col in columns}
-    avg_negative = {col: np.mean(negative_values[col]) for col in columns}
-    
-    return avg_positive, avg_negative
+    return positive_predictions[:2], negative_predictions[:2]
 
-# Define relevant columns for each data source
-relevant_columns = {
-    'openface_smile': ['AU06_r', 'AU12_r'],
-    'opengraphau_smile': ['AU6', 'AU12'],
-    'hsemotion_smile': ['Happiness']
-}
+# Dictionary to store example predictions
+example_predictions = []
 
-# Dictionary to store average values
-average_values = []
-
-# Loop through each data source and calculate average values
+# Loop through each data source and rule, get example predictions
 for source, source_info in data_sources.items():
     data_dict = source_info['data']
-    columns = relevant_columns[source]
-    avg_positive, avg_negative = get_average_values(data_dict, Final_Smile_Labels, columns)
-    
-    for col in columns:
-        average_values.append({
+    for rule_name, rule_func in source_info['rules'].items():
+        # Get best threshold for the current rule
+        best_threshold = next(result['Best Threshold'] for result in results if result['Source'] == source and result['Rule'] == rule_name)
+        
+        positive_examples, negative_examples = get_example_predictions(rule_func, data_dict, best_threshold)
+        
+        example_predictions.append({
             'Source': source,
-            'Column': col,
-            'Positive Average': avg_positive[col],
-            'Negative Average': avg_negative[col]
+            'Rule': rule_name,
+            'Positive Examples': positive_examples,
+            'Negative Examples': negative_examples
         })
 
-# Create DataFrame for average values
-average_values_df = pd.DataFrame(average_values)
-
-# Display average values
-print(average_values_df)
+# Print example predictions
+for example in example_predictions:
+    print(f"Source: {example['Source']}, Rule: {example['Rule']}")
+    print(f"Positive Examples: {example['Positive Examples']}")
+    print(f"Negative Examples: {example['Negative Examples']}")
+    print()
