@@ -1,18 +1,37 @@
 from sklearn.metrics import accuracy_score, roc_auc_score
+import numpy as np
+import pandas as pd
 
-def smile_rule(df, threshold):
+# Rule functions for OpenFace
+def smile_rule_openface_au6(df, threshold):
+    avg_features = df.mean()
+    return avg_features['AU06_r'] >= threshold
+
+def smile_rule_openface_au12(df, threshold):
+    avg_features = df.mean()
+    return avg_features['AU12_r'] >= threshold
+
+def smile_rule_openface_au6_au12(df, threshold):
     avg_features = df.mean()
     return (avg_features['AU06_r'] + avg_features['AU12_r']) >= threshold
 
+# Rule functions for OpenGraph
+def smile_rule_opengraph_au6(df, threshold):
+    avg_features = df.mean()
+    return avg_features['AU6'] >= threshold
+
+def smile_rule_opengraph_au12(df, threshold):
+    avg_features = df.mean()
+    return avg_features['AU12'] >= threshold
+
+def smile_rule_opengraph_au6_au12(df, threshold):
+    avg_features = df.mean()
+    return (avg_features['AU6'] + avg_features['AU12']) >= threshold
+
+# Rule function for HSE
 def smile_rule_hse(df, threshold):
     avg_features = df.mean()
-    return (avg_features['Happiness']) >= threshold
-
-
-def discomfort_rule(df, threshold):
-    avg_features = df.mean()
-    return (avg_features['AU04_r'] + avg_features['AU06_r'] + avg_features['AU09_r'] + avg_features['AU12_r']) >= threshold
-
+    return avg_features['Happiness'] >= threshold
 
 # Function to calculate accuracy and AUROC
 def evaluate_rule(rule_func, data_dict, labels_df, threshold):
@@ -44,11 +63,53 @@ def tune_threshold(rule_func, data_dict, labels_df, thresholds):
     
     return best_threshold, best_accuracy, best_auroc
 
-
-# TESTING ONE RULE
-
 # Define thresholds to test
 thresholds = np.linspace(0, 1, 21)
 
-# Tune threshold
-best_threshold, best_accuracy, best_auroc = tune_threshold(smile_rule_hse, hsemotion_smile, Final_Smile_Labels, thresholds)
+# Dictionary of data sources and their corresponding rule functions
+data_sources = {
+    'openface_smile': {
+        'data': openface_smile,
+        'rules': {
+            'AU6': smile_rule_openface_au6,
+            'AU12': smile_rule_openface_au12,
+            'AU6_AU12': smile_rule_openface_au6_au12
+        }
+    },
+    'opengraphau_smile': {
+        'data': opengraphau_smile,
+        'rules': {
+            'AU6': smile_rule_opengraph_au6,
+            'AU12': smile_rule_opengraph_au12,
+            'AU6_AU12': smile_rule_opengraph_au6_au12
+        }
+    },
+    'hsemotion_smile': {
+        'data': hsemotion_smile,
+        'rules': {
+            'Happiness': smile_rule_hse
+        }
+    }
+}
+
+# DataFrame to store results
+results = []
+
+# Loop through each data source and rule, tune thresholds and evaluate
+for source, source_info in data_sources.items():
+    data_dict = source_info['data']
+    for rule_name, rule_func in source_info['rules'].items():
+        best_threshold, best_accuracy, best_auroc = tune_threshold(rule_func, data_dict, Final_Smile_Labels, thresholds)
+        results.append({
+            'Source': source,
+            'Rule': rule_name,
+            'Best Threshold': best_threshold,
+            'Accuracy': best_accuracy,
+            'AUROC': best_auroc
+        })
+
+# Create DataFrame
+results_df = pd.DataFrame(results)
+
+# Display results
+print(results_df)
