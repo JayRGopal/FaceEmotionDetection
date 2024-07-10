@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import os
 
-def visualize_analysis(input_folder, csv_output_folder, video_output_folder, threshold=0.8):
+def visualize_analysis(input_folder, csv_output_folder, video_output_folder, threshold=0.8, USE_BBOXES=True):
     video_files = [f for f in os.listdir(input_folder) if f.endswith('.mp4')]
     
     # Get the last part of the input folder path for naming the output video
@@ -39,14 +39,15 @@ def visualize_analysis(input_folder, csv_output_folder, video_output_folder, thr
         video_path = os.path.join(input_folder, video_file)
         output_base_path = os.path.splitext(video_file)[0]
         
-        au_csv_path = os.path.join(csv_output_folder, output_base_path, 'outputs_ogau.csv')
-        emotion_csv_path = os.path.join(csv_output_folder, output_base_path, 'outputs_hse.csv')
-        bbox_csv_path = os.path.join(csv_output_folder, output_base_path, 'outputs_bboxes.csv')
+        au_csv_path = os.path.join(csv_output_folder, video_file, 'outputs_ogau.csv')
+        emotion_csv_path = os.path.join(csv_output_folder, video_file, 'outputs_hse.csv')
+        bbox_csv_path = os.path.join(csv_output_folder, video_file, 'outputs_bboxes.csv')
         
         # Load CSVs
         au_df = pd.read_csv(au_csv_path)
         emotion_df = pd.read_csv(emotion_csv_path)
-        bbox_df = pd.read_csv(bbox_csv_path)
+        if USE_BBOXES:
+            bbox_df = pd.read_csv(bbox_csv_path)
         
         # Filter frames based on emotion threshold
         filtered_frames = emotion_df[emotion_df['Happiness'] >= threshold]['frame'].unique()
@@ -79,7 +80,8 @@ def visualize_analysis(input_folder, csv_output_folder, video_output_folder, thr
             # Check if there's data for the current frame
             au_data = au_df[au_df['frame'] == current_frame]
             emotion_data = emotion_df[emotion_df['frame'] == current_frame]
-            bbox_data = bbox_df[bbox_df['frame'] == current_frame]
+            if USE_BBOXES:
+                bbox_data = bbox_df[bbox_df['frame'] == current_frame]
             
             # If no data for the current frame, use the previous frame's data
             if au_data.empty:
@@ -92,13 +94,14 @@ def visualize_analysis(input_folder, csv_output_folder, video_output_folder, thr
             else:
                 emotion_data_last = emotion_data
             
-            if bbox_data.empty:
-                bbox_data = bbox_data_last
-            else:
-                bbox_data_last = bbox_data
+            if USE_BBOXES:
+                if bbox_data.empty:
+                    bbox_data = bbox_data_last
+                else:
+                    bbox_data_last = bbox_data
             
             # Extract facial bounding box coordinates for the current frame
-            if not bbox_data.empty:
+            if USE_BBOXES and not bbox_data.empty:
                 x, y, w, h = bbox_data.iloc[0]['Facial Box X'], bbox_data.iloc[0]['Facial Box Y'], bbox_data.iloc[0]['Facial Box W'], bbox_data.iloc[0]['Facial Box H']
                 
                 # Draw the facial bounding box on the frame
@@ -127,11 +130,13 @@ def visualize_analysis(input_folder, csv_output_folder, video_output_folder, thr
         out.release()
     cv2.destroyAllWindows()
 
-# Example usage:
-INPUT_FOLDER = 'path_to_input_videos'
-CSV_OUTPUT_FOLDER = 'path_to_csv_folders'
-VIDEO_OUTPUT_FOLDER = 'path_to_video_output'
+# Usage:
+PAT_NOW = 'S20_150'
+USE_BBOXES = False
+INPUT_FOLDER = f'/home/klab/NAS/Analysis/MP4/{PAT_NOW}_MP4'
+CSV_OUTPUT_FOLDER = f'/home/klab/NAS/Analysis/outputs_Combined/{PAT_NOW}'
+VIDEO_OUTPUT_FOLDER = 'output_videos'
 
 os.makedirs(VIDEO_OUTPUT_FOLDER, exist_ok=True)
 
-visualize_analysis(INPUT_FOLDER, CSV_OUTPUT_FOLDER, VIDEO_OUTPUT_FOLDER, threshold=0.8)
+visualize_analysis(INPUT_FOLDER, CSV_OUTPUT_FOLDER, VIDEO_OUTPUT_FOLDER, threshold=0.8, USE_BBOXES=USE_BBOXES)
