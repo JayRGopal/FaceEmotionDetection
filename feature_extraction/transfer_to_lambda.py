@@ -1,47 +1,115 @@
-Source: openface_smile, Rule: AU6_r
-Positive Examples:
-  1890WF01 31:58, Probabilities: {'AU01_r': 5.0, 'AU02_r': 5.0, 'AU04_r': 0.0, 'AU05_r': 5.0, 'AU06_r': 2.0839999999999996, 'AU07_r': 5.0, 'AU09_r': 0.0, 'AU10_r': 1.782, 'AU12_r': 2.128, 'AU14_r': 3.696, 'AU15_r': 0.0, 'AU17_r': 0.0, 'AU20_r': 1.5859999999999999, 'AU23_r': 5.0, 'AU25_r': 0.0, 'AU26_r': 5.0, 'AU45_r': 0.0, 'AU01_c': 1.0, 'AU02_c': 1.0, 'AU04_c': 0.0, 'AU05_c': 1.0, 'AU06_c': 0.0, 'AU07_c': 1.0, 'AU09_c': 0.0, 'AU10_c': 0.0, 'AU12_c': 0.0, 'AU14_c': 0.0, 'AU15_c': 1.0, 'AU17_c': 1.0, 'AU20_c': 0.0, 'AU23_c': 0.0, 'AU25_c': 1.0, 'AU26_c': 1.0, 'AU45_c': 0.8}
-  1890XC01 14:58, Probabilities: {'AU01_r': 0.0, 'AU02_r': 0.0, 'AU04_r': 0.818, 'AU05_r': 0.0, 'AU06_r': 2.11, 'AU07_r': 1.7259999999999998, 'AU09_r': 0.476, 'AU10_r': 2.57, 'AU12_r': 2.354, 'AU14_r': 2.486, 'AU15_r': 0.0, 'AU17_r': 0.16399999999999998, 'AU20_r': 0.088, 'AU23_r': 0.17600000000000002, 'AU25_r': 1.54, 'AU26_r': 0.26399999999999996, 'AU45_r': 0.7, 'AU01_c': 0.0, 'AU02_c': 0.0, 'AU04_c': 1.0, 'AU05_c': 1.0, 'AU06_c': 1.0, 'AU07_c': 0.8, 'AU09_c': 1.0, 'AU10_c': 1.0, 'AU12_c': 1.0, 'AU14_c': 1.0, 'AU15_c': 0.0, 'AU17_c': 0.0, 'AU20_c': 0.2, 'AU23_c': 0.0, 'AU25_c': 1.0, 'AU26_c': 0.0, 'AU45_c': 0.0}
-Negative Examples:
-  1890VY00 2:13, Probabilities: {'AU01_r': 0.002, 'AU02_r': 0.0, 'AU04_r': 0.046, 'AU05_r': 0.0, 'AU06_r': 0.5820000000000001, 'AU07_r': 2.0, 'AU09_r': 0.0, 'AU10_r': 0.016, 'AU12_r': 0.356, 'AU14_r': 0.0, 'AU15_r': 0.0, 'AU17_r': 0.10200000000000001, 'AU20_r': 0.30999999999999994, 'AU23_r': 0.0, 'AU25_r': 0.45, 'AU26_r': 0.7020000000000001, 'AU45_r': 0.074, 'AU01_c': 0.6, 'AU02_c': 0.6, 'AU04_c': 0.0, 'AU05_c': 0.2, 'AU06_c': 1.0, 'AU07_c': 1.0, 'AU09_c': 0.0, 'AU10_c': 0.0, 'AU12_c': 0.0, 'AU14_c': 0.0, 'AU15_c': 0.0, 'AU17_c': 0.0, 'AU20_c': 0.0, 'AU23_c': 0.4, 'AU25_c': 0.6, 'AU26_c': 0.0, 'AU45_c': 0.0}
-  1890VY00 4:53, Probabilities: {'AU01_r': 0.24, 'AU02_r': 0.0, 'AU04_r': 0.21000000000000002, 'AU05_r': 0.092, 'AU06_r': 0.522, 'AU07_r': 1.97, 'AU09_r': 0.0, 'AU10_r': 0.0, 'AU12_r': 0.0, 'AU14_r': 0.0, 'AU15_r': 0.10800000000000001, 'AU17_r': 0.9380000000000001, 'AU20_r': 0.012, 'AU23_r': 0.24, 'AU25_r': 0.0, 'AU26_r': 0.0, 'AU45_r': 0.504, 'AU01_c': 0.0, 'AU02_c': 0.0, 'AU04_c': 0.0, 'AU05_c': 1.0, 'AU06_c': 1.0, 'AU07_c': 0.6, 'AU09_c': 0.0, 'AU10_c': 0.0, 'AU12_c': 0.0, 'AU14_c': 0.0, 'AU15_c': 0.0, 'AU17_c': 0.6, 'AU20_c': 0.0, 'AU23_c': 1.0, 'AU25_c': 0.0, 'AU26_c': 0.0, 'AU45_c': 0.0}
+from sklearn.metrics import accuracy_score, roc_auc_score
+import numpy as np
+import pandas as pd
 
-Source: openface_smile, Rule: AU12_r
-Positive Examples:
-  1890W800 4:39, Probabilities: {'AU01_r': 0.004, 'AU02_r': 0.0, 'AU04_r': 1.014, 'AU05_r': 0.018, 'AU06_r': 1.2280000000000002, 'AU07_r': 0.012, 'AU09_r': 0.006, 'AU10_r': 1.9780000000000002, 'AU12_r': 2.06, 'AU14_r': 1.4300000000000002, 'AU15_r': 0.21600000000000003, 'AU17_r': 0.188, 'AU20_r': 0.386, 'AU23_r': 0.12799999999999997, 'AU25_r': 0.044000000000000004, 'AU26_r': 0.41, 'AU45_r': 0.344, 'AU01_c': 0.0, 'AU02_c': 0.0, 'AU04_c': 1.0, 'AU05_c': 0.0, 'AU06_c': 1.0, 'AU07_c': 0.0, 'AU09_c': 0.0, 'AU10_c': 1.0, 'AU12_c': 1.0, 'AU14_c': 1.0, 'AU15_c': 0.0, 'AU17_c': 0.0, 'AU20_c': 0.2, 'AU23_c': 0.0, 'AU25_c': 1.0, 'AU26_c': 0.6, 'AU45_c': 0.0}
-  1890WF01 31:58, Probabilities: {'AU01_r': 5.0, 'AU02_r': 5.0, 'AU04_r': 0.0, 'AU05_r': 5.0, 'AU06_r': 2.0839999999999996, 'AU07_r': 5.0, 'AU09_r': 0.0, 'AU10_r': 1.782, 'AU12_r': 2.128, 'AU14_r': 3.696, 'AU15_r': 0.0, 'AU17_r': 0.0, 'AU20_r': 1.5859999999999999, 'AU23_r': 5.0, 'AU25_r': 0.0, 'AU26_r': 5.0, 'AU45_r': 0.0, 'AU01_c': 1.0, 'AU02_c': 1.0, 'AU04_c': 0.0, 'AU05_c': 1.0, 'AU06_c': 0.0, 'AU07_c': 1.0, 'AU09_c': 0.0, 'AU10_c': 0.0, 'AU12_c': 0.0, 'AU14_c': 0.0, 'AU15_c': 1.0, 'AU17_c': 1.0, 'AU20_c': 0.0, 'AU23_c': 0.0, 'AU25_c': 1.0, 'AU26_c': 1.0, 'AU45_c': 0.8}
-Negative Examples:
-  1890VY00 2:13, Probabilities: {'AU01_r': 0.002, 'AU02_r': 0.0, 'AU04_r': 0.046, 'AU05_r': 0.0, 'AU06_r': 0.5820000000000001, 'AU07_r': 2.0, 'AU09_r': 0.0, 'AU10_r': 0.016, 'AU12_r': 0.356, 'AU14_r': 0.0, 'AU15_r': 0.0, 'AU17_r': 0.10200000000000001, 'AU20_r': 0.30999999999999994, 'AU23_r': 0.0, 'AU25_r': 0.45, 'AU26_r': 0.7020000000000001, 'AU45_r': 0.074, 'AU01_c': 0.6, 'AU02_c': 0.6, 'AU04_c': 0.0, 'AU05_c': 0.2, 'AU06_c': 1.0, 'AU07_c': 1.0, 'AU09_c': 0.0, 'AU10_c': 0.0, 'AU12_c': 0.0, 'AU14_c': 0.0, 'AU15_c': 0.0, 'AU17_c': 0.0, 'AU20_c': 0.0, 'AU23_c': 0.4, 'AU25_c': 0.6, 'AU26_c': 0.0, 'AU45_c': 0.0}
-  1890VY00 4:53, Probabilities: {'AU01_r': 0.24, 'AU02_r': 0.0, 'AU04_r': 0.21000000000000002, 'AU05_r': 0.092, 'AU06_r': 0.522, 'AU07_r': 1.97, 'AU09_r': 0.0, 'AU10_r': 0.0, 'AU12_r': 0.0, 'AU14_r': 0.0, 'AU15_r': 0.10800000000000001, 'AU17_r': 0.9380000000000001, 'AU20_r': 0.012, 'AU23_r': 0.24, 'AU25_r': 0.0, 'AU26_r': 0.0, 'AU45_r': 0.504, 'AU01_c': 0.0, 'AU02_c': 0.0, 'AU04_c': 0.0, 'AU05_c': 1.0, 'AU06_c': 1.0, 'AU07_c': 0.6, 'AU09_c': 0.0, 'AU10_c': 0.0, 'AU12_c': 0.0, 'AU14_c': 0.0, 'AU15_c': 0.0, 'AU17_c': 0.6, 'AU20_c': 0.0, 'AU23_c': 1.0, 'AU25_c': 0.0, 'AU26_c': 0.0, 'AU45_c': 0.0}
+# Rule functions for OpenFace
+def smile_rule_openface_au6(df, threshold):
+    avg_features = df.mean()
+    return avg_features['AU06_r'] >= threshold
 
-Source: openface_smile, Rule: AU6_r_AU12_r
-Positive Examples:
-  1890W300 2:49, Probabilities: {'AU01_r': 0.0, 'AU02_r': 0.0, 'AU04_r': 0.0, 'AU05_r': 0.0, 'AU06_r': 1.0159999999999998, 'AU07_r': 1.154, 'AU09_r': 0.118, 'AU10_r': 1.214, 'AU12_r': 1.14, 'AU14_r': 1.1860000000000002, 'AU15_r': 0.054000000000000006, 'AU17_r': 0.29000000000000004, 'AU20_r': 0.0, 'AU23_r': 0.086, 'AU25_r': 0.052000000000000005, 'AU26_r': 0.22000000000000003, 'AU45_r': 0.092, 'AU01_c': 0.0, 'AU02_c': 0.0, 'AU04_c': 1.0, 'AU05_c': 1.0, 'AU06_c': 1.0, 'AU07_c': 1.0, 'AU09_c': 0.0, 'AU10_c': 1.0, 'AU12_c': 1.0, 'AU14_c': 1.0, 'AU15_c': 0.0, 'AU17_c': 0.0, 'AU20_c': 0.0, 'AU23_c': 0.4, 'AU25_c': 0.0, 'AU26_c': 0.0, 'AU45_c': 0.0}
-  1890W300 18:09, Probabilities: {'AU01_r': 0.0, 'AU02_r': 0.0, 'AU04_r': 0.0, 'AU05_r': 0.0, 'AU06_r': 1.57, 'AU07_r': 0.086, 'AU09_r': 0.0, 'AU10_r': 1.0699999999999998, 'AU12_r': 0.9640000000000001, 'AU14_r': 0.21000000000000002, 'AU15_r': 0.8380000000000001, 'AU17_r': 1.5539999999999998, 'AU20_r': 0.34199999999999997, 'AU23_r': 0.5119999999999999, 'AU25_r': 0.0, 'AU26_r': 0.0, 'AU45_r': 0.0, 'AU01_c': 0.0, 'AU02_c': 0.0, 'AU04_c': 0.0, 'AU05_c': 1.0, 'AU06_c': 1.0, 'AU07_c': 1.0, 'AU09_c': 0.0, 'AU10_c': 1.0, 'AU12_c': 1.0, 'AU14_c': 0.6, 'AU15_c': 0.6, 'AU17_c': 0.4, 'AU20_c': 0.0, 'AU23_c': 0.8, 'AU25_c': 0.6, 'AU26_c': 0.0, 'AU45_c': 0.0}
-Negative Examples:
-  1890VY00 2:13, Probabilities: {'AU01_r': 0.002, 'AU02_r': 0.0, 'AU04_r': 0.046, 'AU05_r': 0.0, 'AU06_r': 0.5820000000000001, 'AU07_r': 2.0, 'AU09_r': 0.0, 'AU10_r': 0.016, 'AU12_r': 0.356, 'AU14_r': 0.0, 'AU15_r': 0.0, 'AU17_r': 0.10200000000000001, 'AU20_r': 0.30999999999999994, 'AU23_r': 0.0, 'AU25_r': 0.45, 'AU26_r': 0.7020000000000001, 'AU45_r': 0.074, 'AU01_c': 0.6, 'AU02_c': 0.6, 'AU04_c': 0.0, 'AU05_c': 0.2, 'AU06_c': 1.0, 'AU07_c': 1.0, 'AU09_c': 0.0, 'AU10_c': 0.0, 'AU12_c': 0.0, 'AU14_c': 0.0, 'AU15_c': 0.0, 'AU17_c': 0.0, 'AU20_c': 0.0, 'AU23_c': 0.4, 'AU25_c': 0.6, 'AU26_c': 0.0, 'AU45_c': 0.0}
-  1890VY00 4:53, Probabilities: {'AU01_r': 0.24, 'AU02_r': 0.0, 'AU04_r': 0.21000000000000002, 'AU05_r': 0.092, 'AU06_r': 0.522, 'AU07_r': 1.97, 'AU09_r': 0.0, 'AU10_r': 0.0, 'AU12_r': 0.0, 'AU14_r': 0.0, 'AU15_r': 0.10800000000000001, 'AU17_r': 0.9380000000000001, 'AU20_r': 0.012, 'AU23_r': 0.24, 'AU25_r': 0.0, 'AU26_r': 0.0, 'AU45_r': 0.504, 'AU01_c': 0.0, 'AU02_c': 0.0, 'AU04_c': 0.0, 'AU05_c': 1.0, 'AU06_c': 1.0, 'AU07_c': 0.6, 'AU09_c': 0.0, 'AU10_c': 0.0, 'AU12_c': 0.0, 'AU14_c': 0.0, 'AU15_c': 0.0, 'AU17_c': 0.6, 'AU20_c': 0.0, 'AU23_c': 1.0, 'AU25_c': 0.0, 'AU26_c': 0.0, 'AU45_c': 0.0}
+def smile_rule_openface_au12(df, threshold):
+    avg_features = df.mean()
+    return avg_features['AU12_r'] >= threshold
 
-Source: opengraphau_smile, Rule: AU6
-Positive Examples:
-Negative Examples:
-  1890VY00 2:13, Probabilities: {'AU1': 0.02545059323310852, 'AU2': 0.003997185372281819, 'AU4': 0.23945302218198777, 'AU5': 0.03260554876178503, 'AU6': 0.27212628722190857, 'AU7': 0.3212260276079178, 'AU9': 0.009718286711722613, 'AU10': 0.119243586063385, 'AU11': 0.03488549068570137, 'AU12': 0.0984806776046753, 'AU13': 0.08176230192184449, 'AU14': 0.08271254897117615, 'AU15': 0.083079769089818, 'AU16': 0.04950752854347229, 'AU17': 0.340802401304245, 'AU18': 0.06822999715805053, 'AU19': 0.19966292083263398, 'AU20': 0.20828703343868255, 'AU22': 0.013848228985443712, 'AU23': 0.08762674033641815, 'AU24': 0.021061041951179506, 'AU25': 0.7455409646034241, 'AU26': 0.05891507491469383, 'AU27': 0.05215415582060814, 'AU32': 0.018706945702433586, 'AU38': 0.36011522710323335, 'AU39': 0.02673794813454151}
-  1890VY00 4:53, Probabilities: {'AU1': 0.06253941729664803, 'AU2': 0.009104053303599358, 'AU4': 0.16407276391983033, 'AU5': 0.01958258617669344, 'AU6': 0.17111043483018876, 'AU7': 0.2438662976026535, 'AU9': 0.04583917036652565, 'AU10': 0.09281312376260757, 'AU11': 0.0225264435634017, 'AU12': 0.04996741563081741, 'AU13': 0.0977310873568058, 'AU14': 0.06540695503354073, 'AU15': 0.2206658273935318, 'AU16': 0.04884195700287819, 'AU17': 0.40349108576774595, 'AU18': 0.09463946111500263, 'AU19': 0.01929361978545785, 'AU20': 0.15797953456640243, 'AU22': 0.01547939796000719, 'AU23': 0.03838762268424034, 'AU24': 0.032349591702222825, 'AU25': 0.33241657018661497, 'AU26': 0.018247321620583533, 'AU27': 0.02889911849051714, 'AU32': 0.07435699477791786, 'AU38': 0.10576192140579224, 'AU39': 0.021695180982351302}
+def smile_rule_openface_au6_au12(df, threshold):
+    avg_features = df.mean()
+    return (avg_features['AU06_r'] + avg_features['AU12_r']) >= threshold
 
-Source: opengraphau_smile, Rule: AU12
-Positive Examples:
-Negative Examples:
-  1890VY00 2:13, Probabilities: {'AU1': 0.02545059323310852, 'AU2': 0.003997185372281819, 'AU4': 0.23945302218198777, 'AU5': 0.03260554876178503, 'AU6': 0.27212628722190857, 'AU7': 0.3212260276079178, 'AU9': 0.009718286711722613, 'AU10': 0.119243586063385, 'AU11': 0.03488549068570137, 'AU12': 0.0984806776046753, 'AU13': 0.08176230192184449, 'AU14': 0.08271254897117615, 'AU15': 0.083079769089818, 'AU16': 0.04950752854347229, 'AU17': 0.340802401304245, 'AU18': 0.06822999715805053, 'AU19': 0.19966292083263398, 'AU20': 0.20828703343868255, 'AU22': 0.013848228985443712, 'AU23': 0.08762674033641815, 'AU24': 0.021061041951179506, 'AU25': 0.7455409646034241, 'AU26': 0.05891507491469383, 'AU27': 0.05215415582060814, 'AU32': 0.018706945702433586, 'AU38': 0.36011522710323335, 'AU39': 0.02673794813454151}
-  1890VY00 4:53, Probabilities: {'AU1': 0.06253941729664803, 'AU2': 0.009104053303599358, 'AU4': 0.16407276391983033, 'AU5': 0.01958258617669344, 'AU6': 0.17111043483018876, 'AU7': 0.2438662976026535, 'AU9': 0.04583917036652565, 'AU10': 0.09281312376260757, 'AU11': 0.0225264435634017, 'AU12': 0.04996741563081741, 'AU13': 0.0977310873568058, 'AU14': 0.06540695503354073, 'AU15': 0.2206658273935318, 'AU16': 0.04884195700287819, 'AU17': 0.40349108576774595, 'AU18': 0.09463946111500263, 'AU19': 0.01929361978545785, 'AU20': 0.15797953456640243, 'AU22': 0.01547939796000719, 'AU23': 0.03838762268424034, 'AU24': 0.032349591702222825, 'AU25': 0.33241657018661497, 'AU26': 0.018247321620583533, 'AU27': 0.02889911849051714, 'AU32': 0.07435699477791786, 'AU38': 0.10576192140579224, 'AU39': 0.021695180982351302}
+# Rule functions for OpenGraph
+def smile_rule_opengraph_au6(df, threshold):
+    avg_features = df.mean()
+    return avg_features['AU6'] >= threshold
 
-Source: opengraphau_smile, Rule: AU6_AU12
-Positive Examples:
-Negative Examples:
-  1890VY00 2:13, Probabilities: {'AU1': 0.02545059323310852, 'AU2': 0.003997185372281819, 'AU4': 0.23945302218198777, 'AU5': 0.03260554876178503, 'AU6': 0.27212628722190857, 'AU7': 0.3212260276079178, 'AU9': 0.009718286711722613, 'AU10': 0.119243586063385, 'AU11': 0.03488549068570137, 'AU12': 0.0984806776046753, 'AU13': 0.08176230192184449, 'AU14': 0.08271254897117615, 'AU15': 0.083079769089818, 'AU16': 0.04950752854347229, 'AU17': 0.340802401304245, 'AU18': 0.06822999715805053, 'AU19': 0.19966292083263398, 'AU20': 0.20828703343868255, 'AU22': 0.013848228985443712, 'AU23': 0.08762674033641815, 'AU24': 0.021061041951179506, 'AU25': 0.7455409646034241, 'AU26': 0.05891507491469383, 'AU27': 0.05215415582060814, 'AU32': 0.018706945702433586, 'AU38': 0.36011522710323335, 'AU39': 0.02673794813454151}
-  1890VY00 4:53, Probabilities: {'AU1': 0.06253941729664803, 'AU2': 0.009104053303599358, 'AU4': 0.16407276391983033, 'AU5': 0.01958258617669344, 'AU6': 0.17111043483018876, 'AU7': 0.2438662976026535, 'AU9': 0.04583917036652565, 'AU10': 0.09281312376260757, 'AU11': 0.0225264435634017, 'AU12': 0.04996741563081741, 'AU13': 0.0977310873568058, 'AU14': 0.06540695503354073, 'AU15': 0.2206658273935318, 'AU16': 0.04884195700287819, 'AU17': 0.40349108576774595, 'AU18': 0.09463946111500263, 'AU19': 0.01929361978545785, 'AU20': 0.15797953456640243, 'AU22': 0.01547939796000719, 'AU23': 0.03838762268424034, 'AU24': 0.032349591702222825, 'AU25': 0.33241657018661497, 'AU26': 0.018247321620583533, 'AU27': 0.02889911849051714, 'AU32': 0.07435699477791786, 'AU38': 0.10576192140579224, 'AU39': 0.021695180982351302}
+def smile_rule_opengraph_au12(df, threshold):
+    avg_features = df.mean()
+    return avg_features['AU12'] >= threshold
 
-Source: hsemotion_smile, Rule: Happiness
-Positive Examples:
-Negative Examples:
-  1890VY00 2:13, Probabilities: {'Happiness': 0.028517379611730575}
-  1890VY00 4:53, Probabilities: {'Happiness': 0.0025801106938160958}
+def smile_rule_opengraph_au6_au12(df, threshold):
+    avg_features = df.mean()
+    return (avg_features['AU6'] + avg_features['AU12']) >= threshold
+
+# Rule function for HSE
+def smile_rule_hse(df, threshold):
+    avg_features = df.mean()
+    return avg_features['Happiness'] >= threshold
+
+# Function to calculate accuracy and AUROC
+def evaluate_rule(rule_func, data_dict, labels_df, threshold):
+    y_true = []
+    y_pred = []
+
+    for timestamp, df in data_dict.items():
+        if timestamp in labels_df['Datetime'].values:
+            y_true.append(labels_df[labels_df['Datetime'] == timestamp]['EventDetected'].values[0])
+            y_pred.append(int(rule_func(df, threshold)))
+    
+    accuracy = accuracy_score(y_true, y_pred)
+    auroc = roc_auc_score(y_true, y_pred)
+    
+    return accuracy, auroc
+
+# Function to tune threshold
+def tune_threshold(rule_func, data_dict, labels_df, thresholds):
+    best_threshold = None
+    best_accuracy = 0
+    best_auroc = 0
+    
+    for threshold in thresholds:
+        accuracy, auroc = evaluate_rule(rule_func, data_dict, labels_df, threshold)
+        if accuracy > best_accuracy or (accuracy == best_accuracy and auroc > best_auroc):
+            best_threshold = threshold
+            best_accuracy = accuracy
+            best_auroc = auroc
+    
+    return best_threshold, best_accuracy, best_auroc
+
+# Define thresholds to test
+thresholds = np.linspace(0.1, 2, 21)
+
+# Dictionary of data sources and their corresponding rule functions
+data_sources = {
+    'openface_smile': {
+        'data': openface_smile,
+        'rules': {
+            'AU6_r': smile_rule_openface_au6,
+            'AU12_r': smile_rule_openface_au12,
+            'AU6_r_AU12_r': smile_rule_openface_au6_au12
+        }
+    },
+    'opengraphau_smile': {
+        'data': opengraphau_smile,
+        'rules': {
+            'AU6': smile_rule_opengraph_au6,
+            'AU12': smile_rule_opengraph_au12,
+            'AU6_AU12': smile_rule_opengraph_au6_au12
+        }
+    },
+    'hsemotion_smile': {
+        'data': hsemotion_smile,
+        'rules': {
+            'Happiness': smile_rule_hse
+        }
+    }
+}
+
+# DataFrame to store results
+results = []
+
+# Loop through each data source and rule, tune thresholds and evaluate
+for source, source_info in data_sources.items():
+    data_dict = source_info['data']
+    for rule_name, rule_func in source_info['rules'].items():
+        best_threshold, best_accuracy, best_auroc = tune_threshold(rule_func, data_dict, Final_Smile_Labels, thresholds)
+        results.append({
+            'Source': source,
+            'Rule': rule_name,
+            'Best Threshold': best_threshold,
+            'Accuracy': best_accuracy,
+            'AUROC': best_auroc
+        })
+
+# Create DataFrame
+results_df = pd.DataFrame(results)
+
+# Display results
+results_df
