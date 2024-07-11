@@ -1,4 +1,4 @@
-from sklearn.metrics import accuracy_score, roc_auc_score
+from sklearn.metrics import accuracy_score, roc_auc_score, confusion_matrix
 import numpy as np
 import pandas as pd
 
@@ -33,7 +33,7 @@ def smile_rule_hse(df, threshold):
     avg_features = df.mean()
     return avg_features['Happiness'] >= threshold
 
-# Function to calculate accuracy and AUROC
+# Function to calculate metrics
 def evaluate_rule(rule_func, data_dict, labels_df, threshold):
     y_true = []
     y_pred = []
@@ -42,26 +42,34 @@ def evaluate_rule(rule_func, data_dict, labels_df, threshold):
         if timestamp in labels_df['Datetime'].values:
             y_true.append(labels_df[labels_df['Datetime'] == timestamp]['EventDetected'].values[0])
             y_pred.append(int(rule_func(df, threshold)))
-    
+
     accuracy = accuracy_score(y_true, y_pred)
     auroc = roc_auc_score(y_true, y_pred)
+
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+    sensitivity = tp / (tp + fn)
+    specificity = tn / (tn + fp)
     
-    return accuracy, auroc
+    return accuracy, auroc, sensitivity, specificity
 
 # Function to tune threshold
 def tune_threshold(rule_func, data_dict, labels_df, thresholds):
     best_threshold = None
     best_accuracy = 0
     best_auroc = 0
+    best_sensitivity = 0
+    best_specificity = 0
     
     for threshold in thresholds:
-        accuracy, auroc = evaluate_rule(rule_func, data_dict, labels_df, threshold)
+        accuracy, auroc, sensitivity, specificity = evaluate_rule(rule_func, data_dict, labels_df, threshold)
         if accuracy > best_accuracy or (accuracy == best_accuracy and auroc > best_auroc):
             best_threshold = threshold
             best_accuracy = accuracy
             best_auroc = auroc
+            best_sensitivity = sensitivity
+            best_specificity = specificity
     
-    return best_threshold, best_accuracy, best_auroc
+    return best_threshold, best_accuracy, best_auroc, best_sensitivity, best_specificity
 
 # Define thresholds to test
 thresholds = np.linspace(0.1, 2, 21)
@@ -99,13 +107,15 @@ results = []
 for source, source_info in data_sources.items():
     data_dict = source_info['data']
     for rule_name, rule_func in source_info['rules'].items():
-        best_threshold, best_accuracy, best_auroc = tune_threshold(rule_func, data_dict, Final_Smile_Labels, thresholds)
+        best_threshold, best_accuracy, best_auroc, best_sensitivity, best_specificity = tune_threshold(rule_func, data_dict, Final_Smile_Labels, thresholds)
         results.append({
             'Source': source,
             'Rule': rule_name,
             'Best Threshold': best_threshold,
             'Accuracy': best_accuracy,
-            'AUROC': best_auroc
+            'AUROC': best_auroc,
+            'Sensitivity': best_sensitivity,
+            'Specificity': best_specificity
         })
 
 # Create DataFrame
