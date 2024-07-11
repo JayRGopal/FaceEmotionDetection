@@ -43,11 +43,15 @@ def visualize_analysis(input_folder, csv_output_folder, video_output_folder, thr
         emotion_csv_path = os.path.join(csv_output_folder, video_file, 'outputs_hse.csv')
         bbox_csv_path = os.path.join(csv_output_folder, video_file, 'outputs_bboxes.csv')
         
-        # Load CSVs
-        au_df = pd.read_csv(au_csv_path)
-        emotion_df = pd.read_csv(emotion_csv_path)
-        if USE_BBOXES:
-            bbox_df = pd.read_csv(bbox_csv_path)
+        try:
+            # Load CSVs
+            au_df = pd.read_csv(au_csv_path)
+            emotion_df = pd.read_csv(emotion_csv_path)
+            if USE_BBOXES:
+                bbox_df = pd.read_csv(bbox_csv_path)
+        except pd.errors.EmptyDataError:
+            print(f"Skipping {video_file} due to empty CSV files.")
+            continue
         
         # Filter frames based on emotion threshold
         filtered_frames = emotion_df[emotion_df['Happiness'] >= threshold]['frame'].unique()
