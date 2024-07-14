@@ -203,6 +203,8 @@ Project Link: [https://github.com/JayRGopal/FaceEmotionDetection](https://github
 * [Img Shields](https://shields.io)
 * [Font Awesome](https://fontawesome.com)
 * [README Template](https://github.com/othneildrew/Best-README-Template)
+* [OpenGraphAU](https://github.com/lingjivoo/OpenGraphAU)
+* [HSEmotion](https://github.com/av-savchenko/hsemotion)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
