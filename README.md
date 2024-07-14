@@ -1,26 +1,27 @@
 <a id="readme-top"></a>
 
 
+
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
-[![MIT License][license-shield]][license-url]
+[![Lab Website][lab-website-shield]][lab-website-url]
+[![Twitter][twitter-shield]][twitter-url]
 [![LinkedIn][linkedin-shield]][linkedin-url]
-
 
 
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
   <a href="https://github.com/JayRGopal/FaceEmotionDetection">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
+    <img src="readme_assets/FaceDx_Logo.png" alt="Logo" width="385" height="270">
   </a>
 
-  <h3 align="center">FaceDx</h3>
+  <h1 align="center">FaceDx</h1>
 
   <p align="center">
-    A Markerless Computer Vision Approach For Continuous Quantification of Mood and Affective Behaviors
+    <h3>A Markerless Computer Vision Approach For Continuous Quantification of Internal States and Affective Behaviors in Clinical Settings</h3>
     <br />
     <br />
     <a href="https://github.com/JayRGopal/FaceEmotionDetection/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
@@ -51,7 +52,6 @@
     <li><a href="#usage">Usage</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
@@ -178,14 +178,6 @@ Don't forget to give the project a star! Thanks again!
 
 
 
-<!-- LICENSE -->
-## License
-
-Distributed under the MIT License. See `LICENSE.txt` for more information.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 
 <!-- CONTACTS -->
 ## Contacts
@@ -193,6 +185,9 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 Yuhao "Danny" Huang, MD - [@YuhaoHuangMD](https://twitter.com/YuhaoHuangMD) - Yhhuang@Stanford.edu
 
 Jay Gopal - [@JayRGopal](https://twitter.com/JayRGopal) - Jay_Gopal@Brown.edu & JGopal@Stanford.edu
+
+Corey Keller, MD, PhD - [@DrCoreyKeller](https://twitter.com/DrCoreyKeller) - CKeller1@Stanford.edu
+
 
 Project Link: [https://github.com/JayRGopal/FaceEmotionDetection](https://github.com/JayRGopal/FaceEmotionDetection)
 
@@ -204,7 +199,6 @@ Project Link: [https://github.com/JayRGopal/FaceEmotionDetection](https://github
 ## Acknowledgments
 
 
-* [Choose an Open Source License](https://choosealicense.com)
 * [GitHub Emoji Cheat Sheet](https://www.webpagefx.com/tools/emoji-cheat-sheet)
 * [Malven's Flexbox Cheatsheet](https://flexbox.malven.co/)
 * [Malven's Grid Cheatsheet](https://grid.malven.co/)
@@ -220,18 +214,20 @@ Project Link: [https://github.com/JayRGopal/FaceEmotionDetection](https://github
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/othneildrew/Best-README-Template.svg?style=for-the-badge
+[contributors-shield]: https://img.shields.io/github/contributors/JayRGopal/FaceEmotionDetection
 [contributors-url]: https://github.com/JayRGopal/FaceEmotionDetection/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/othneildrew/Best-README-Template.svg?style=for-the-badge
+[forks-shield]: https://img.shields.io/github/forks/JayRGopal/FaceEmotionDetection
 [forks-url]: https://github.com/JayRGopal/FaceEmotionDetection/network/members
-[stars-shield]: https://img.shields.io/github/stars/othneildrew/Best-README-Template.svg?style=for-the-badge
+[stars-shield]: https://img.shields.io/github/stars/JayRGopal/FaceEmotionDetection
 [stars-url]: https://github.com/JayRGopal/FaceEmotionDetection/stargazers
-[issues-shield]: https://img.shields.io/github/issues/othneildrew/Best-README-Template.svg?style=for-the-badge
+[issues-shield]: https://img.shields.io/github/issues/JayRGopal/FaceEmotionDetection
 [issues-url]: https://github.com/JayRGopal/FaceEmotionDetection/issues
-[license-shield]: https://img.shields.io/github/license/othneildrew/Best-README-Template.svg?style=for-the-badge
-[license-url]: https://github.com/JayRGopal/FaceEmotionDetection/blob/master/LICENSE.txt
-[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
+[lab-website-shield]: https://img.shields.io/website?url=https%3A%2F%2Fprecisionneuro.stanford.edu%2F
+[lab-website-url]: https://precisionneuro.stanford.edu/
+[linkedin-shield]: https://img.shields.io/badge/LinkedIn-JayRGopal-blue
 [linkedin-url]: https://linkedin.com/in/jay-gopal/
+[twitter-shield]: https://img.shields.io/twitter/follow/JayRGopal
+[twitter-url]: https://twitter.com/JayRGopal
 [product-screenshot]: images/screenshot.png
 [Next.js]: https://img.shields.io/badge/next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white
 [Next-url]: https://nextjs.org/
