@@ -10,8 +10,6 @@
 .
 [Issues][issues-url]
 .
-[MIT License][license-url]
-.
 [LinkedIn][linkedin-url]
 
 
@@ -57,7 +55,6 @@
     <li><a href="#usage">Usage</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
@@ -184,14 +181,6 @@ Don't forget to give the project a star! Thanks again!
 
 
 
-<!-- LICENSE -->
-## License
-
-Distributed under the MIT License. See `LICENSE.txt` for more information.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 
 <!-- CONTACTS -->
 ## Contacts
@@ -210,7 +199,6 @@ Project Link: [https://github.com/JayRGopal/FaceEmotionDetection](https://github
 ## Acknowledgments
 
 
-* [Choose an Open Source License](https://choosealicense.com)
 * [GitHub Emoji Cheat Sheet](https://www.webpagefx.com/tools/emoji-cheat-sheet)
 * [Malven's Flexbox Cheatsheet](https://flexbox.malven.co/)
 * [Malven's Grid Cheatsheet](https://grid.malven.co/)
@@ -230,7 +218,6 @@ Project Link: [https://github.com/JayRGopal/FaceEmotionDetection](https://github
 [forks-url]: https://github.com/JayRGopal/FaceEmotionDetection/network/members
 [stars-url]: https://github.com/JayRGopal/FaceEmotionDetection/stargazers
 [issues-url]: https://github.com/JayRGopal/FaceEmotionDetection/issues
-[license-url]: https://github.com/JayRGopal/FaceEmotionDetection/blob/master/LICENSE.txt
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://linkedin.com/in/jay-gopal/
 [product-screenshot]: images/screenshot.png
