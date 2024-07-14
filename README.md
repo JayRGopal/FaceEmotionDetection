@@ -1,12 +1,18 @@
 <a id="readme-top"></a>
 
 
-[![Contributors]][contributors-url]
-[![Forks]][forks-url]
-[![Stargazers]][stars-url]
-[![Issues]][issues-url]
-[![MIT License]][license-url]
-[![LinkedIn][linkedin-shield]][linkedin-url]
+
+[Contributors][contributors-url]
+.
+[Forks][forks-url]
+.
+[Stargazers][stars-url]
+.
+[Issues][issues-url]
+.
+[MIT License][license-url]
+.
+[LinkedIn][linkedin-url]
 
 
 
