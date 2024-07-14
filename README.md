@@ -7,8 +7,8 @@
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
 [![Lab Website][lab-website-shield]][lab-website-url]
+[![Twitter][twitter-shield]][twitter-url]
 [![LinkedIn][linkedin-shield]][linkedin-url]
-
 
 
 <!-- PROJECT LOGO -->
@@ -21,7 +21,7 @@
   <h1 align="center">FaceDx</h1>
 
   <p align="center">
-    A Markerless Computer Vision Approach For Continuous Quantification of Mood and Affective Behaviors
+    <h3>A Markerless Computer Vision Approach For Continuous Quantification of Internal States and Affective Behaviors in Clinical Settings</h3>
     <br />
     <br />
     <a href="https://github.com/JayRGopal/FaceEmotionDetection/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
@@ -224,8 +224,10 @@ Project Link: [https://github.com/JayRGopal/FaceEmotionDetection](https://github
 [issues-url]: https://github.com/JayRGopal/FaceEmotionDetection/issues
 [lab-website-shield]: https://img.shields.io/website?url=https%3A%2F%2Fprecisionneuro.stanford.edu%2F
 [lab-website-url]: https://precisionneuro.stanford.edu/
-[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
+[linkedin-shield]: https://img.shields.io/badge/LinkedIn-JayRGopal-blue
 [linkedin-url]: https://linkedin.com/in/jay-gopal/
+[twitter-shield]: https://img.shields.io/twitter/follow/JayRGopal
+[twitter-url]: https://twitter.com/JayRGopal
 [product-screenshot]: images/screenshot.png
 [Next.js]: https://img.shields.io/badge/next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white
 [Next-url]: https://nextjs.org/
