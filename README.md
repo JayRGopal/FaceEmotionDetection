@@ -14,7 +14,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/JayRGopal/FaceEmotionDetection">
-    <img src="readme_assets/FaceDx_Logo.png" alt="Logo" width="275" height="193">
+    <img src="readme_assets/FaceDx_Logo.png" alt="Logo" width="385" height="270">
   </a>
 
   <h3 align="center">FaceDx</h3>
