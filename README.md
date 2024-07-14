@@ -17,7 +17,7 @@
     <img src="readme_assets/FaceDx_Logo.png" alt="Logo" width="385" height="270">
   </a>
 
-  <h3 align="center">FaceDx</h3>
+  <h1 align="center">FaceDx</h1>
 
   <p align="center">
     A Markerless Computer Vision Approach For Continuous Quantification of Mood and Affective Behaviors
