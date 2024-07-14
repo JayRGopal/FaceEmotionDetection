@@ -37,7 +37,7 @@
   <summary>Table of Contents</summary>
   <ol>
     <li>
-      <a href="#about-the-project">About The Project</a>
+      <a href="#project-overview">Project Overview</a>
       <ul>
         <li><a href="#built-with">Built With</a></li>
       </ul>
@@ -59,10 +59,10 @@
 
 
 
-<!-- ABOUT THE PROJECT -->
-## About The Project
+<!-- PROJECT OVERVIEW -->
+## Project Overview
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
+[![FaceDx Screen Shot][product-screenshot]]
 
 There are many great README templates available on GitHub; however, I didn't find one that really suited my needs so I created this enhanced one. I want to create a README template so amazing that it'll be the last one you ever need -- I think this is it.
 
@@ -226,4 +226,4 @@ Project Link: [https://github.com/JayRGopal/FaceEmotionDetection](https://github
 [linkedin-url]: https://linkedin.com/in/jay-gopal/
 [twitter-shield]: https://img.shields.io/twitter/follow/JayRGopal
 [twitter-url]: https://twitter.com/JayRGopal
-[product-screenshot]: images/screenshot.png
+[product-screenshot]: readme-assets/product_demo.png
