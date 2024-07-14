@@ -2,15 +2,12 @@
 
 
 
-[Contributors][contributors-url]
-.
-[Forks][forks-url]
-.
-[Stargazers][stars-url]
-.
-[Issues][issues-url]
-.
-[LinkedIn][linkedin-url]
+[![Contributors][contributors-shield]][contributors-url]
+[![Forks][forks-shield]][forks-url]
+[![Stargazers][stars-shield]][stars-url]
+[![Issues][issues-shield]][issues-url]
+[![Lab Website][lab-website-shield]][lab-website-url]
+[![LinkedIn][linkedin-shield]][linkedin-url]
 
 
 
@@ -189,6 +186,9 @@ Yuhao "Danny" Huang, MD - [@YuhaoHuangMD](https://twitter.com/YuhaoHuangMD) - Yh
 
 Jay Gopal - [@JayRGopal](https://twitter.com/JayRGopal) - Jay_Gopal@Brown.edu & JGopal@Stanford.edu
 
+Corey Keller, MD, PhD - [@DrCoreyKeller](https://twitter.com/DrCoreyKeller) - CKeller1@Stanford.edu
+
+
 Project Link: [https://github.com/JayRGopal/FaceEmotionDetection](https://github.com/JayRGopal/FaceEmotionDetection)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -214,10 +214,16 @@ Project Link: [https://github.com/JayRGopal/FaceEmotionDetection](https://github
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
+[contributors-shield]: https://img.shields.io/github/contributors/JayRGopal/FaceEmotionDetection
 [contributors-url]: https://github.com/JayRGopal/FaceEmotionDetection/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/JayRGopal/FaceEmotionDetection
 [forks-url]: https://github.com/JayRGopal/FaceEmotionDetection/network/members
+[stars-shield]: https://img.shields.io/github/stars/JayRGopal/FaceEmotionDetection
 [stars-url]: https://github.com/JayRGopal/FaceEmotionDetection/stargazers
+[issues-shield]: https://img.shields.io/github/issues/JayRGopal/FaceEmotionDetection
 [issues-url]: https://github.com/JayRGopal/FaceEmotionDetection/issues
+[lab-website-shield]: https://img.shields.io/website?url=https%3A%2F%2Fprecisionneuro.stanford.edu%2F
+[lab-website-url]: https://precisionneuro.stanford.edu/
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://linkedin.com/in/jay-gopal/
 [product-screenshot]: images/screenshot.png
