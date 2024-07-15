@@ -22,8 +22,6 @@
 
   <p align="center">
     <h3>A Markerless Computer Vision Approach For Continuous Quantification of Internal States and Affective Behaviors in Clinical Settings</h3>
-    <br />
-    <br />
     <a href="https://github.com/JayRGopal/FaceEmotionDetection/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
     ·
     <a href="https://github.com/JayRGopal/FaceEmotionDetection/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
@@ -63,7 +61,9 @@
 
 ![Product Demo](readme_assets/product_demo.png)
 
-TODO
+FaceDx is a fully integrated computer vision workflow to analyze internal states, affect, pain, and short-term behaviors in the clinical setting. Importantly, our approach is markerless and does not require any fine-tuning, meaning FaceDx can automatically process any videos in which the given subject's face is visible. We bring together pre-trained, open source models that output facial action units (AUs) and emotions on a frame-by-frame basis. 
+
+FaceDx has been shown to accurately decode self-reported long-term mood scores, as well as short-term behaviors such as smiles, frowns, or neutral expressions. Importantly, we are one of the first to conduct this validation in a clinical setting without the need for significant human intervention and analysis.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -71,7 +71,28 @@ TODO
 
 ### Built With
 
-TODO
+We use a combination of the most widely employed deep learning and computer vision libraries for our custom clinical monitoring pipeline.
+* **PyTorch**: MTCNN, OpenGraphAU
+* **TensorFlow**: HSEmotion, DeepFace & Partial Verify,
+* **OpenCV**: Video Processing, Intermediate Image Saving, Visualizer
+
+<br />
+<div align="center">
+  <a href="https://github.com/JayRGopal/FaceEmotionDetection">
+    <img src="readme_assets/pytorch.png" alt="Logo" width="451" height="112">
+  </a>
+  <br />
+  <a href="https://github.com/JayRGopal/FaceEmotionDetection">
+    <img src="readme_assets/tensorflow.png" alt="Logo" width="422" height="270">
+  </a>
+
+  <a href="https://github.com/JayRGopal/FaceEmotionDetection">
+    <img src="readme_assets/opencv.png" alt="Logo" width="262" height="347">
+  </a>
+
+</div>
+
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
