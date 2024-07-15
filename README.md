@@ -138,6 +138,7 @@ Project Link: [https://github.com/JayRGopal/FaceEmotionDetection](https://github
 * [README Template](https://github.com/othneildrew/Best-README-Template)
 * [OpenGraphAU](https://github.com/lingjivoo/OpenGraphAU)
 * [HSEmotion](https://github.com/av-savchenko/hsemotion)
+* [DeepFace](https://github.com/serengil/deepface)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
