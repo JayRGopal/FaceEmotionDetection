@@ -32,8 +32,8 @@ def visualize_analysis(video_path, au_csv_path, emotion_csv_path, bbox_csv_path,
             color = (0, 0, 255) if val.values[0] > threshold else (0, 0, 0)
             text = f"{col}: {round(val.values[0], 3)}"
             x_offset = (idx // max_items_per_column) * col_width
-            y_offset = 70 * (idx % max_items_per_column)  # Adjusted y_offset to accommodate bigger text
-            cv2.putText(canvas, text, (start_x + x_offset, 70 + y_offset), cv2.FONT_HERSHEY_SIMPLEX, 1.8, color, 4)  # Increased font scale and thickness
+            y_offset = 50 * (idx % max_items_per_column)  # Adjusted y_offset to accommodate bigger text
+            cv2.putText(canvas, text, (start_x + x_offset, 50 + y_offset), cv2.FONT_HERSHEY_SIMPLEX, 1.2, color, 4)  # Increased font scale and thickness
     
     def draw_data_au(data, start_x, canvas):
         max_items_per_column = 11
@@ -41,10 +41,10 @@ def visualize_analysis(video_path, au_csv_path, emotion_csv_path, bbox_csv_path,
         col_width = width // num_cols
         for idx, (col, val) in enumerate(data.drop(columns=['frame', 'timestamp', 'success']).items()):
             color = (0, 0, 255) if val.values[0] > threshold else (0, 0, 0)
-            text = f"{col}: {round(val.values[0], 3)}"
+            text = f"{col}: {round(val.values[0], 2)}"
             x_offset = (idx // max_items_per_column) * col_width
-            y_offset = 60 * (idx % max_items_per_column)  # Adjusted y_offset to accommodate bigger text
-            cv2.putText(canvas, text, (start_x + x_offset, 60 + y_offset), cv2.FONT_HERSHEY_SIMPLEX, 1.4, color, 3)  # Increased font scale and thickness
+            y_offset = 45 * (idx % max_items_per_column)  # Adjusted y_offset to accommodate bigger text
+            cv2.putText(canvas, text, (start_x + x_offset, 45 + y_offset), cv2.FONT_HERSHEY_SIMPLEX, 1.1, color, 2)  # Increased font scale and thickness
    
 
     while cap.isOpened():
