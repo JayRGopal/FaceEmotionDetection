@@ -87,8 +87,8 @@ for _, row in tqdm(datetime_df.iterrows(), total=len(datetime_df)):
     video_end = row['VideoEnd']
 
     # Load emotion and AU CSVs
-    emotion_csv_path = os.path.join(CSV_DIRECTORY, video_file.replace('.mp4', ''), 'outputs_hse.csv')
-    au_csv_path = os.path.join(CSV_DIRECTORY, video_file.replace('.mp4', ''), 'outputs_ogau.csv')
+    emotion_csv_path = os.path.join(CSV_DIRECTORY, video_file, 'outputs_hse.csv')
+    au_csv_path = os.path.join(CSV_DIRECTORY, video_file, 'outputs_ogau.csv')
 
     if not os.path.exists(emotion_csv_path) or not os.path.exists(au_csv_path):
         continue
