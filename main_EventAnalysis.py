@@ -19,13 +19,6 @@ MIN_EVENT_LENGTH = 2  # Minimum length of each event in frames
 MERGE_TIME = 3  # Maximum frames apart to consider merging events
 FPS = 5  # Frames per second
 
-# Function to calculate event start times within the video
-def calculate_event_times_within_video(frames, fps=5):
-    seconds = np.array(frames) / fps
-    minutes = np.floor(seconds / 60).astype(int)
-    seconds = np.round(seconds % 60, 1)
-    return minutes, seconds
-
 # Function to detect events
 def detect_events(emotion_df, au_df):
     events = []
@@ -58,7 +51,8 @@ def detect_events(emotion_df, au_df):
                 events[-1]['Duration in Seconds'] = round(events[-1]['Duration in Seconds'] + event_length / FPS, 1)
                 continue
 
-            minutes, seconds = calculate_event_times_within_video([start_frame], fps=FPS)
+            minutes = (start_frame // 5) // 60
+            seconds = (start_frame // 5) - (60 * minutes)
             start_time = f"{minutes[0]:02}:{seconds[0]:04.1f}"
             duration = round(event_length / FPS, 1)
 
