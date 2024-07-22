@@ -27,20 +27,27 @@ def calculate_event_times_within_video(frames, fps=5):
     return minutes, seconds
 
 # Function to detect events
-def detect_events(video_file, emotion_df, au_df):
+def detect_events(emotion_df, au_df):
     events = []
 
     for emotion, threshold in EVENT_THRESHOLDS.items():
-        emotion_frames = emotion_df[emotion_df[emotion] >= threshold]['frame']
-        if len(emotion_frames) < MIN_EVENT_LENGTH:
+        emotion_values = emotion_df[emotion].values
+        frames = emotion_df['frame'].values
+
+        # Identify start and end frames of events
+        above_threshold = emotion_values >= threshold
+        start_indices = np.where((above_threshold[:-1] == False) & (above_threshold[1:] == True))[0] + 1
+        end_indices = np.where((above_threshold[:-1] == True) & (above_threshold[1:] == False))[0]
+
+        if len(start_indices) == 0 or len(end_indices) == 0:
             continue
 
-        # Identify contiguous frames as events
-        diff = emotion_frames.diff().fillna(1)
-        event_starts = emotion_frames[diff > 1].values
-        event_ends = np.append(event_starts[1:] - 1, emotion_frames.iloc[-1])
+        if start_indices[0] > end_indices[0]:
+            end_indices = end_indices[1:]
+        if start_indices[-1] > end_indices[-1]:
+            start_indices = start_indices[:-1]
 
-        for start_frame, end_frame in zip(event_starts, event_ends):
+        for start_frame, end_frame in zip(frames[start_indices], frames[end_indices]):
             event_length = end_frame - start_frame + 1
             if event_length < MIN_EVENT_LENGTH:
                 continue
@@ -77,7 +84,7 @@ all_events = []
 
 # Loop through the subfolders in the given CSV directory
 for subfolder in tqdm(os.listdir(CSV_DIRECTORY)):
-    video_file = subfolder
+    video_file = subfolder + '.mp4'
     
     # Load emotion and AU CSVs
     emotion_csv_path = os.path.join(CSV_DIRECTORY, subfolder, 'outputs_hse.csv')
@@ -90,7 +97,12 @@ for subfolder in tqdm(os.listdir(CSV_DIRECTORY)):
     au_df = pd.read_csv(au_csv_path)
 
     # Detect events in the video
-    video_events = detect_events(video_file, emotion_df, au_df)
+    video_events = detect_events(emotion_df, au_df)
+    
+    if video_events:  # Debugging: Check if events are detected
+        print(f"Events detected in {video_file}: {len(video_events)}")
+    else:
+        print(f"No events detected in {video_file}")
 
     all_events.extend(video_events)
 
