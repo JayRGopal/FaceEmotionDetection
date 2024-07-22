@@ -61,6 +61,7 @@ def detect_events(emotion_df, au_df):
 
             event_data = {
                 'Filename': video_file,
+                'Start Frame Num': start_frame,
                 'Start Time': start_time,
                 'Duration in Seconds': duration,
                 'Event Type': emotion,
@@ -77,7 +78,7 @@ def detect_events(emotion_df, au_df):
 all_events = []
 
 # Loop through the subfolders in the given CSV directory
-for subfolder in tqdm(os.listdir(CSV_DIRECTORY)):
+for subfolder in tqdm(os.listdir(CSV_DIRECTORY)[10:20]):
     video_file = subfolder + '.mp4'
     
     # Load emotion and AU CSVs
