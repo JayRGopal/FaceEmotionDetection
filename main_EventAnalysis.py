@@ -28,7 +28,7 @@ datetime_df['VideoEnd'] = pd.to_datetime(datetime_df['VideoEnd'], format='%d-%b-
 
 # Function to calculate start and end times of events
 def calculate_event_times(video_start, frames, fps=5):
-    start_times = video_start + pd.to_timedelta(frames / fps, unit='s')
+    start_times = video_start + pd.to_timedelta(np.array(frames) / fps, unit='s')
     return start_times
 
 # Function to detect events
