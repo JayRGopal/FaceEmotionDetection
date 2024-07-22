@@ -52,9 +52,13 @@ def detect_events(emotion_df, au_df):
                 events[-1]['Duration in Seconds'] = round(events[-1]['Duration in Seconds'] + event_length / FACEDX_FPS, 1)
                 continue
 
-            minutes = (start_frame // VIDEO_FPS) // 60
-            seconds = (start_frame // VIDEO_FPS) - (60 * minutes)
-            start_time = f"{minutes}:{seconds}"
+            minutes = int((start_frame // VIDEO_FPS) // 60)
+            seconds = int((start_frame // VIDEO_FPS) - (60 * minutes))
+            if minutes >= 60:
+              hours = int(minutes // 60)
+              start_time = f"{hours}:{minutes}:{seconds}"
+            else:
+              start_time = f"{minutes}:{seconds}"
             duration = round(event_length / FACEDX_FPS, 1)
 
             avg_au = au_df[(au_df['frame'] >= start_frame) & (au_df['frame'] <= end_frame)].mean()
@@ -62,7 +66,6 @@ def detect_events(emotion_df, au_df):
 
             event_data = {
                 'Filename': video_file,
-                'Start Frame Num': start_frame,
                 'Start Time': start_time,
                 'Duration in Seconds': duration,
                 'Event Type': emotion,
