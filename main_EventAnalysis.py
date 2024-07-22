@@ -83,8 +83,8 @@ def detect_events(emotion_df, au_df):
 all_events = []
 
 # Loop through the subfolders in the given CSV directory
-for subfolder in tqdm(os.listdir(CSV_DIRECTORY)[10:20]):
-    video_file = subfolder + '.mp4'
+for subfolder in tqdm(os.listdir(CSV_DIRECTORY)):
+    video_file = subfolder
     
     # Load emotion and AU CSVs
     emotion_csv_path = os.path.join(CSV_DIRECTORY, subfolder, 'outputs_hse.csv')
@@ -98,11 +98,6 @@ for subfolder in tqdm(os.listdir(CSV_DIRECTORY)[10:20]):
 
     # Detect events in the video
     video_events = detect_events(emotion_df, au_df)
-    
-    if video_events:  # Debugging: Check if events are detected
-        print(f"Events detected in {video_file}: {len(video_events)}")
-    else:
-        print(f"No events detected in {video_file}")
 
     all_events.extend(video_events)
 
