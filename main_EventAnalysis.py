@@ -18,6 +18,7 @@ EVENT_THRESHOLDS = {
 
 MIN_EVENT_LENGTH = 2  # Minimum length of each event in frames
 MERGE_TIME = 3  # Maximum frames apart to consider merging events
+FPS = 5  # Frames per second
 
 # Load datetime CSV
 datetime_df = pd.read_csv(DATETIME_CSV)
@@ -54,12 +55,12 @@ def detect_events(emotion_df, au_df):
             # Merge close by events
             if events and start_frame - events[-1]['End Frame'] <= MERGE_TIME:
                 events[-1]['End Frame'] = end_frame
-                events[-1]['Duration in Seconds'] = round(events[-1]['Duration in Seconds'] + event_length / 5.0, 1)
+                events[-1]['Duration in Seconds'] = round(events[-1]['Duration in Seconds'] + event_length / FPS, 1)
                 continue
 
-            minutes, seconds = calculate_event_times_within_video([start_frame])
+            minutes, seconds = calculate_event_times_within_video([start_frame], fps=FPS)
             start_time = f"{minutes[0]:02}:{seconds[0]:04.1f}"
-            duration = round((end_frame - start_frame + 1) / 5.0, 1)
+            duration = round(event_length / FPS, 1)
 
             avg_au = au_df[(au_df['frame'] >= start_frame) & (au_df['frame'] <= end_frame)].mean()
             avg_emotion = emotion_df[(emotion_df['frame'] >= start_frame) & (emotion_df['frame'] <= end_frame)].mean()
