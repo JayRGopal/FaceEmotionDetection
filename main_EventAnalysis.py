@@ -106,6 +106,9 @@ for subfolder in tqdm(os.listdir(CSV_DIRECTORY)):
     except pd.errors.EmptyDataError:
         print(f"Skipping {video_file}: empty CSV files.")
         continue
+    except OSError as e:
+        print(f"Skipping {video_file}: OSError - {e}")
+        continue
 
     # Detect events in the video
     video_events = detect_events(emotion_df, au_df)
