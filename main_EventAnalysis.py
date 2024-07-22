@@ -44,7 +44,7 @@ def detect_events(emotion_df, au_df):
         # Identify contiguous frames as events
         diff = emotion_frames.diff().fillna(1)
         event_starts = emotion_frames[diff > 1].values
-        event_ends = emotion_frames[diff > 1].shift(-1).fillna(emotion_frames.iloc[-1]).values
+        event_ends = np.append(event_starts[1:] - 1, emotion_frames.iloc[-1])
 
         for start_frame, end_frame in zip(event_starts, event_ends):
             event_length = end_frame - start_frame + 1
@@ -98,6 +98,12 @@ for _, row in tqdm(datetime_df.iterrows(), total=len(datetime_df)):
 
     # Detect events in the video
     video_events = detect_events(emotion_df, au_df)
+    
+    if video_events:  # Debugging: Check if events are detected
+        print(f"Events detected in {video_file}: {len(video_events)}")
+    else:
+        print(f"No events detected in {video_file}")
+
     all_events.extend(video_events)
 
 # Remove 'End Frame' before saving
