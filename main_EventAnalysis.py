@@ -17,6 +17,7 @@ EVENT_THRESHOLDS = {
 
 MIN_EVENT_LENGTH = 2  # Minimum length of each event in frames
 MERGE_TIME = 3  # Maximum frames apart to consider merging events
+
 FACEDX_FPS = 5 # FPS after down sampling
 VIDEO_FPS = 30  # FPS of original video (for time stamps!)
 
@@ -55,10 +56,11 @@ def detect_events(emotion_df, au_df):
             minutes = int((start_frame // VIDEO_FPS) // 60)
             seconds = int((start_frame // VIDEO_FPS) - (60 * minutes))
             if minutes >= 60:
-              hours = int(minutes // 60)
-              start_time = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+                hours = int(minutes // 60)
+                minutes = minutes % 60
+                start_time = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
             else:
-              start_time = f"{minutes:02d}:{seconds:02d}"
+                start_time = f"{minutes:02d}:{seconds:02d}"
             
             duration = round(event_length / FACEDX_FPS, 1)
 
@@ -91,10 +93,19 @@ for subfolder in tqdm(os.listdir(CSV_DIRECTORY)):
     au_csv_path = os.path.join(CSV_DIRECTORY, subfolder, 'outputs_ogau.csv')
 
     if not os.path.exists(emotion_csv_path) or not os.path.exists(au_csv_path):
+        print(f"Skipping {video_file}: missing CSV files.")
         continue
 
-    emotion_df = pd.read_csv(emotion_csv_path)
-    au_df = pd.read_csv(au_csv_path)
+    if os.path.getsize(emotion_csv_path) == 0 or os.path.getsize(au_csv_path) == 0:
+        print(f"Skipping {video_file}: empty CSV files.")
+        continue
+
+    try:
+        emotion_df = pd.read_csv(emotion_csv_path)
+        au_df = pd.read_csv(au_csv_path)
+    except pd.errors.EmptyDataError:
+        print(f"Skipping {video_file}: empty CSV files.")
+        continue
 
     # Detect events in the video
     video_events = detect_events(emotion_df, au_df)
