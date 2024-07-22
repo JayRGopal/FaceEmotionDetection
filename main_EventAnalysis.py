@@ -5,7 +5,6 @@ from tqdm import tqdm
 
 # Parameters
 PAT_NOW = "S23_199"
-DATETIME_CSV = os.path.abspath(f'/home/klab/NAS/Analysis/AudioFacialEEG/Behavioral Labeling/videoDateTimes/Raw CSVs/videoFileTable_S{PAT_NOW[4:]}.csv')
 CSV_DIRECTORY = os.path.abspath(f'/home/klab/NAS/Analysis/outputs_Combined/{PAT_NOW}/')
 OUTPUT_CSV = os.path.join(CSV_DIRECTORY, 'combined_events.csv')
 
@@ -20,12 +19,6 @@ MIN_EVENT_LENGTH = 2  # Minimum length of each event in frames
 MERGE_TIME = 3  # Maximum frames apart to consider merging events
 FPS = 5  # Frames per second
 
-# Load datetime CSV
-datetime_df = pd.read_csv(DATETIME_CSV)
-datetime_df['Filename'] = datetime_df['Filename'].str.replace('.m2t', '.mp4')
-datetime_df['VideoStart'] = pd.to_datetime(datetime_df['VideoStart'], format='%d-%b-%Y %H:%M:%S')
-datetime_df['VideoEnd'] = pd.to_datetime(datetime_df['VideoEnd'], format='%d-%b-%Y %H:%M:%S')
-
 # Function to calculate event start times within the video
 def calculate_event_times_within_video(frames, fps=5):
     seconds = np.array(frames) / fps
@@ -34,7 +27,7 @@ def calculate_event_times_within_video(frames, fps=5):
     return minutes, seconds
 
 # Function to detect events
-def detect_events(emotion_df, au_df):
+def detect_events(video_file, emotion_df, au_df):
     events = []
 
     for emotion, threshold in EVENT_THRESHOLDS.items():
@@ -82,14 +75,13 @@ def detect_events(emotion_df, au_df):
 # Process each video file
 all_events = []
 
-for _, row in tqdm(datetime_df.iterrows(), total=len(datetime_df)):
-    video_file = row['Filename']
-    video_start = row['VideoStart']
-    video_end = row['VideoEnd']
-
+# Loop through the subfolders in the given CSV directory
+for subfolder in tqdm(os.listdir(CSV_DIRECTORY)):
+    video_file = subfolder
+    
     # Load emotion and AU CSVs
-    emotion_csv_path = os.path.join(CSV_DIRECTORY, video_file, 'outputs_hse.csv')
-    au_csv_path = os.path.join(CSV_DIRECTORY, video_file, 'outputs_ogau.csv')
+    emotion_csv_path = os.path.join(CSV_DIRECTORY, subfolder, 'outputs_hse.csv')
+    au_csv_path = os.path.join(CSV_DIRECTORY, subfolder, 'outputs_ogau.csv')
 
     if not os.path.exists(emotion_csv_path) or not os.path.exists(au_csv_path):
         continue
@@ -98,12 +90,7 @@ for _, row in tqdm(datetime_df.iterrows(), total=len(datetime_df)):
     au_df = pd.read_csv(au_csv_path)
 
     # Detect events in the video
-    video_events = detect_events(emotion_df, au_df)
-    
-    if video_events:  # Debugging: Check if events are detected
-        print(f"Events detected in {video_file}: {len(video_events)}")
-    else:
-        print(f"No events detected in {video_file}")
+    video_events = detect_events(video_file, emotion_df, au_df)
 
     all_events.extend(video_events)
 
