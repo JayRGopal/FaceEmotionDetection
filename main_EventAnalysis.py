@@ -12,14 +12,14 @@ OUTPUT_CSV = os.path.join(CSV_DIRECTORY, 'combined_events.csv')
 
 
 EVENT_THRESHOLDS = {
-    'Happiness': 0.85,
+    'Happiness': 0.9,
     'Anger': 0.85,
     'Sadness': 0.9,
-    'Neutral': 0.9
+    'Neutral': 0.95
 }
 
 MIN_EVENT_LENGTH = 2  # Minimum length of each event in frames
-MERGE_TIME = 5  # Maximum frames apart to consider merging events
+MERGE_TIME = 3  # Maximum frames apart to consider merging events
 
 # Load datetime CSV
 datetime_df = pd.read_csv(DATETIME_CSV)
