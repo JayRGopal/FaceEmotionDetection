@@ -1,7 +1,6 @@
 import os
 import pandas as pd
 import numpy as np
-import datetime
 from tqdm import tqdm
 
 # Parameters
@@ -9,7 +8,6 @@ PAT_NOW = "S23_199"
 DATETIME_CSV = os.path.abspath(f'/home/klab/NAS/Analysis/AudioFacialEEG/Behavioral Labeling/videoDateTimes/Raw CSVs/videoFileTable_S{PAT_NOW[4:]}.csv')
 CSV_DIRECTORY = os.path.abspath(f'/home/klab/NAS/Analysis/outputs_Combined/{PAT_NOW}/')
 OUTPUT_CSV = os.path.join(CSV_DIRECTORY, 'combined_events.csv')
-
 
 EVENT_THRESHOLDS = {
     'Happiness': 0.9,
@@ -27,13 +25,15 @@ datetime_df['Filename'] = datetime_df['Filename'].str.replace('.m2t', '.mp4')
 datetime_df['VideoStart'] = pd.to_datetime(datetime_df['VideoStart'], format='%d-%b-%Y %H:%M:%S')
 datetime_df['VideoEnd'] = pd.to_datetime(datetime_df['VideoEnd'], format='%d-%b-%Y %H:%M:%S')
 
-# Function to calculate start and end times of events
-def calculate_event_times(video_start, frames, fps=5):
-    start_times = video_start + pd.to_timedelta(np.array(frames) / fps, unit='s')
-    return start_times
+# Function to calculate event start times within the video
+def calculate_event_times_within_video(frames, fps=5):
+    seconds = np.array(frames) / fps
+    minutes = np.floor(seconds / 60).astype(int)
+    seconds = np.round(seconds % 60, 1)
+    return minutes, seconds
 
 # Function to detect events
-def detect_events(emotion_df, au_df, video_start):
+def detect_events(emotion_df, au_df):
     events = []
 
     for emotion, threshold in EVENT_THRESHOLDS.items():
@@ -54,12 +54,12 @@ def detect_events(emotion_df, au_df, video_start):
             # Merge close by events
             if events and start_frame - events[-1]['End Frame'] <= MERGE_TIME:
                 events[-1]['End Frame'] = end_frame
-                events[-1]['Duration in Seconds'] += event_length / 5.0
+                events[-1]['Duration in Seconds'] = round(events[-1]['Duration in Seconds'] + event_length / 5.0, 1)
                 continue
 
-            start_time = calculate_event_times(video_start, [start_frame])[0]
-            end_time = calculate_event_times(video_start, [end_frame])[0]
-            duration = (end_time - start_time).total_seconds()
+            minutes, seconds = calculate_event_times_within_video([start_frame])
+            start_time = f"{minutes[0]:02}:{seconds[0]:04.1f}"
+            duration = round((end_frame - start_frame + 1) / 5.0, 1)
 
             avg_au = au_df[(au_df['frame'] >= start_frame) & (au_df['frame'] <= end_frame)].mean()
             avg_emotion = emotion_df[(emotion_df['frame'] >= start_frame) & (emotion_df['frame'] <= end_frame)].mean()
@@ -87,8 +87,8 @@ for _, row in tqdm(datetime_df.iterrows(), total=len(datetime_df)):
     video_end = row['VideoEnd']
 
     # Load emotion and AU CSVs
-    emotion_csv_path = os.path.join(CSV_DIRECTORY, video_file, 'outputs_hse.csv')
-    au_csv_path = os.path.join(CSV_DIRECTORY, video_file, 'outputs_ogau.csv')
+    emotion_csv_path = os.path.join(CSV_DIRECTORY, video_file.replace('.mp4', ''), 'outputs_hse.csv')
+    au_csv_path = os.path.join(CSV_DIRECTORY, video_file.replace('.mp4', ''), 'outputs_ogau.csv')
 
     if not os.path.exists(emotion_csv_path) or not os.path.exists(au_csv_path):
         continue
@@ -97,7 +97,7 @@ for _, row in tqdm(datetime_df.iterrows(), total=len(datetime_df)):
     au_df = pd.read_csv(au_csv_path)
 
     # Detect events in the video
-    video_events = detect_events(emotion_df, au_df, video_start)
+    video_events = detect_events(emotion_df, au_df)
     all_events.extend(video_events)
 
 # Remove 'End Frame' before saving
