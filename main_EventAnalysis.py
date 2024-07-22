@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 import datetime
+from tqdm import tqdm
 
 # Parameters
 PAT_NOW = "S23_199"
@@ -80,7 +81,7 @@ def detect_events(emotion_df, au_df, video_start):
 # Process each video file
 all_events = []
 
-for _, row in datetime_df.iterrows():
+for _, row in tqdm(datetime_df.iterrows(), total=len(datetime_df)):
     video_file = row['Filename']
     video_start = row['VideoStart']
     video_end = row['VideoEnd']
