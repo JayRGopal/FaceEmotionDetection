@@ -5,7 +5,7 @@ import datetime
 
 # Parameters
 PAT_NOW = "S23_199"
-DATETIME_CSV = os.path.abspath(f'/home/klab/NAS/Analysis/AudioFacialEEG/Behavioral\ Labeling/videoDateTimes/Raw\ CSVs/videoFileTable_S{PAT_NOW[4:]}.csv')
+DATETIME_CSV = os.path.abspath(f'/home/klab/NAS/Analysis/AudioFacialEEG/Behavioral Labeling/videoDateTimes/Raw CSVs/videoFileTable_S{PAT_NOW[4:]}.csv')
 CSV_DIRECTORY = os.path.abspath(f'/home/klab/NAS/Analysis/outputs_Combined/{PAT_NOW}/')
 OUTPUT_CSV = os.path.join(CSV_DIRECTORY, 'combined_events.csv')
 
