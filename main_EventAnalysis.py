@@ -6,7 +6,7 @@ from tqdm import tqdm
 # Parameters
 PAT_NOW = "S23_199"
 CSV_DIRECTORY = os.path.abspath(f'/home/klab/NAS/Analysis/outputs_Combined/{PAT_NOW}/')
-OUTPUT_CSV = os.path.join(CSV_DIRECTORY, 'combined_events.csv')
+OUTPUT_CSV = os.path.join(os.path.abspath(f'/home/klab/NAS/Analysis/outputs_EventAnalysis/'), f'combined_events_{PAT_NOW}.csv')
 
 EVENT_THRESHOLDS = {
     'Happiness': 0.9,
