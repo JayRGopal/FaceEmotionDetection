@@ -127,18 +127,21 @@ def visualize_analysis(input_folder, csv_output_folder, video_output_folder, thr
                 else:
                     bbox_data_last = bbox_data
             
+            # Create a copy of the frame for the combined video
+            combined_frame = frame.copy()
+            
             # Extract facial bounding box coordinates for the current frame
             if USE_BBOXES and not bbox_data.empty:
                 x, y, w, h = bbox_data.iloc[0]['Facial Box X'], bbox_data.iloc[0]['Facial Box Y'], bbox_data.iloc[0]['Facial Box W'], bbox_data.iloc[0]['Facial Box H']
                 
-                # Draw the facial bounding box on the frame
-                cv2.rectangle(frame, (int(x), int(y)), (int(x + w), int(y + h)), (0, 255, 0), 2)
+                # Draw the facial bounding box on the combined frame only
+                cv2.rectangle(combined_frame, (int(x), int(y)), (int(x + w), int(y + h)), (0, 255, 0), 2)
             
             # Create a blank canvas
             canvas = 255 * np.ones((height, 3*width, 3), dtype=np.uint8)
             
-            # Place the video frame in the middle
-            canvas[:, width:2*width, :] = frame
+            # Place the combined frame (with bounding box) in the middle
+            canvas[:, width:2*width, :] = combined_frame
             
             # Write the emotion outputs on the left
             if emotion_data is not None:
@@ -151,7 +154,7 @@ def visualize_analysis(input_folder, csv_output_folder, video_output_folder, thr
             # Write the frame to the output video
             out.write(canvas)
             
-            # Save clips if enabled
+            # Save clips if enabled (without bounding box)
             if SAVE_CLIPS:
                 if clip_writer is None:
                     # Start of a new event
@@ -167,7 +170,7 @@ def visualize_analysis(input_folder, csv_output_folder, video_output_folder, thr
                             clip_writer.write(buffer_frame)
                     cap.set(cv2.CAP_PROP_POS_FRAMES, current_frame)
                 
-                clip_writer.write(frame)
+                clip_writer.write(frame)  # Write the original frame without bounding box
         
         cap.release()
         if SAVE_CLIPS and clip_writer is not None:
@@ -208,6 +211,20 @@ happiness_threshold = find_highest_threshold('Happiness')
 anger_threshold = find_highest_threshold('Anger')
 neutral_threshold = find_highest_threshold('Neutral')
 sadness_threshold = find_highest_threshold('Sadness')
+
+# Create a DataFrame to store the chosen thresholds
+thresholds_meta = pd.DataFrame({
+    'Emotion': ['Happiness', 'Anger', 'Neutral', 'Sadness'],
+    'Threshold': [happiness_threshold, anger_threshold, neutral_threshold, sadness_threshold]
+})
+
+# Define the path for the meta data CSV
+meta_data_csv_path = os.path.join(CSV_OUTPUT_FOLDER, 'chosen_thresholds_meta.csv')
+
+# Save the meta data CSV
+thresholds_meta.to_csv(meta_data_csv_path, index=False)
+
+print(f"Chosen thresholds meta data saved to: {meta_data_csv_path}")
 
 # Visualize analysis for each emotion with the determined thresholds
 if happiness_threshold:
