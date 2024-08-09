@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import os
 
-def visualize_analysis(input_folder, csv_output_folder, video_output_folder, threshold=0.8, emotion_now='Happiness', USE_BBOXES=True):
+def visualize_analysis(input_folder, csv_output_folder, video_output_folder, threshold=0.8, emotion_now='Happiness', USE_BBOXES=True, SAVE_CLIPS=False, CLIPS_OUTPUT_FOLDER=None):
     video_files = [f for f in os.listdir(input_folder) if f.endswith('.mp4')]
     
     # Get the last part of the input folder path for naming the output video
@@ -12,6 +12,10 @@ def visualize_analysis(input_folder, csv_output_folder, video_output_folder, thr
     
     # Initialize the VideoWriter object later
     out = None
+    
+    # If saving clips, ensure the output folder exists
+    if SAVE_CLIPS and CLIPS_OUTPUT_FOLDER:
+        os.makedirs(CLIPS_OUTPUT_FOLDER, exist_ok=True)
     
     def draw_data_emotion(data, start_x, canvas):
         max_items_per_column = 8
@@ -76,6 +80,12 @@ def visualize_analysis(input_folder, csv_output_folder, video_output_folder, thr
         emotion_data_last = None
         bbox_data_last = None
         
+        # Initialize variables for event detection and saving
+        event_frames = []
+        event_index = 0
+        clip_writer = None
+        buffer_frames = 2 * fps  # 2 second buffer
+        
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
@@ -84,6 +94,14 @@ def visualize_analysis(input_folder, csv_output_folder, video_output_folder, thr
             current_frame = int(cap.get(cv2.CAP_PROP_POS_FRAMES)) - 1
             
             if current_frame not in filtered_frames:
+                if SAVE_CLIPS and clip_writer is not None:
+                    # Add buffer frames after the event
+                    for _ in range(buffer_frames):
+                        ret, buffer_frame = cap.read()
+                        if ret:
+                            clip_writer.write(buffer_frame)
+                    clip_writer.release()
+                    clip_writer = None
                 continue
             
             # Check if there's data for the current frame
@@ -132,8 +150,33 @@ def visualize_analysis(input_folder, csv_output_folder, video_output_folder, thr
             
             # Write the frame to the output video
             out.write(canvas)
+            
+            # Save clips if enabled
+            if SAVE_CLIPS:
+                if clip_writer is None:
+                    # Start of a new event
+                    clip_path = os.path.join(CLIPS_OUTPUT_FOLDER, f"{emotion_now.lower()}_{event_index}.mp4")
+                    clip_writer = cv2.VideoWriter(clip_path, fourcc, fps, (width, height))
+                    event_index += 1
+                    
+                    # Add buffer frames before the event
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, max(0, current_frame - buffer_frames))
+                    for _ in range(buffer_frames):
+                        ret, buffer_frame = cap.read()
+                        if ret:
+                            clip_writer.write(buffer_frame)
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, current_frame)
+                
+                clip_writer.write(frame)
         
         cap.release()
+        if SAVE_CLIPS and clip_writer is not None:
+            # Add buffer frames after the last event
+            for _ in range(buffer_frames):
+                ret, buffer_frame = cap.read()
+                if ret:
+                    clip_writer.write(buffer_frame)
+            clip_writer.release()
     
     if out is not None:
         out.release()
@@ -142,15 +185,39 @@ def visualize_analysis(input_folder, csv_output_folder, video_output_folder, thr
 # Usage:
 PAT_NOW = 'S20_150'
 USE_BBOXES = True
-INPUT_FOLDER = f'/home/klab/NAS/Analysis/MP4/{PAT_NOW}_MP4'
-CSV_OUTPUT_FOLDER = f'/home/klab/NAS/Analysis/outputs_Combined/{PAT_NOW}'
-VIDEO_OUTPUT_FOLDER = f'/home/klab/NAS/Analysis/outputs_Visualized/{PAT_NOW}/'
+SAVE_CLIPS = True
+INPUT_FOLDER = f'/home/jgopal/NAS/Analysis/MP4/{PAT_NOW}_MP4'
+CSV_OUTPUT_FOLDER = f'/home/jgopal/NAS/Analysis/outputs_Combined/{PAT_NOW}'
+VIDEO_OUTPUT_FOLDER = f'/home/jgopal/NAS/Analysis/outputs_Visualized/{PAT_NOW}/'
+THRESHOLDS_CSV_PATH = os.path.join(os.path.abspath(f'/home/jgopal/NAS/Analysis/outputs_EventAnalysis/'), f'event_detection_counts_{PAT_NOW}.csv')
+CLIPS_OUTPUT_FOLDER = f'/home/jgopal/NAS/Analysis/outputs_EventAnalysis/{PAT_NOW}/'
 
 os.makedirs(VIDEO_OUTPUT_FOLDER, exist_ok=True)
 
-visualize_analysis(INPUT_FOLDER, CSV_OUTPUT_FOLDER, VIDEO_OUTPUT_FOLDER, threshold=0.85, emotion_now='Happiness', USE_BBOXES=USE_BBOXES)
-visualize_analysis(INPUT_FOLDER, CSV_OUTPUT_FOLDER, VIDEO_OUTPUT_FOLDER, threshold=0.85, emotion_now='Anger', USE_BBOXES=USE_BBOXES)
-visualize_analysis(INPUT_FOLDER, CSV_OUTPUT_FOLDER, VIDEO_OUTPUT_FOLDER, threshold=0.9, emotion_now='Neutral', USE_BBOXES=USE_BBOXES)
-visualize_analysis(INPUT_FOLDER, CSV_OUTPUT_FOLDER, VIDEO_OUTPUT_FOLDER, threshold=0.85, emotion_now='Sadness', USE_BBOXES=USE_BBOXES)
+# Load the thresholds CSV
+thresholds_df = pd.read_csv(THRESHOLDS_CSV_PATH)
 
+# Function to find the highest threshold with at least 100 events
+def find_highest_threshold(emotion):
+    emotion_counts = thresholds_df[emotion]
+    valid_thresholds = thresholds_df[emotion_counts >= 100]['Threshold']
+    return valid_thresholds.max() if not valid_thresholds.empty else None
 
+# Find the highest valid threshold for each emotion
+happiness_threshold = find_highest_threshold('Happiness')
+anger_threshold = find_highest_threshold('Anger')
+neutral_threshold = find_highest_threshold('Neutral')
+sadness_threshold = find_highest_threshold('Sadness')
+
+# Visualize analysis for each emotion with the determined thresholds
+if happiness_threshold:
+    visualize_analysis(INPUT_FOLDER, CSV_OUTPUT_FOLDER, VIDEO_OUTPUT_FOLDER, threshold=happiness_threshold, emotion_now='Happiness', USE_BBOXES=USE_BBOXES, SAVE_CLIPS=SAVE_CLIPS, CLIPS_OUTPUT_FOLDER=CLIPS_OUTPUT_FOLDER)
+
+if anger_threshold:
+    visualize_analysis(INPUT_FOLDER, CSV_OUTPUT_FOLDER, VIDEO_OUTPUT_FOLDER, threshold=anger_threshold, emotion_now='Anger', USE_BBOXES=USE_BBOXES, SAVE_CLIPS=SAVE_CLIPS, CLIPS_OUTPUT_FOLDER=CLIPS_OUTPUT_FOLDER)
+
+if neutral_threshold:
+    visualize_analysis(INPUT_FOLDER, CSV_OUTPUT_FOLDER, VIDEO_OUTPUT_FOLDER, threshold=neutral_threshold, emotion_now='Neutral', USE_BBOXES=USE_BBOXES, SAVE_CLIPS=SAVE_CLIPS, CLIPS_OUTPUT_FOLDER=CLIPS_OUTPUT_FOLDER)
+
+if sadness_threshold:
+    visualize_analysis(INPUT_FOLDER, CSV_OUTPUT_FOLDER, VIDEO_OUTPUT_FOLDER, threshold=sadness_threshold, emotion_now='Sadness', USE_BBOXES=USE_BBOXES, SAVE_CLIPS=SAVE_CLIPS, CLIPS_OUTPUT_FOLDER=CLIPS_OUTPUT_FOLDER)
