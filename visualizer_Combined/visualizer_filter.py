@@ -189,7 +189,7 @@ SAVE_CLIPS = True
 INPUT_FOLDER = f'/home/jgopal/NAS/Analysis/MP4/{PAT_NOW}_MP4'
 CSV_OUTPUT_FOLDER = f'/home/jgopal/NAS/Analysis/outputs_Combined/{PAT_NOW}'
 VIDEO_OUTPUT_FOLDER = f'/home/jgopal/NAS/Analysis/outputs_Visualized/{PAT_NOW}/'
-THRESHOLDS_CSV_PATH = os.path.join(os.path.abspath(f'/home/jgopal/NAS/Analysis/outputs_EventAnalysis/'), f'event_detection_counts_{PAT_NOW}.csv')
+THRESHOLDS_CSV_PATH = f'/home/jgopal/NAS/Analysis/outputs_EventAnalysis/event_detection_counts_{PAT_NOW}.csv'
 CLIPS_OUTPUT_FOLDER = f'/home/jgopal/NAS/Analysis/outputs_EventAnalysis/{PAT_NOW}/'
 
 os.makedirs(VIDEO_OUTPUT_FOLDER, exist_ok=True)
