@@ -8,12 +8,13 @@ PAT_NOW = "S23_199"
 CSV_DIRECTORY = os.path.abspath(f'/home/klab/NAS/Analysis/outputs_Combined/{PAT_NOW}/')
 OUTPUT_CSV = os.path.join(os.path.abspath(f'/home/klab/NAS/Analysis/outputs_EventAnalysis/'), f'combined_events_{PAT_NOW}.csv')
 
-EVENT_THRESHOLDS = {
-    'Happiness': 0.9,
-    'Anger': 0.85,
-    'Sadness': 0.9,
-    'Neutral': 0.95
-}
+META_DATA_CSV_PATH = os.path.join(os.path.abspath(f'/home/jgopal/NAS/Analysis/outputs_EventAnalysis/'), f'chosen_thresholds_{PAT_NOW}.csv')
+
+# Load the thresholds from the meta data CSV
+thresholds_df = pd.read_csv(META_DATA_CSV_PATH)
+
+EVENT_THRESHOLDS = dict(zip(thresholds_df['Emotion'], thresholds_df['Threshold']))
+
 
 MIN_EVENT_LENGTH = 2  # Minimum length of each event in frames
 MERGE_TIME = 3  # Maximum frames apart to consider merging events

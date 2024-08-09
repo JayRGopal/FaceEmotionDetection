@@ -95,3 +95,33 @@ event_counts_df.index.name = 'Threshold'
 event_counts_df.to_csv(OUTPUT_COUNTS_CSV)
 
 print(f"Event counts saved to {OUTPUT_COUNTS_CSV}")
+
+
+# Load the thresholds CSV
+thresholds_df = pd.read_csv(OUTPUT_COUNTS_CSV)
+
+# Function to find the highest threshold with at least 100 events
+def find_highest_threshold(emotion):
+    emotion_counts = thresholds_df[emotion]
+    valid_thresholds = thresholds_df[emotion_counts >= 100]['Threshold']
+    return valid_thresholds.max() if not valid_thresholds.empty else None
+
+# Find the highest valid threshold for each emotion
+happiness_threshold = find_highest_threshold('Happiness')
+anger_threshold = find_highest_threshold('Anger')
+neutral_threshold = find_highest_threshold('Neutral')
+sadness_threshold = find_highest_threshold('Sadness')
+
+# Create a DataFrame to store the chosen thresholds
+thresholds_meta = pd.DataFrame({
+    'Emotion': ['Happiness', 'Anger', 'Neutral', 'Sadness'],
+    'Threshold': [happiness_threshold, anger_threshold, neutral_threshold, sadness_threshold]
+})
+
+# Define the path for the meta data CSV
+meta_data_csv_path = os.path.join(os.path.abspath(f'/home/jgopal/NAS/Analysis/outputs_EventAnalysis/'), f'chosen_thresholds_{PAT_NOW}.csv')
+
+# Save the meta data CSV
+thresholds_meta.to_csv(meta_data_csv_path, index=False)
+
+print(f"Chosen thresholds meta data saved to: {meta_data_csv_path}")
