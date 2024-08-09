@@ -4,9 +4,10 @@ import numpy as np
 from tqdm import tqdm
 
 # Parameters
-PAT_NOW = "S23_199"
-CSV_DIRECTORY = os.path.abspath(f'/home/klab/NAS/Analysis/outputs_Combined/{PAT_NOW}/')
-OUTPUT_CSV = os.path.join(os.path.abspath(f'/home/klab/NAS/Analysis/outputs_EventAnalysis/'), f'combined_events_{PAT_NOW}.csv')
+PAT_NOW = "S20_150"
+FACEDX_CSV_DIRECTORY = os.path.abspath(f'/home/jgopal/NAS/Analysis/outputs_Combined/{PAT_NOW}/')
+OPENFACE_CSV_DIRECTORY = os.path.abspath(f'/home/jgopal/NAS/Analysis/outputs_OpenFace/{PAT_NOW}/')
+OUTPUT_CSV = os.path.join(os.path.abspath(f'/home/jgopal/NAS/Analysis/outputs_EventAnalysis/'), f'combined_events_{PAT_NOW}.csv')
 
 META_DATA_CSV_PATH = os.path.join(os.path.abspath(f'/home/jgopal/NAS/Analysis/outputs_EventAnalysis/'), f'chosen_thresholds_{PAT_NOW}.csv')
 
@@ -23,7 +24,7 @@ FACEDX_FPS = 5 # FPS after down sampling
 VIDEO_FPS = 30  # FPS of original video (for time stamps!)
 
 # Function to detect events
-def detect_events(emotion_df, au_df):
+def detect_events(emotion_df, au_df, openface_df):
     events = []
 
     for emotion, threshold in EVENT_THRESHOLDS.items():
@@ -67,6 +68,8 @@ def detect_events(emotion_df, au_df):
 
             avg_au = au_df[(au_df['frame'] >= start_frame) & (au_df['frame'] <= end_frame)].mean()
             avg_emotion = emotion_df[(emotion_df['frame'] >= start_frame) & (emotion_df['frame'] <= end_frame)].mean()
+            avg_openface = openface_df[(openface_df['frame'] >= start_frame) & (openface_df['frame'] <= end_frame)][['AU45_r', 'AU45_c']].mean()
+            avg_openface = avg_openface.rename(index={'AU45_r': 'OpenFace_AU45_r', 'AU45_c': 'OpenFace_AU45_c'})
 
             event_data = {
                 'Filename': video_file,
@@ -77,7 +80,8 @@ def detect_events(emotion_df, au_df):
             }
             event_data.update(avg_au.drop(['frame', 'timestamp', 'success']).to_dict())
             event_data.update(avg_emotion.drop(['frame', 'timestamp', 'success']).to_dict())
-
+            event_data.update(avg_openface.to_dict())
+            
             events.append(event_data)
 
     return events
@@ -86,12 +90,13 @@ def detect_events(emotion_df, au_df):
 all_events = []
 
 # Loop through the subfolders in the given CSV directory
-for subfolder in tqdm(os.listdir(CSV_DIRECTORY)):
+for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)):
     video_file = subfolder
     
     # Load emotion and AU CSVs
-    emotion_csv_path = os.path.join(CSV_DIRECTORY, subfolder, 'outputs_hse.csv')
-    au_csv_path = os.path.join(CSV_DIRECTORY, subfolder, 'outputs_ogau.csv')
+    emotion_csv_path = os.path.join(FACEDX_CSV_DIRECTORY, subfolder, 'outputs_hse.csv')
+    au_csv_path = os.path.join(FACEDX_CSV_DIRECTORY, subfolder, 'outputs_ogau.csv')
+    openface_csv_path = os.path.join(OPENFACE_CSV_DIRECTORY, f'{subfolder[:-4]}.csv')
 
     if not os.path.exists(emotion_csv_path) or not os.path.exists(au_csv_path):
         print(f"Skipping {video_file}: missing CSV files.")
@@ -101,9 +106,14 @@ for subfolder in tqdm(os.listdir(CSV_DIRECTORY)):
         print(f"Skipping {video_file}: empty CSV files.")
         continue
 
+    if os.path.getsize(openface_csv_path) == 0:
+        print(f"Skipping {video_file}: empty OpenFace CSV file.")
+        continue
+
     try:
         emotion_df = pd.read_csv(emotion_csv_path)
         au_df = pd.read_csv(au_csv_path)
+        openface_df = pd.read_csv(openface_csv_path)
     except pd.errors.EmptyDataError:
         print(f"Skipping {video_file}: empty CSV files.")
         continue
@@ -112,7 +122,7 @@ for subfolder in tqdm(os.listdir(CSV_DIRECTORY)):
         continue
 
     # Detect events in the video
-    video_events = detect_events(emotion_df, au_df)
+    video_events = detect_events(emotion_df, au_df, openface_df)
 
     all_events.extend(video_events)
 
