@@ -68,8 +68,12 @@ def detect_events(emotion_df, au_df, openface_df):
 
             avg_au = au_df[(au_df['frame'] >= start_frame) & (au_df['frame'] <= end_frame)].mean()
             avg_emotion = emotion_df[(emotion_df['frame'] >= start_frame) & (emotion_df['frame'] <= end_frame)].mean()
-            avg_openface = openface_df[(openface_df['frame'] >= start_frame) & (openface_df['frame'] <= end_frame)][[' AU45_r', ' AU45_c']].mean()
-            avg_openface = avg_openface.rename(index={' AU45_r': 'OpenFace_AU45_r', 'AU45_c': 'OpenFace_AU45_c'})
+            # Handle potential variations in column names (with or without leading space)
+            au45_r_col = ' AU45_r' if ' AU45_r' in openface_df.columns else 'AU45_r'
+            au45_c_col = ' AU45_c' if ' AU45_c' in openface_df.columns else 'AU45_c'
+            
+            avg_openface = openface_df[(openface_df['frame'] >= start_frame) & (openface_df['frame'] <= end_frame)][[au45_r_col, au45_c_col]].mean()
+            avg_openface = avg_openface.rename(index={au45_r_col: 'OpenFace_AU45_r', au45_c_col: 'OpenFace_AU45_c'})
 
             event_data = {
                 'Filename': video_file,
