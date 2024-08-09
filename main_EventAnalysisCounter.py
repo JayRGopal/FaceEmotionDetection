@@ -4,7 +4,7 @@ import numpy as np
 from tqdm import tqdm
 
 # Parameters
-PAT_NOW = "S20_150"
+PAT_NOW = "S23_199"
 CSV_DIRECTORY = os.path.abspath(f'/home/jgopal/NAS/Analysis/outputs_Combined/{PAT_NOW}/')
 OUTPUT_COUNTS_CSV = os.path.join(os.path.abspath(f'/home/jgopal/NAS/Analysis/outputs_EventAnalysis/'), f'event_detection_counts_{PAT_NOW}.csv')
 
