@@ -3,11 +3,11 @@ import pandas as pd
 import numpy as np
 import os
 
-def visualize_analysis(input_folder, csv_output_folder, video_output_folder, threshold=0.8, USE_BBOXES=True):
+def visualize_analysis(input_folder, csv_output_folder, video_output_folder, threshold=0.8, emotion_now='Happiness', USE_BBOXES=True):
     video_files = [f for f in os.listdir(input_folder) if f.endswith('.mp4')]
     
     # Get the last part of the input folder path for naming the output video
-    output_video_name = os.path.basename(os.path.normpath(input_folder)) + '_combined_output.mp4'
+    output_video_name = os.path.basename(os.path.normpath(input_folder)) + f'_{emotion_now}_{threshold}_output.mp4'
     combined_output_path = os.path.join(video_output_folder, output_video_name)
     
     # Initialize the VideoWriter object later
@@ -21,8 +21,8 @@ def visualize_analysis(input_folder, csv_output_folder, video_output_folder, thr
             color = (0, 0, 255) if val.values[0] > threshold else (0, 0, 0)
             text = f"{col}: {round(val.values[0], 3)}"
             x_offset = (idx // max_items_per_column) * col_width
-            y_offset = 70 * (idx % max_items_per_column)  # Adjusted y_offset to accommodate bigger text
-            cv2.putText(canvas, text, (start_x + x_offset, 70 + y_offset), cv2.FONT_HERSHEY_SIMPLEX, 1.8, color, 4)  # Increased font scale and thickness
+            y_offset = 50 * (idx % max_items_per_column)  # Adjusted y_offset to accommodate bigger text
+            cv2.putText(canvas, text, (start_x + x_offset, 50 + y_offset), cv2.FONT_HERSHEY_SIMPLEX, 1.3, color, 3)  # Increased font scale and thickness
     
     def draw_data_au(data, start_x, canvas):
         max_items_per_column = 11
@@ -30,11 +30,12 @@ def visualize_analysis(input_folder, csv_output_folder, video_output_folder, thr
         col_width = width // num_cols
         for idx, (col, val) in enumerate(data.drop(columns=['frame', 'timestamp', 'success']).items()):
             color = (0, 0, 255) if val.values[0] > threshold else (0, 0, 0)
-            text = f"{col}: {round(val.values[0], 3)}"
+            text = f"{col}: {round(val.values[0], 2)}"
             x_offset = (idx // max_items_per_column) * col_width
-            y_offset = 60 * (idx % max_items_per_column)  # Adjusted y_offset to accommodate bigger text
-            cv2.putText(canvas, text, (start_x + x_offset, 60 + y_offset), cv2.FONT_HERSHEY_SIMPLEX, 1.4, color, 3)  # Increased font scale and thickness
-    
+            y_offset = 40 * (idx % max_items_per_column)  # Adjusted y_offset to accommodate bigger text
+            cv2.putText(canvas, text, (start_x + x_offset, 40 + y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.75, color, 2)  # Increased font scale and thickness
+   
+
     for video_file in video_files:
         video_path = os.path.join(input_folder, video_file)
         output_base_path = os.path.splitext(video_file)[0]
@@ -43,18 +44,22 @@ def visualize_analysis(input_folder, csv_output_folder, video_output_folder, thr
         emotion_csv_path = os.path.join(csv_output_folder, video_file, 'outputs_hse.csv')
         bbox_csv_path = os.path.join(csv_output_folder, video_file, 'outputs_bboxes.csv')
         
-        try:
-            # Load CSVs
-            au_df = pd.read_csv(au_csv_path)
-            emotion_df = pd.read_csv(emotion_csv_path)
-            if USE_BBOXES:
-                bbox_df = pd.read_csv(bbox_csv_path)
-        except pd.errors.EmptyDataError:
-            print(f"Skipping {video_file} due to empty CSV files.")
+        if os.path.exists(au_csv_path):
+            try:
+                # Load CSVs
+                au_df = pd.read_csv(au_csv_path)
+                emotion_df = pd.read_csv(emotion_csv_path)
+                if USE_BBOXES:
+                    bbox_df = pd.read_csv(bbox_csv_path)
+            except pd.errors.EmptyDataError:
+                print(f"Skipping {video_file} due to empty CSV files.")
+                continue
+        else:
+            print(f"Skipping {video_file} due to missing CSV files.")
             continue
         
         # Filter frames based on emotion threshold
-        filtered_frames = emotion_df[emotion_df['Happiness'] >= threshold]['frame'].unique()
+        filtered_frames = emotion_df[emotion_df[emotion_now] >= threshold]['frame'].unique()
         
         # Load video
         cap = cv2.VideoCapture(video_path)
@@ -136,11 +141,16 @@ def visualize_analysis(input_folder, csv_output_folder, video_output_folder, thr
 
 # Usage:
 PAT_NOW = 'S20_150'
-USE_BBOXES = False
+USE_BBOXES = True
 INPUT_FOLDER = f'/home/klab/NAS/Analysis/MP4/{PAT_NOW}_MP4'
 CSV_OUTPUT_FOLDER = f'/home/klab/NAS/Analysis/outputs_Combined/{PAT_NOW}'
-VIDEO_OUTPUT_FOLDER = 'output_videos'
+VIDEO_OUTPUT_FOLDER = f'/home/klab/NAS/Analysis/outputs_Visualized/{PAT_NOW}/'
 
 os.makedirs(VIDEO_OUTPUT_FOLDER, exist_ok=True)
 
-visualize_analysis(INPUT_FOLDER, CSV_OUTPUT_FOLDER, VIDEO_OUTPUT_FOLDER, threshold=0.8, USE_BBOXES=USE_BBOXES)
+visualize_analysis(INPUT_FOLDER, CSV_OUTPUT_FOLDER, VIDEO_OUTPUT_FOLDER, threshold=0.85, emotion_now='Happiness', USE_BBOXES=USE_BBOXES)
+visualize_analysis(INPUT_FOLDER, CSV_OUTPUT_FOLDER, VIDEO_OUTPUT_FOLDER, threshold=0.85, emotion_now='Anger', USE_BBOXES=USE_BBOXES)
+visualize_analysis(INPUT_FOLDER, CSV_OUTPUT_FOLDER, VIDEO_OUTPUT_FOLDER, threshold=0.9, emotion_now='Neutral', USE_BBOXES=USE_BBOXES)
+visualize_analysis(INPUT_FOLDER, CSV_OUTPUT_FOLDER, VIDEO_OUTPUT_FOLDER, threshold=0.85, emotion_now='Sadness', USE_BBOXES=USE_BBOXES)
+
+
