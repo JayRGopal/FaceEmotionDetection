@@ -39,7 +39,7 @@ def save_event_clips(input_folder, event_analysis_csv, clips_output_folder):
         end_frame = min(int(cap.get(cv2.CAP_PROP_FRAME_COUNT)), end_frame + buffer_frames)
         
         # Set up clip writer
-        clip_name = f"{event['Emotion']}_{index+1}.mp4"
+        clip_name = f"{event['Event Type']}_{index+1}.mp4"
         clip_path = os.path.join(clips_output_folder, clip_name)
         fourcc = cv2.VideoWriter_fourcc(*'MP4V')
         clip_writer = cv2.VideoWriter(clip_path, fourcc, fps, (width, height))
