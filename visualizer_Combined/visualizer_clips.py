@@ -67,6 +67,6 @@ def save_event_clips(input_folder, event_analysis_csv, clips_output_folder):
 PAT_NOW = 'S20_150'
 INPUT_FOLDER = f'/home/jgopal/NAS/Analysis/MP4/{PAT_NOW}_MP4'
 CLIPS_OUTPUT_FOLDER = f'/home/jgopal/NAS/Analysis/outputs_EventAnalysis/{PAT_NOW}/'
-EVENT_ANALYSIS_CSV = os.path.join(os.path.abspath(f'/home/klab/NAS/Analysis/outputs_EventAnalysis/'), f'combined_events_{PAT_NOW}.csv')
+EVENT_ANALYSIS_CSV = os.path.join(os.path.abspath(f'/home/jgopal/NAS/Analysis/outputs_EventAnalysis/'), f'combined_events_{PAT_NOW}.csv')
 
 save_event_clips(INPUT_FOLDER, EVENT_ANALYSIS_CSV, CLIPS_OUTPUT_FOLDER)
