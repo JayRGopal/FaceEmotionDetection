@@ -4,7 +4,7 @@ import numpy as np
 from tqdm import tqdm
 
 # Parameters
-PAT_NOW = "S20_150"
+PAT_NOW = "S23_199"
 FACEDX_CSV_DIRECTORY = os.path.abspath(f'/home/jgopal/NAS/Analysis/outputs_Combined/{PAT_NOW}/')
 OPENFACE_CSV_DIRECTORY = os.path.abspath(f'/home/jgopal/NAS/Analysis/outputs_OpenFace/{PAT_NOW}/')
 OUTPUT_CSV = os.path.join(os.path.abspath(f'/home/jgopal/NAS/Analysis/outputs_EventAnalysis/'), f'combined_events_{PAT_NOW}.csv')
