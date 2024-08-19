@@ -1,24 +1,39 @@
-from sklearn.metrics import ConfusionMatrixDisplay
+def average_inner_dfs(dictionary):
+    """
+    Replace each list of DataFrames in a nested dictionary with the average of the DataFrames in each list.
+    For columns with strings, convert to numbers if possible and take the string from the first DataFrame otherwise.
 
-def plot_confusion_matrices(hsemotion_smile, final_smile_labels, folder_path):
-    thresholds = [0.8, 0.85, 0.9]
-    
-    for threshold in thresholds:
-        y_true = []
-        y_pred = []
-        for timestamp, df in hsemotion_smile.items():
-            happiness_scores = df['Happiness'].values
-            events_detected = np.convolve(happiness_scores > threshold, np.ones(2, dtype=int), 'valid') == 2
-            predicted_label = int(np.any(events_detected))
-            ground_truth_label = final_smile_labels.loc[final_smile_labels['Datetime'] == timestamp, 'EventDetected'].values[0]
+    Args:
+        dictionary (dict): The dictionary containing lists of DataFrames.
 
-            y_true.append(ground_truth_label)
-            y_pred.append(predicted_label)
+    Returns:
+        dict: A modified copy of the dictionary with the average of each list of DataFrames.
+    """
+    def process_columns(df_list):
+        """
+        Process columns to calculate averages for numeric columns and keep strings from the first DataFrame.
+        """
+        combined_df = pd.concat(df_list, ignore_index=True)
+        avg_df = pd.DataFrame()
+
+        for column in combined_df.columns:
+            # Try to convert the column to numeric
+            numeric_series = pd.to_numeric(combined_df[column], errors='coerce')
+            
+            if numeric_series.notna().all():
+                # If all values can be converted to numeric, calculate the mean
+                avg_df[column] = numeric_series.groupby(combined_df.index).mean()
+            else:
+                avg_df[column] = df_list[0][column].values
         
-        cm = confusion_matrix(y_true, y_pred)
-        disp = ConfusionMatrixDisplay(confusion_matrix=cm)
-        disp.plot()
-        plt.title(f'Confusion Matrix at Threshold {threshold}')
-        plt.savefig(f"{folder_path}/confusion_matrix_smile_{threshold}.png")
-        plt.show()
-
+        return avg_df
+    
+    new_dict = {}
+    for split_time, outer_dict in dictionary.items():
+        new_dict[split_time] = {}
+        for outer_key, inner_dict in outer_dict.items():
+            new_dict[split_time][outer_key] = {}
+            for timestamp, df_list in inner_dict.items():
+                avg_df = process_columns(df_list)
+                new_dict[split_time][outer_key][timestamp] = avg_df
+    return new_dict
