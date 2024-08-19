@@ -13,6 +13,16 @@ def average_inner_dfs(dictionary):
         """
         Process columns to calculate averages for numeric columns and keep strings from the first DataFrame.
         """
+        if not df_list:
+            # If df_list is empty, return a DataFrame with zeros (or equivalent)
+            # Find a non-empty DataFrame in the outer dictionary to use for the structure
+            for outer_dict in dictionary.values():
+                for inner_dict in outer_dict.values():
+                    for df in inner_dict.values():
+                        if not df.empty:
+                            zero_filled_df = pd.DataFrame({col: np.zeros(len(df), dtype=df[col].dtype) for col in df.columns})
+                            return zero_filled_df
+        
         combined_df = pd.concat(df_list, ignore_index=True)
         avg_df = pd.DataFrame()
 
