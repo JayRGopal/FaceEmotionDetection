@@ -14,14 +14,8 @@ def average_inner_dfs(dictionary):
         Process columns to calculate averages for numeric columns and keep strings from the first DataFrame.
         """
         if not df_list:
-            # If df_list is empty, return a DataFrame with zeros (or equivalent)
-            # Find a non-empty DataFrame in the outer dictionary to use for the structure
-            for outer_dict in dictionary.values():
-                for inner_dict in outer_dict.values():
-                    for df in inner_dict.values():
-                        if not df.empty:
-                            zero_filled_df = pd.DataFrame({col: np.zeros(len(df), dtype=df[col].dtype) for col in df.columns})
-                            return zero_filled_df
+            # If df_list is empty, return an empty DataFrame
+            return pd.DataFrame()
         
         combined_df = pd.concat(df_list, ignore_index=True)
         avg_df = pd.DataFrame()
@@ -38,12 +32,32 @@ def average_inner_dfs(dictionary):
         
         return avg_df
     
+    def create_empty_df_like(sample_df):
+        """
+        Create a DataFrame with the same columns as sample_df but filled with zeros (or equivalent) based on datatype.
+        """
+        return pd.DataFrame({col: np.zeros(sample_df.shape[0], dtype=sample_df[col].dtype) for col in sample_df.columns})
+
     new_dict = {}
     for split_time, outer_dict in dictionary.items():
         new_dict[split_time] = {}
         for outer_key, inner_dict in outer_dict.items():
             new_dict[split_time][outer_key] = {}
             for timestamp, df_list in inner_dict.items():
-                avg_df = process_columns(df_list)
+                if df_list:
+                    # If the df_list is not empty, process normally
+                    avg_df = process_columns(df_list)
+                else:
+                    # If the df_list is empty, find a non-empty DataFrame structure to create a zero-filled DataFrame
+                    for outer_split_time in dictionary.values():
+                        for outer_inner_dict in outer_split_time.values():
+                            for df in outer_inner_dict.values():
+                                if df_list:  # Ensure df_list is not empty
+                                    avg_df = create_empty_df_like(df[0])
+                                    break
+                            if 'avg_df' in locals():
+                                break
+                        if 'avg_df' in locals():
+                            break
                 new_dict[split_time][outer_key][timestamp] = avg_df
     return new_dict
