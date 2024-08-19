@@ -16,9 +16,9 @@ def average_inner_dfs(dictionary):
         if not df_list:
             # If df_list is empty, return an empty DataFrame
             return pd.DataFrame()
-        
+
         combined_df = pd.concat(df_list, ignore_index=True)
-        avg_df = pd.DataFrame()
+        avg_df = pd.DataFrame(index=combined_df.index)
 
         for column in combined_df.columns:
             # Try to convert the column to numeric
@@ -28,7 +28,8 @@ def average_inner_dfs(dictionary):
                 # If all values can be converted to numeric, calculate the mean
                 avg_df[column] = numeric_series.groupby(combined_df.index).mean()
             else:
-                avg_df[column] = df_list[0][column].values
+                # Repeat the first DataFrame's values to match the length of the combined DataFrame
+                avg_df[column] = np.tile(df_list[0][column].values[0], len(combined_df))
         
         return avg_df
     
@@ -52,7 +53,7 @@ def average_inner_dfs(dictionary):
                     for outer_split_time in dictionary.values():
                         for outer_inner_dict in outer_split_time.values():
                             for df in outer_inner_dict.values():
-                                if df_list:  # Ensure df_list is not empty
+                                if df:  # Ensure df_list is not empty
                                     avg_df = create_empty_df_like(df[0])
                                     break
                             if 'avg_df' in locals():
