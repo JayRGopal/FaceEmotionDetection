@@ -10,9 +10,6 @@ from openpyxl.styles import Font
 MOOD_TRACKING_SHEET_PATH = f'/home/jgopal/NAS/Analysis/AudioFacialEEG/Behavioral Labeling/Mood_Tracking.xlsx'
 MISC_FIGURE_PATH = f'/home/jgopal/NAS/Analysis/Misc_Figures/'
 
-# Define the date format explicitly
-date_format = "%Y-%m-%d %H:%M:%S"  # Replace with your actual format
-
 # Read the Excel file
 xls = pd.ExcelFile(MOOD_TRACKING_SHEET_PATH)
 
@@ -36,8 +33,9 @@ for sheet_name in sheet_names:
     mood_df = df.dropna(subset=['Mood'])
     mood_df = mood_df[mood_df['Mood'].astype(bool)]
 
-    # Convert the first column to datetime using the specified format
-    mood_df[mood_df.columns[0]] = pd.to_datetime(mood_df[mood_df.columns[0]], format=date_format, errors='coerce')
+    # Convert the first column to datetime if it's not already in datetime format
+    if not pd.api.types.is_datetime64_any_dtype(mood_df[mood_df.columns[0]]):
+        mood_df[mood_df.columns[0]] = pd.to_datetime(mood_df[mood_df.columns[0]], errors='coerce')
 
     # Remove rows with invalid datetime
     mood_df = mood_df.dropna(subset=[mood_df.columns[0]])
@@ -68,8 +66,9 @@ for sheet_name in sheet_names:
         column_df = df.dropna(subset=[column])
         column_df = column_df[column_df[column].astype(bool)]
 
-        # Convert the first column to datetime using the specified format
-        column_df[column_df.columns[0]] = pd.to_datetime(column_df[column_df.columns[0]], format=date_format, errors='coerce')
+        # Convert the first column to datetime if it's not already in datetime format
+        if not pd.api.types.is_datetime64_any_dtype(column_df[column_df.columns[0]]):
+            column_df[column_df.columns[0]] = pd.to_datetime(column_df[column_df.columns[0]], errors='coerce')
 
         # Remove rows with invalid datetime
         column_df = column_df.dropna(subset=[column_df.columns[0]])
