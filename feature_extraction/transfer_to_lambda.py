@@ -1,21 +1,26 @@
-# Check and load or generate dfs_openface
-if not os.path.exists(RUNTIME_VAR_PATH + f'dfs_openface_{PAT_SHORT_NAME}.pkl'):
-    # Generate dfs_openface if not already saved
-    dfs_openface = get_dict_openface(OPENFACE_OUTPUT_DIRECTORY)
-    dfs_openface = apply_function_to_dict(dfs_openface, only_successful_frames)
-    save_var(dfs_openface, forced_name=f'dfs_openface_{PAT_SHORT_NAME}')
-else:
-    # Load dfs_openface if it already exists
-    dfs_openface = load_var(f'dfs_openface_{PAT_SHORT_NAME}')
-
-# Check and load or generate dfs_openface_extras
-if not os.path.exists(RUNTIME_VAR_PATH + f'dfs_openface_extras_{PAT_NOW}.pkl'):
-    # Generate dfs_openface_extras if not already saved
-    dfs_openface_extras = get_dict_openface_extras(OPENFACE_OUTPUT_DIRECTORY)
-    dfs_openface_extras = apply_function_to_dict(dfs_openface_extras, only_successful_frames)
-    save_var(dfs_openface_extras, forced_name=f'dfs_openface_extras_{PAT_NOW}')
-else:
-    # Load dfs_openface_extras if it already exists
-    dfs_openface_extras = load_var(f'dfs_openface_extras_{PAT_NOW}')
+Do the same for this
 
 
+dfs_hsemotion = get_dict(COMBINED_OUTPUT_DIRECTORY, file_now='outputs_hse.csv')
+dfs_hsemotion = apply_function_to_dict(dfs_hsemotion, only_successful_frames)
+
+
+OPENGRAPHAU_THRESHOLD = 0.5
+dfs_opengraphau = get_dict(COMBINED_OUTPUT_DIRECTORY, file_now='outputs_ogau.csv')
+dfs_opengraphau = apply_function_to_dict(dfs_opengraphau, create_binary_columns, threshold=OPENGRAPHAU_THRESHOLD)
+dfs_opengraphau = apply_function_to_dict(dfs_opengraphau, only_successful_frames)
+dfs_opengraphau = apply_function_to_dict(dfs_opengraphau, remove_columns_ending_with_r)
+
+
+# SAVE THE HSEMOTION AND OPENGRAPHAU DICTIONARIES
+
+save_var(dfs_hsemotion, forced_name=f'dfs_hsemotion_{PAT_SHORT_NAME}')
+
+save_var(dfs_opengraphau, forced_name=f'dfs_opengraphau_{PAT_SHORT_NAME}')
+
+
+# LOAD THE HSEMOTION AND OPENGRAPHAU DICTIONARIES
+
+dfs_hsemotion = load_var(f'dfs_hsemotion_{PAT_SHORT_NAME}')
+
+dfs_opengraphau = load_var(f'dfs_opengraphau_{PAT_SHORT_NAME}')
