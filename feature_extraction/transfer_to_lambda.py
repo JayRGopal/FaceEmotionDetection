@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.dates as mdates
 import os
+from openpyxl import load_workbook
+from openpyxl.styles import Font
 
 # Path to the xlsx file
 MOOD_TRACKING_SHEET_PATH = f'/home/jgopal/NAS/Analysis/AudioFacialEEG/Behavioral Labeling/Mood_Tracking.xlsx'
@@ -26,10 +28,40 @@ for sheet_name in sheet_names:
     df = pd.read_excel(xls, sheet_name=sheet_name)
     
     patient_info = {'Sheet Name': sheet_name}
-    include_patient = True
     
+    # Mood criteria for inclusion
+    mood_df = df.dropna(subset=['Mood'])
+    mood_df = mood_df[mood_df['Mood'].astype(bool)]
+
+    # Convert the first column to datetime
+    mood_df[mood_df.columns[0]] = pd.to_datetime(mood_df[mood_df.columns[0]], errors='coerce')
+
+    # Remove rows with invalid datetime
+    mood_df = mood_df.dropna(subset=[mood_df.columns[0]])
+
+    # Sort for chronological order
+    mood_df = mood_df.sort_values(by=mood_df.columns[0])
+
+    # Extract the datetime and mood values
+    time_data_mood = mood_df[mood_df.columns[0]]
+    mood_data = mood_df['Mood']
+
+    # Calculate the metrics for mood
+    num_mood_datapoints = len(mood_data)
+    num_unique_mood_values = mood_data.nunique()
+    mood_percent_variation = mood_data.std() / mood_data.mean() * 100 if mood_data.mean() != 0 else 0
+    mood_days_span = (time_data_mood.max() - time_data_mood.min()).days
+
+    # Add mood metrics to patient info
+    patient_info['Num Mood Datapoints'] = num_mood_datapoints
+    patient_info['Num Unique Mood Values'] = num_unique_mood_values
+    patient_info['Mood Pct Variation'] = mood_percent_variation
+
+    # Criteria for inclusion based on mood data
+    include_patient = num_mood_datapoints >= 5 and num_unique_mood_values >= 4
+
+    # Analyze and plot other data columns
     for column in columns_to_analyze:
-        # Filter rows where the column is not empty and not NaN
         column_df = df.dropna(subset=[column])
         column_df = column_df[column_df[column].astype(bool)]
 
@@ -46,20 +78,15 @@ for sheet_name in sheet_names:
         time_data = column_df[column_df.columns[0]]
         value_data = column_df[column]
 
-        # Calculate the metrics
+        # Calculate the metrics for each column
         num_datapoints = len(value_data)
         num_unique_values = value_data.nunique()
         percent_variation = value_data.std() / value_data.mean() * 100 if value_data.mean() != 0 else 0
-        days_span = (time_data.max() - time_data.min()).days
 
         # Add metrics to patient info
         patient_info[f'Num {column} Datapoints'] = num_datapoints
         patient_info[f'Num Unique {column} Values'] = num_unique_values
         patient_info[f'{column} Pct Variation'] = percent_variation
-
-        # Criteria for inclusion
-        if num_datapoints < 5 or num_unique_values < 4:
-            include_patient = False
 
         # Plot the data
         color = plot_colors[column]
@@ -91,3 +118,16 @@ patient_df = pd.DataFrame(patient_data)
 new_file_path = os.path.join(os.path.dirname(MOOD_TRACKING_SHEET_PATH), 'Mood_Tracking_Overview.xlsx')
 with pd.ExcelWriter(new_file_path, engine='openpyxl') as writer:
     patient_df.to_excel(writer, sheet_name='Data_Overview', index=False)
+
+# Load the workbook and access the sheet
+wb = load_workbook(new_file_path)
+ws = wb['Data_Overview']
+
+# Bold the rows where 'Include Patient' is 'Yes'
+for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
+    if row[0].value == 'Yes':
+        for cell in row:
+            cell.font = Font(bold=True)
+
+# Save the updated workbook
+wb.save(new_file_path)
