@@ -1,135 +1,121 @@
-import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
-import matplotlib.dates as mdates
-import os
-from openpyxl import load_workbook
-from openpyxl.styles import Font
+# ALPHA PARAMETER SEARCH FOR LASSO - RUN THIS FIRST!
 
-# Path to the xlsx file
-MOOD_TRACKING_SHEET_PATH = f'/home/jgopal/NAS/Analysis/AudioFacialEEG/Behavioral Labeling/Mood_Tracking.xlsx'
-MISC_FIGURE_PATH = f'/home/jgopal/NAS/Analysis/Misc_Figures/'
+all_metrics = [col for col in df_moodTracking.columns if col != 'Datetime']
 
-# Read the Excel file
-xls = pd.ExcelFile(MOOD_TRACKING_SHEET_PATH)
+FILE_ENDING = '.png'
 
-# Get all sheet names that start with "S_"
-sheet_names = [sheet for sheet in xls.sheet_names if sheet.startswith("S_")]
+# We are just searching using lasso regression
+#RESULTS_PREFIX_LIST = ['OF_L_', 'OGAU_L_', 'OFAUHSE_L_', 'OGAUHSE_L_', 'HSE_L_', 'ALL_L_']
+RESULTS_PREFIX_LIST = ['OF_L_', 'OGAU_L_', 'OGAUHSE_L_', 'HSE_L_']
+#RESULTS_PREFIX_LIST = ['OGAUHSE_L_']
 
-# Define the columns for analysis
-columns_to_analyze = ['Mood', 'Depression', 'Anxiety']
-plot_colors = {'Mood': 'blue', 'Depression': 'green', 'Anxiety': 'red'}
 
-# Initialize a list to collect patient data for the final spreadsheet
-patient_data = []
+EMOTIONS_FOR_SEARCH = ['Mood'] # We are just searching on Mood
+TIME_WINDOW_FOR_SEARCH = '180' # We are just searching 3 hours
 
-# Iterate through the sheets and analyze data
-for sheet_name in sheet_names:
-    df = pd.read_excel(xls, sheet_name=sheet_name)
-    
-    patient_info = {'Sheet Name': sheet_name}
-    
-    # Mood criteria for inclusion
-    mood_df = df.dropna(subset=['Mood'])
-    mood_df = mood_df[mood_df['Mood'].astype(bool)]
+# List of alpha values to search through
+#ALPHAS_FOR_SEARCH = np.arange(0, 1.6, 0.1)
+ALPHAS_FOR_SEARCH = np.arange(0, 5, 0.2)
+#ALPHAS_FOR_SEARCH = np.arange(0, 10, 0.2)
 
-    # Convert the first column to datetime if it's not already in datetime format
-    if not pd.api.types.is_datetime64_any_dtype(mood_df[mood_df.columns[0]]):
-        mood_df[mood_df.columns[0]] = pd.to_datetime(mood_df[mood_df.columns[0]], errors='coerce')
+# This will populate with the best alphas for each prefix in RESULTS_PREFIX_LIST
+best_alphas_lasso = {}
 
-    # Remove rows with invalid datetime
-    mood_df = mood_df.dropna(subset=[mood_df.columns[0]])
+for RESULTS_PREFIX in RESULTS_PREFIX_LIST:
+  do_lasso = False
+  do_ridge = False
 
-    # Sort for chronological order
-    mood_df = mood_df.sort_values(by=mood_df.columns[0])
+  if '_L_' in RESULTS_PREFIX:
+    do_lasso = True
 
-    # Extract the datetime and mood values
-    time_data_mood = mood_df[mood_df.columns[0]]
-    mood_data = mood_df['Mood']
+  if '_R_' in RESULTS_PREFIX:
+    do_ridge = True
 
-    # Calculate the metrics for mood
-    num_mood_datapoints = len(mood_data)
-    num_unique_mood_values = mood_data.nunique()
-    mood_percent_variation = mood_data.std() / mood_data.mean() * 100 if mood_data.mean() != 0 else 0
-    mood_days_span = (time_data_mood.max() - time_data_mood.min()).days
 
-    # Add mood metrics to patient info
-    patient_info['Num Mood Datapoints'] = num_mood_datapoints
-    patient_info['Num Unique Mood Values'] = num_unique_mood_values
-    patient_info['Mood Pct Variation'] = mood_percent_variation
+  if 'OF_' in RESULTS_PREFIX:
+    spreadsheet_path = FEATURE_LABEL_PATH+f'experimental3_openface_0.5_hours.xlsx'
+    vectors_now = openface_vectors_dict
+    method_now = 'OpenFace'
 
-    # Criteria for inclusion based on mood data
-    include_patient = num_mood_datapoints >= 5 and num_unique_mood_values >= 4
+  elif 'OGAU_' in RESULTS_PREFIX:
+    spreadsheet_path = FEATURE_LABEL_PATH+'opengraphau_0.5_hours.xlsx'
+    vectors_now = opengraphau_vectors_dict
+    method_now = 'OpenGraphAU'
 
-    # Analyze and plot other data columns
-    for column in columns_to_analyze:
-        column_df = df.dropna(subset=[column])
-        column_df = column_df[column_df[column].astype(bool)]
+  elif 'OFAUHSE_' in RESULTS_PREFIX:
+    spreadsheet_path = FEATURE_LABEL_PATH+'ofauhse_0.5_hours.xlsx'
+    vectors_now = ofauhsemotion_vectors_dict
+    method_now = 'OFAU+HSE'
 
-        # Convert the first column to datetime if it's not already in datetime format
-        if not pd.api.types.is_datetime64_any_dtype(column_df[column_df.columns[0]]):
-            column_df[column_df.columns[0]] = pd.to_datetime(column_df[column_df.columns[0]], errors='coerce')
+  elif 'OGAUHSE_' in RESULTS_PREFIX:
+    spreadsheet_path = FEATURE_LABEL_PATH+'ogauhse_0.5_hours.xlsx'
+    vectors_now = ogauhsemotion_vectors_dict
+    method_now = 'OGAU+HSE'
 
-        # Remove rows with invalid datetime
-        column_df = column_df.dropna(subset=[column_df.columns[0]])
+  elif 'HSE_' in RESULTS_PREFIX:
+    spreadsheet_path = FEATURE_LABEL_PATH+'hsemotion_0.5_hours.xlsx'
+    vectors_now = hsemotion_vectors_dict
+    method_now = 'HSEmotion'
 
-        # Sort for chronological order
-        column_df = column_df.sort_values(by=column_df.columns[0])
+  elif 'ALL_' in RESULTS_PREFIX:
+    spreadsheet_path = FEATURE_LABEL_PATH+'all_0.5_hours.xlsx'
+    vectors_now = all_vectors_dict
+    method_now = 'ALL(OF+OG+HSE)'
 
-        # Extract the datetime and values
-        time_data = column_df[column_df.columns[0]]
-        value_data = column_df[column]
 
-        # Calculate the metrics for each column
-        num_datapoints = len(value_data)
-        num_unique_values = value_data.nunique()
-        percent_variation = value_data.std() / value_data.mean() * 100 if value_data.mean() != 0 else 0
+  # Let's put each setting in its own folder!
+  os.makedirs(RESULTS_PATH_BASE + 'SEARCH_Alpha_Lasso/' + RESULTS_PREFIX, exist_ok=True)
+  results_prefix_unmodified = RESULTS_PREFIX
+  RESULTS_PREFIX = 'SEARCH_Alpha_Lasso/' + RESULTS_PREFIX + '/' + RESULTS_PREFIX
 
-        # Add metrics to patient info
-        patient_info[f'Num {column} Datapoints'] = num_datapoints
-        patient_info[f'Num Unique {column} Values'] = num_unique_values
-        patient_info[f'{column} Pct Variation'] = percent_variation
+  # This will store the best R, averaged across all metrics we're testing, for each alpha
+  pearson_r_list = []
 
-        # Plot the data
-        color = plot_colors[column]
-        plt.plot(time_data, value_data, marker='o', color=color, label=column)
+  for alpha_now in ALPHAS_FOR_SEARCH:
 
-    # Add the inclusion decision to patient info
-    patient_info['Include Patient'] = 'Yes' if include_patient else 'No'
+    avg_best_R = 0
 
-    # Append patient info to the list
-    patient_data.append(patient_info)
+    # Loop through EMOTIONS_FOR_SEARCH
+    for metric in EMOTIONS_FOR_SEARCH:
+      print('METRIC NOW: ', metric)
+      vectors_return, y = extractOneMetric(metric, vectors_now=vectors_now)
+      
+      # Limit to just one time window for alpha search
+      tmp_vectors = vectors_return
+      vectors_return = {}
+      vectors_return[TIME_WINDOW_FOR_SEARCH] = tmp_vectors[TIME_WINDOW_FOR_SEARCH]
+      del tmp_vectors
 
-    # Finalize the plot for this patient
-    plt.title(f'{sheet_name}: Mood, Depression, and Anxiety Over Time', fontsize=20)
-    plt.xlabel('Datetime', fontsize=18)
-    plt.ylabel('Score (0-10)', fontsize=18)
-    plt.xticks(rotation=45)
-    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%Y %H:%M'))
-    plt.legend()
-    plt.tight_layout()
+      scores, preds, y, models = linRegOneMetric(vectors_return, y, do_lasso=do_lasso, do_ridge=do_ridge, alpha=alpha_now)
+      scores_r, preds_r, _, models_r = linRegOneMetric(vectors_return, y, randShuffle=True, alpha=alpha_now)
 
-    # Save the figure for this patient
-    plt.savefig(os.path.join(MISC_FIGURE_PATH, f'{sheet_name}_Mood_Anxiety_Depression.png'), dpi=300)
-    plt.clf()  # Clear the figure for the next patient
+      # make scatterplots
+      randShuffleR, _, _ = plot_scatterplots(preds_r, y, f'{metric} Random Shuffle', RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_scatterRand_{alpha_now}{FILE_ENDING}')
+      r_list, p_list, scatterFig = plot_scatterplots(preds, y, metric, RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_scatterplots_{alpha_now}{FILE_ENDING}', randShuffleR=randShuffleR)
 
-# Convert the patient data to a DataFrame
-patient_df = pd.DataFrame(patient_data)
+      # Determine our best time radius for this metric based on Pearson's R
+      best_time_radius = list(scores.keys())[np.argmax(r_list)]
+      best_mse_list = scores[best_time_radius]
+      best_avg_mse = np.mean(scores[best_time_radius])
+      best_pearson_r = r_list[np.argmax(r_list)]
 
-# Save the DataFrame to an Excel file
-new_file_path = os.path.join(os.path.dirname(MOOD_TRACKING_SHEET_PATH), 'Mood_Tracking_Overview.xlsx')
-with pd.ExcelWriter(new_file_path, engine='openpyxl') as writer:
-    patient_df.to_excel(writer, sheet_name='Data_Overview', index=False)
+      # Add to our avg best R
+      avg_best_R = avg_best_R + best_pearson_r
 
-# Load the workbook and access the sheet
-wb = load_workbook(new_file_path)
-ws = wb['Data_Overview']
+      # bar plot for pearson r
+      rPlotFig = make_r_barplot(r_list, list(scores.keys()), metric, RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_R_{alpha_now}{FILE_ENDING}', method_now=method_now)
 
-# Bold the rows where 'Include Patient' is 'Yes'
-for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
-    if row[0].value == 'Yes':
-        for cell in row:
-            cell.font = Font(bold=True)
+      # make MSE plot
+      MSEPlotFig = make_mse_boxplot(scores, metric, RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_MSE_{alpha_now}{FILE_ENDING}', method_now=method_now)
 
-# Save the updated workbook
-wb.save(new_file_path)
+    # Add one R value for this alpha value to pearson_r_list
+    avg_best_R = avg_best_R / len(EMOTIONS_FOR_SEARCH)
+    pearson_r_list.append(avg_best_R)
+
+  # Plot R vs. alpha for this setting
+  plot_pearsons_r_vs_alpha(pearson_r_list=pearson_r_list, ALPHAS_FOR_SEARCH=ALPHAS_FOR_SEARCH, method=method_now, save_path=RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_Alpha_Search{FILE_ENDING}')
+
+  # Find best alpha for this setting
+  best_index_of_alpha = np.argmax(pearson_r_list)
+  best_alpha_value = ALPHAS_FOR_SEARCH[best_index_of_alpha]
+  best_alphas_lasso[results_prefix_unmodified] = best_alpha_value
