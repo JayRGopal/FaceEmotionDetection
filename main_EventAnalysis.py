@@ -115,6 +115,11 @@ for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)):
         print(f"Skipping {video_file}: OSError - {e}")
         continue
 
+    # Check if 'frame' column exists
+    if 'frame' not in emotion_df.columns or 'frame' not in au_df.columns:
+        print(f"Skipping {video_file}: 'frame' column not found in one of the DataFrames.")
+        continue
+
     # Detect events in the video
     video_events = detect_events(emotion_df, au_df)
 
@@ -126,8 +131,13 @@ for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)):
         event_au_df = au_df[(au_df['frame'] >= start_frame) & (au_df['frame'] <= end_frame)]
         event_emotion_df = emotion_df[(emotion_df['frame'] >= start_frame) & (emotion_df['frame'] <= end_frame)]
 
-        # Merge AU and emotion data
-        event_data = pd.merge(event_au_df, event_emotion_df.drop(columns=['frame', 'timestamp', 'success']), on='frame')
+        # Ensure 'frame' column is present before merging
+        if 'frame' in event_au_df.columns and 'frame' in event_emotion_df.columns:
+            # Merge AU and emotion data
+            event_data = pd.merge(event_au_df, event_emotion_df.drop(columns=['frame', 'timestamp', 'success']), on='frame')
+        else:
+            print(f"Skipping event in {video_file}: 'frame' column missing during merging.")
+            continue
 
         # Add event metadata to each row
         event_data['Filename'] = video_file
@@ -139,12 +149,15 @@ for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)):
         all_events.append(event_data)
 
 # Concatenate all event data
-events_df = pd.concat(all_events, ignore_index=True)
+if all_events:
+    events_df = pd.concat(all_events, ignore_index=True)
 
-# Clean column names of the final DataFrame
-events_df = clean_column_names(events_df)
+    # Clean column names of the final DataFrame
+    events_df = clean_column_names(events_df)
 
-# Save all events to a single CSV file
-events_df.to_csv(OUTPUT_CSV, index=False)
+    # Save all events to a single CSV file
+    events_df.to_csv(OUTPUT_CSV, index=False)
 
-print(f"Events saved to {OUTPUT_CSV}")
+    print(f"Events saved to {OUTPUT_CSV}")
+else:
+    print("No events to save.")
