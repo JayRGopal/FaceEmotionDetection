@@ -13,7 +13,9 @@ def save_event_clips(input_folder, event_analysis_csv, clips_output_folder):
     grouped_events = events_df.groupby(['Filename', 'Start Time', 'Duration in Seconds', 'Event Type'])
     
     # Iterate through unique events
+    clip_num = 0
     for (video_file, start_time, duration, event_type), group in grouped_events:
+        clip_num = clip_num + 1
         video_path = os.path.join(input_folder, video_file)
         
         # Load video
@@ -38,7 +40,7 @@ def save_event_clips(input_folder, event_analysis_csv, clips_output_folder):
         end_frame = min(int(cap.get(cv2.CAP_PROP_FRAME_COUNT)), end_frame + buffer_frames)
         
         # Set up clip writer
-        clip_name = f"{event_type}_{video_file}_{start_time.replace(':', '-')}.mp4"
+        clip_name = f"{event_type}_{clip_num}.mp4"
         clip_path = os.path.join(clips_output_folder, clip_name)
         fourcc = cv2.VideoWriter_fourcc(*'MP4V')
         clip_writer = cv2.VideoWriter(clip_path, fourcc, fps, (width, height))
