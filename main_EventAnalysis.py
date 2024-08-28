@@ -22,7 +22,7 @@ FACEDX_FPS = 5  # FPS after downsampling
 VIDEO_FPS = 30  # FPS of original video (for time stamps!)
 
 # Function to detect events
-def detect_events(emotion_df, au_df):
+def detect_events(emotion_df, au_df, video_file):
     events = []
 
     for emotion, threshold in EVENT_THRESHOLDS.items():
@@ -66,6 +66,7 @@ def detect_events(emotion_df, au_df):
                     event_rows = emotion_df[(emotion_df['frame'] >= frames[merged_start]) & (emotion_df['frame'] <= frames[merged_end])].copy()
                     event_rows['Start Time'] = start_time
                     event_rows['Event Type'] = emotion
+                    event_rows['Filename'] = video_file
 
                     au_rows = au_df[(au_df['frame'] >= frames[merged_start]) & (au_df['frame'] <= frames[merged_end])].drop(['timestamp', 'success'], axis=1)
                     event_rows = event_rows.merge(au_rows, left_on='frame', right_on='frame', suffixes=('', '_au'))
@@ -90,6 +91,7 @@ def detect_events(emotion_df, au_df):
             event_rows = emotion_df[(emotion_df['frame'] >= frames[merged_start]) & (emotion_df['frame'] <= frames[merged_end])].copy()
             event_rows['Start Time'] = start_time
             event_rows['Event Type'] = emotion
+            event_rows['Filename'] = video_file
 
             au_rows = au_df[(au_df['frame'] >= frames[merged_start]) & (au_df['frame'] <= frames[merged_end])].drop(['timestamp', 'success'], axis=1)
             event_rows = event_rows.merge(au_rows, left_on='frame', right_on='frame', suffixes=('', '_au'))
@@ -128,7 +130,7 @@ for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)[:5]):
         continue
 
     # Detect events in the video
-    video_events = detect_events(emotion_df, au_df)
+    video_events = detect_events(emotion_df, au_df, video_file)
 
     if not video_events.empty:
         all_events.append(video_events)
