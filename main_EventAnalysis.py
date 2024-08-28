@@ -42,41 +42,61 @@ def detect_events(emotion_df, au_df, video_file):
         if start_indices[-1] > end_indices[-1]:
             start_indices = start_indices[:-1]
 
-        for start_frame, end_frame in zip(frames[start_indices], frames[end_indices]):
-            event_length = end_frame - start_frame + 1
-            if event_length < MIN_EVENT_LENGTH:
-                continue
+        merged_start, merged_end = start_indices[0], end_indices[0]
 
-            # Merge close by events
-            if events and start_frame - events[-1]['End Frame'] <= MERGE_TIME:
-                events[-1]['End Frame'] = end_frame
-                # Calculate duration as the total timespan of the event
-                events[-1]['Duration in Seconds'] = round((end_frame - events[-1]['Start Frame']) / VIDEO_FPS, 1)
-                continue
+        for i in range(1, len(start_indices)):
+            start_frame, end_frame = frames[start_indices[i]], frames[end_indices[i]]
 
-            minutes = int((start_frame // VIDEO_FPS) // 60)
-            seconds = int((start_frame // VIDEO_FPS) - (60 * minutes))
-            if minutes >= 60:
-                hours = int(minutes // 60)
-                minutes = minutes % 60
-                start_time = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+            if start_frame - frames[merged_end] <= MERGE_TIME:
+                # Merge this event with the previous one
+                merged_end = end_indices[i]
             else:
-                start_time = f"{minutes:02d}:{seconds:02d}"
+                # Save the previous merged event
+                event_length = frames[merged_end] - frames[merged_start] + 1
+                if event_length >= MIN_EVENT_LENGTH:
+                    minutes = int((frames[merged_start] // VIDEO_FPS) // 60)
+                    seconds = int((frames[merged_start] // VIDEO_FPS) - (60 * minutes))
+                    start_time = f"{minutes:02d}:{seconds:02d}"
 
-            duration = round(event_length / FACEDX_FPS, 1)
+                    duration = round((frames[merged_end] - frames[merged_start]) / VIDEO_FPS, 1)
 
-            event_data = {
-                'Filename': video_file,
-                'Start Time': start_time,
-                'Duration in Seconds': duration,
-                'Event Type': emotion,
-                'Start Frame': start_frame,
-                'End Frame': end_frame
-            }
+                    # Get all rows for this merged event
+                    event_rows = emotion_df[(emotion_df['frame'] >= frames[merged_start]) & (emotion_df['frame'] <= frames[merged_end])].copy()
+                    event_rows['Start Time'] = start_time
+                    event_rows['Event Type'] = emotion
+                    event_rows['Filename'] = video_file
+                    event_rows['Duration in Seconds'] = duration
 
-            events.append(event_data)
+                    au_rows = au_df[(au_df['frame'] >= frames[merged_start]) & (au_df['frame'] <= frames[merged_end])].drop(['timestamp', 'success'], axis=1)
+                    event_rows = event_rows.merge(au_rows, left_on='frame', right_on='frame', suffixes=('', '_au'))
 
-    return events
+                    events.append(event_rows)
+
+                # Start a new event
+                merged_start, merged_end = start_indices[i], end_indices[i]
+
+        # Save the last merged event
+        event_length = frames[merged_end] - frames[merged_start] + 1
+        if event_length >= MIN_EVENT_LENGTH:
+            minutes = int((frames[merged_start] // VIDEO_FPS) // 60)
+            seconds = int((frames[merged_start] // VIDEO_FPS) - (60 * minutes))
+            start_time = f"{minutes:02d}:{seconds:02d}"
+
+            duration = round((frames[merged_end] - frames[merged_start]) / VIDEO_FPS, 1)
+
+            # Get all rows for this merged event
+            event_rows = emotion_df[(emotion_df['frame'] >= frames[merged_start]) & (emotion_df['frame'] <= frames[merged_end])].copy()
+            event_rows['Start Time'] = start_time
+            event_rows['Event Type'] = emotion
+            event_rows['Filename'] = video_file
+            event_rows['Duration in Seconds'] = duration
+
+            au_rows = au_df[(au_df['frame'] >= frames[merged_start]) & (au_df['frame'] <= frames[merged_end])].drop(['timestamp', 'success'], axis=1)
+            event_rows = event_rows.merge(au_rows, left_on='frame', right_on='frame', suffixes=('', '_au'))
+
+            events.append(event_rows)
+
+    return pd.concat(events, ignore_index=True) if events else pd.DataFrame()
 
 # Process each video file
 all_events = []
@@ -110,41 +130,38 @@ for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)[:5]):
     # Detect events in the video
     video_events = detect_events(emotion_df, au_df, video_file)
 
-    if video_events:
-        all_events.extend(video_events)
+    if not video_events.empty:
+        all_events.append(video_events)
 
-# Remove 'End Frame' and 'Start Frame' before saving
-for event in all_events:
-    event.pop('End Frame', None)
-    event.pop('Start Frame', None)
-
-# Convert to DataFrame
-all_events_df = pd.DataFrame(all_events)
-
-# Add Clip Name column
-global_event_counter = 0
-clip_names = []
-previous_key = None
-
-for _, row in all_events_df.iterrows():
-    key = (row['Start Time'], row['Filename'])
+# Concatenate all events across videos
+if all_events:
+    all_events_df = pd.concat(all_events, ignore_index=True)
     
-    # Increment the global event counter only when encountering a new key
-    if key != previous_key:
-        global_event_counter += 1
-        previous_key = key
-    
-    clip_name = f"{row['Event Type']}_{global_event_counter}.mp4"
-    clip_names.append(clip_name)
+    # Initialize a global event counter
+    global_event_counter = 0
+    clip_names = []
+    previous_key = None
 
-# Assign the Clip Name column to the DataFrame
-all_events_df['Clip Name'] = clip_names
+    for _, row in all_events_df.iterrows():
+        key = (row['Start Time'], row['Filename'])
+        
+        # Increment the global event counter only when encountering a new key
+        if key != previous_key:
+            global_event_counter += 1
+            previous_key = key
+        
+        clip_name = f"{row['Event Type']}_{global_event_counter}.mp4"
+        clip_names.append(clip_name)
 
-# Reorder columns
-meta_columns = ['Clip Name', 'Start Time', 'Filename', 'Event Type', 'Duration in Seconds']
-all_columns = meta_columns + [col for col in all_events_df.columns if col not in meta_columns]
-all_events_df = all_events_df[all_columns]
+    # Assign the Clip Name column to the DataFrame
+    all_events_df['Clip Name'] = clip_names
 
-# Save all events to a single CSV file
-all_events_df.to_csv(OUTPUT_CSV, index=False)
-print(f"Events saved to {OUTPUT_CSV}")
+    # Reorder columns
+    meta_columns = ['Clip Name', 'Start Time', 'Filename', 'Event Type', 'Duration in Seconds']  # Add or modify as needed
+    all_columns = meta_columns + [col for col in all_events_df.columns if col not in meta_columns]
+    all_events_df = all_events_df[all_columns]
+
+    all_events_df.to_csv(OUTPUT_CSV, index=False)
+    print(f"Events saved to {OUTPUT_CSV}")
+else:
+    print("No events detected.")
