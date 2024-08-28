@@ -62,7 +62,7 @@ def detect_events(emotion_df, au_df, video_file):
                         start_time = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
                     else:
                         start_time = f"{minutes:02d}:{seconds:02d}"
-                    duration = round(event_length / FACEDX_FPS, 1)
+                    duration = round((frames[merged_end] - frames[merged_start] + 1) / FACEDX_FPS, 1)
 
                     event_rows = emotion_df[(emotion_df['frame'] >= frames[merged_start]) & (emotion_df['frame'] <= frames[merged_end])].copy()
                     event_rows['Start Time'] = start_time
@@ -89,7 +89,7 @@ def detect_events(emotion_df, au_df, video_file):
                 start_time = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
             else:
                 start_time = f"{minutes:02d}:{seconds:02d}"
-            duration = round(event_length / FACEDX_FPS, 1)
+            duration = round((frames[merged_end] - frames[merged_start] + 1) / FACEDX_FPS, 1)
 
             event_rows = emotion_df[(emotion_df['frame'] >= frames[merged_start]) & (emotion_df['frame'] <= frames[merged_end])].copy()
             event_rows['Start Time'] = start_time
