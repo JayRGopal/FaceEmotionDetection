@@ -31,6 +31,7 @@ def clean_column_names(df):
 def detect_events(emotion_df, au_df):
     events = []
 
+    event_idx = 0
     for emotion, threshold in EVENT_THRESHOLDS.items():
         emotion_values = emotion_df[emotion].values
         frames = emotion_df['frame'].values
@@ -49,6 +50,7 @@ def detect_events(emotion_df, au_df):
             start_indices = start_indices[:-1]
         
         for start_frame, end_frame in zip(frames[start_indices], frames[end_indices]):
+            event_idx = event_idx + 1
             event_length = end_frame - start_frame + 1
             if event_length < MIN_EVENT_LENGTH:
                 continue
@@ -74,7 +76,8 @@ def detect_events(emotion_df, au_df):
                 'Duration in Seconds': duration,
                 'Event Type': emotion,
                 'Start Frame': start_frame,
-                'End Frame': end_frame
+                'End Frame': end_frame,
+                'Clip Name': f'{emotion}_{event_idx}.mp4'
             }
 
             events.append(event_data)
@@ -85,7 +88,7 @@ def detect_events(emotion_df, au_df):
 all_events = []
 
 # Loop through the subfolders in the given CSV directory
-for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)[:10]):
+for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)):
     video_file = subfolder
 
     # Load emotion and AU CSVs
@@ -133,6 +136,7 @@ for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)[:10]):
         event_data['Start Time'] = event['Start Time']
         event_data['Duration in Seconds'] = event['Duration in Seconds']
         event_data['Event Type'] = event['Event Type']
+        event_data['Clip Name'] = event['Clip Name']
 
         all_events.append(event_data)
 
@@ -144,7 +148,7 @@ if all_events:
     events_df = clean_column_names(events_df)
 
     # Reorder columns so that meta columns are first
-    meta_columns = ['Filename', 'Start Time', 'Duration in Seconds', 'Event Type']
+    meta_columns = ['Clip Name', 'Filename', 'Start Time', 'Duration in Seconds', 'Event Type']
     other_columns = [col for col in events_df.columns if col not in meta_columns]
     ordered_columns = meta_columns + other_columns
     events_df = events_df[ordered_columns]
