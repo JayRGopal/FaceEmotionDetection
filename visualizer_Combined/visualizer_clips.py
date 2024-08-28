@@ -9,11 +9,11 @@ def save_event_clips(input_folder, event_analysis_csv, clips_output_folder):
     # Ensure the output folder exists
     os.makedirs(clips_output_folder, exist_ok=True)
     
-    # Add a new column for clip names
-    events_df['Clip Name'] = ''
+    # Group the DataFrame by unique events
+    grouped_events = events_df.groupby(['Filename', 'Start Time', 'Duration in Seconds', 'Event Type'])
     
-    for index, event in events_df.iterrows():
-        video_file = event['Filename']
+    # Iterate through unique events
+    for (video_file, start_time, duration, event_type), group in grouped_events:
         video_path = os.path.join(input_folder, video_file)
         
         # Load video
@@ -23,14 +23,13 @@ def save_event_clips(input_folder, event_analysis_csv, clips_output_folder):
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         
         # Calculate start and end frames
-        start_time = event['Start Time'].split(':')
-        if len(start_time) == 3:
-            start_frame = (int(start_time[0]) * 3600 + int(start_time[1]) * 60 + int(start_time[2])) * fps
-        elif len(start_time) == 2:
-            start_frame = (int(start_time[0]) * 60 + int(start_time[1])) * fps
+        start_time_parts = start_time.split(':')
+        if len(start_time_parts) == 3:
+            start_frame = (int(start_time_parts[0]) * 3600 + int(start_time_parts[1]) * 60 + int(start_time_parts[2])) * fps
+        elif len(start_time_parts) == 2:
+            start_frame = (int(start_time_parts[0]) * 60 + int(start_time_parts[1])) * fps
         else:
-            raise ValueError(f"Unexpected time format: {event['Start Time']}")
-        duration = event['Duration in Seconds']
+            raise ValueError(f"Unexpected time format: {start_time}")
         end_frame = start_frame + (duration * fps)
         
         # Add 2 seconds buffer before and after
@@ -39,7 +38,7 @@ def save_event_clips(input_folder, event_analysis_csv, clips_output_folder):
         end_frame = min(int(cap.get(cv2.CAP_PROP_FRAME_COUNT)), end_frame + buffer_frames)
         
         # Set up clip writer
-        clip_name = f"{event['Event Type']}_{index+1}.mp4"
+        clip_name = f"{event_type}_{video_file}_{start_time.replace(':', '-')}.mp4"
         clip_path = os.path.join(clips_output_folder, clip_name)
         fourcc = cv2.VideoWriter_fourcc(*'MP4V')
         clip_writer = cv2.VideoWriter(clip_path, fourcc, fps, (width, height))
@@ -55,8 +54,8 @@ def save_event_clips(input_folder, event_analysis_csv, clips_output_folder):
         clip_writer.release()
         cap.release()
         
-        # Update the clip name in the DataFrame
-        events_df.at[index, 'Clip Name'] = clip_name
+        # Update the clip name for all rows of this event
+        events_df.loc[group.index, 'Clip Name'] = clip_name
     
     cv2.destroyAllWindows()
     
