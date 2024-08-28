@@ -47,8 +47,10 @@ def detect_events(emotion_df, au_df):
             end_indices = end_indices[1:]
         if start_indices[-1] > end_indices[-1]:
             start_indices = start_indices[:-1]
-
+        
+        event_idx = 0
         for start_frame, end_frame in zip(frames[start_indices], frames[end_indices]):
+            event_idx = event_idx + 1
             event_length = end_frame - start_frame + 1
             if event_length < MIN_EVENT_LENGTH:
                 continue
@@ -74,7 +76,8 @@ def detect_events(emotion_df, au_df):
                 'Duration in Seconds': duration,
                 'Event Type': emotion,
                 'Start Frame': start_frame,
-                'End Frame': end_frame
+                'End Frame': end_frame,
+                'Clip Name': f'{emotion}_{event_idx}.mp4'
             }
 
             events.append(event_data)
@@ -131,6 +134,7 @@ for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)):
         event_data['Start Time'] = event['Start Time']
         event_data['Duration in Seconds'] = event['Duration in Seconds']
         event_data['Event Type'] = event['Event Type']
+        event_data['Clip Name'] = event['Clip Name']
 
         all_events.append(event_data)
 
