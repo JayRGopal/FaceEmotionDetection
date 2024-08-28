@@ -40,12 +40,17 @@ def detect_events(emotion_df, au_df):
         start_indices = np.where((above_threshold[:-1] == False) & (above_threshold[1:] == True))[0] + 1
         end_indices = np.where((above_threshold[:-1] == True) & (above_threshold[1:] == False))[0]
 
+        if len(above_threshold) > 0 and above_threshold[0]:
+            start_indices = np.insert(start_indices, 0, 0)
+        if len(above_threshold) > 1 and above_threshold[-1]:
+            end_indices = np.append(end_indices, len(above_threshold) - 1)
+
         if len(start_indices) == 0 or len(end_indices) == 0:
             continue
 
         if start_indices[0] > end_indices[0]:
             end_indices = end_indices[1:]
-        if start_indices[-1] > end_indices[-1]:
+        if len(start_indices) > len(end_indices):
             start_indices = start_indices[:-1]
         
         for start_frame, end_frame in zip(frames[start_indices], frames[end_indices]):
@@ -57,28 +62,27 @@ def detect_events(emotion_df, au_df):
             if events and start_frame - events[-1]['End Frame'] <= MERGE_TIME:
                 events[-1]['End Frame'] = end_frame
                 events[-1]['Duration in Seconds'] = round(events[-1]['Duration in Seconds'] + event_length / FACEDX_FPS, 1)
-                continue
-
-            minutes = int((start_frame // VIDEO_FPS) // 60)
-            seconds = int((start_frame // VIDEO_FPS) - (60 * minutes))
-            if minutes >= 60:
-                hours = int(minutes // 60)
-                minutes = minutes % 60
-                start_time = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
             else:
-                start_time = f"{minutes:02d}:{seconds:02d}"
+                minutes = int((start_frame // VIDEO_FPS) // 60)
+                seconds = int((start_frame // VIDEO_FPS) - (60 * minutes))
+                if minutes >= 60:
+                    hours = int(minutes // 60)
+                    minutes = minutes % 60
+                    start_time = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+                else:
+                    start_time = f"{minutes:02d}:{seconds:02d}"
 
-            duration = round(event_length / FACEDX_FPS, 1)
+                duration = round(event_length / FACEDX_FPS, 1)
 
-            event_data = {
-                'Start Time': start_time,
-                'Duration in Seconds': duration,
-                'Event Type': emotion,
-                'Start Frame': start_frame,
-                'End Frame': end_frame
-            }
+                event_data = {
+                    'Start Time': start_time,
+                    'Duration in Seconds': duration,
+                    'Event Type': emotion,
+                    'Start Frame': start_frame,
+                    'End Frame': end_frame
+                }
 
-            events.append(event_data)
+                events.append(event_data)
 
     return events
 
@@ -86,7 +90,7 @@ def detect_events(emotion_df, au_df):
 all_events = []
 
 # Loop through the subfolders in the given CSV directory
-for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)):
+for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)[:5]):
     video_file = subfolder
 
     # Load emotion and AU CSVs
