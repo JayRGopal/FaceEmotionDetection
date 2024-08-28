@@ -143,24 +143,25 @@ for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)[:5]):
 if all_events:
     all_events_df = pd.concat(all_events, ignore_index=True)
     
-    # Initialize a dictionary to keep track of the indices for each unique combination
-    clip_index = {}
-
-    # Create the Clip Name column
+    # Initialize a global event counter
+    global_event_counter = 0
     clip_names = []
+    previous_key = None
 
     for _, row in all_events_df.iterrows():
         key = (row['Start Time'], row['Filename'])
-        if key not in clip_index:
-            clip_index[key] = 1
-        else:
-            clip_index[key] += 1
         
-        clip_name = f"{row['Event Type']}_{clip_index[key]}.mp4"
+        # Increment the global event counter only when encountering a new key
+        if key != previous_key:
+            global_event_counter += 1
+            previous_key = key
+        
+        clip_name = f"{row['Event Type']}_{global_event_counter}.mp4"
         clip_names.append(clip_name)
 
+    # Assign the Clip Name column to the DataFrame
     all_events_df['Clip Name'] = clip_names
-    
+
     # Reorder columns
     meta_columns = ['Clip Name', 'Start Time', 'Filename', 'Event Type', 'Duration in Seconds']  # Add or modify as needed
     all_columns = meta_columns + [col for col in all_events_df.columns if col not in meta_columns]
