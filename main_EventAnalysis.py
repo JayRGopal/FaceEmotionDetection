@@ -136,6 +136,16 @@ for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)[:5]):
 # Concatenate all events across videos
 if all_events:
     all_events_df = pd.concat(all_events, ignore_index=True)
+    
+    # Add Clip Name column
+    all_events_df['Clip Name'] = (all_events_df.groupby(['Start Time', 'Filename']).cumcount() + 1).astype(str)
+    all_events_df['Clip Name'] = all_events_df['Event Type'] + "_" + all_events_df['Clip Name'] + ".mp4"
+
+    # Reorder columns
+    meta_columns = ['Clip Name', 'Start Time', 'Filename', 'Event Type', 'Duration in Seconds']  # Add or modify as needed
+    all_columns = meta_columns + [col for col in all_events_df.columns if col not in meta_columns]
+    all_events_df = all_events_df[all_columns]
+
     all_events_df.to_csv(OUTPUT_CSV, index=False)
     print(f"Events saved to {OUTPUT_CSV}")
 else:
