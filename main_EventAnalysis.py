@@ -12,6 +12,7 @@ META_DATA_CSV_PATH = os.path.join(os.path.abspath(f'/home/jgopal/NAS/Analysis/ou
 
 # Load the thresholds from the meta data CSV
 thresholds_df = pd.read_csv(META_DATA_CSV_PATH)
+thresholds_df.columns = thresholds_df.columns.str.strip()  # Clean column names
 
 EVENT_THRESHOLDS = dict(zip(thresholds_df['Emotion'], thresholds_df['Threshold']))
 
@@ -20,6 +21,11 @@ MERGE_TIME = 3  # Maximum frames apart to consider merging events
 
 FACEDX_FPS = 5  # FPS after down sampling
 VIDEO_FPS = 30  # FPS of original video (for time stamps!)
+
+# Function to clean DataFrame column names
+def clean_column_names(df):
+    df.columns = df.columns.str.strip()
+    return df
 
 # Function to detect events
 def detect_events(emotion_df, au_df):
@@ -96,7 +102,9 @@ for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)):
 
     try:
         emotion_df = pd.read_csv(emotion_csv_path)
+        emotion_df = clean_column_names(emotion_df)
         au_df = pd.read_csv(au_csv_path)
+        au_df = clean_column_names(au_df)
     except pd.errors.EmptyDataError:
         print(f"Skipping {video_file}: empty CSV files.")
         continue
@@ -110,24 +118,27 @@ for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)):
     for event in video_events:
         start_frame = event['Start Frame']
         end_frame = event['End Frame']
-        
+
         # Get the frame-by-frame data for this event
         event_au_df = au_df[(au_df['frame'] >= start_frame) & (au_df['frame'] <= end_frame)]
         event_emotion_df = emotion_df[(emotion_df['frame'] >= start_frame) & (emotion_df['frame'] <= end_frame)]
-        
+
         # Merge AU and emotion data
         event_data = pd.merge(event_au_df, event_emotion_df.drop(columns=['frame', 'timestamp', 'success']), on='frame')
-        
+
         # Add event metadata to each row
         event_data['Filename'] = video_file
         event_data['Start Time'] = event['Start Time']
         event_data['Duration in Seconds'] = event['Duration in Seconds']
         event_data['Event Type'] = event['Event Type']
-        
+
         all_events.append(event_data)
 
 # Concatenate all event data
 events_df = pd.concat(all_events, ignore_index=True)
+
+# Clean column names of the final DataFrame
+events_df = clean_column_names(events_df)
 
 # Save all events to a single CSV file
 events_df.to_csv(OUTPUT_CSV, index=False)
