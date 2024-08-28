@@ -85,7 +85,7 @@ def detect_events(emotion_df, au_df):
 all_events = []
 
 # Loop through the subfolders in the given CSV directory
-for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)):
+for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)[:10]):
     video_file = subfolder
 
     # Load emotion and AU CSVs
@@ -144,7 +144,7 @@ if all_events:
     events_df = clean_column_names(events_df)
 
     # Reorder columns so that meta columns are first
-    meta_columns = ['Filename', 'Start Time', 'Duration in Seconds', 'Event Type', 'Start Frame', 'End Frame']
+    meta_columns = ['Filename', 'Start Time', 'Duration in Seconds', 'Event Type']
     other_columns = [col for col in events_df.columns if col not in meta_columns]
     ordered_columns = meta_columns + other_columns
     events_df = events_df[ordered_columns]
