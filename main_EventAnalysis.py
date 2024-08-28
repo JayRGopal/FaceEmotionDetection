@@ -126,12 +126,9 @@ for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)):
         # Get the frame-by-frame data for this event
         event_au_df = au_df[(au_df['frame'] >= start_frame) & (au_df['frame'] <= end_frame)]
         event_emotion_df = emotion_df[(emotion_df['frame'] >= start_frame) & (emotion_df['frame'] <= end_frame)]
-
-        event_au_df['frame'] = event_au_df['frame'].astype(int)
-        event_emotion_df['frame'] = event_emotion_df['frame'].astype(int)
-
+        
         # Merge AU and emotion data
-        event_data = pd.merge(event_au_df, event_emotion_df.drop(columns=['frame', 'timestamp', 'success']), on='frame')
+        event_data = pd.merge(event_au_df, event_emotion_df.drop(columns=['timestamp', 'success']), on='frame')
     
 
         # Add event metadata to each row
