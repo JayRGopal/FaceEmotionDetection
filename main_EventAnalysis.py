@@ -56,6 +56,7 @@ def detect_events(emotion_df, au_df):
             # Merge close by events
             if events and start_frame - events[-1]['End Frame'] <= MERGE_TIME:
                 events[-1]['End Frame'] = end_frame
+                events[-1]['Duration in Seconds'] = round(events[-1]['Duration in Seconds'] + event_length / FACEDX_FPS, 1)
                 continue
 
             minutes = int((start_frame // VIDEO_FPS) // 60)
