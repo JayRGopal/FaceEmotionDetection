@@ -1,5 +1,5 @@
 Traceback (most recent call last):
-  File "/home/jgopal/Desktop/FaceEmotionDetection/main_EventAnalysis.py", line 130, in <module>
+  File "/home/jgopal/Desktop/FaceEmotionDetection/main_EventAnalysis.py", line 137, in <module>
     event_data = pd.merge(event_au_df, event_emotion_df.drop(columns=['frame', 'timestamp', 'success']), on='frame')
   File "/home/jgopal/miniconda3/envs/cvquant/lib/python3.10/site-packages/pandas/core/reshape/merge.py", line 170, in merge
     op = _MergeOperation(
