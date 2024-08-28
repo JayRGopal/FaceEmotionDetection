@@ -85,7 +85,7 @@ def detect_events(emotion_df, au_df):
 all_events = []
 
 # Loop through the subfolders in the given CSV directory
-for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)):
+for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)[:5]):
     video_file = subfolder
 
     # Load emotion and AU CSVs
@@ -144,12 +144,12 @@ if all_events:
     # Add Clip Name column
     clip_name_list = []
     clip_index = 1
-    current_event_type = events_df.iloc[0]['Event Type']
+    current_start_time = events_df.iloc[0]['Start Time']
 
     for i, row in events_df.iterrows():
-        if row['Event Type'] != current_event_type:
+        if row['Start Time'] != current_start_time:
             clip_index += 1
-            current_event_type = row['Event Type']
+            current_start_time = row['Start Time']
         clip_name_list.append(f"{row['Event Type']}_{clip_index}.mp4")
 
     events_df.insert(0, 'Clip Name', clip_name_list)  # Insert at the very left
