@@ -31,7 +31,6 @@ def clean_column_names(df):
 def detect_events(emotion_df, au_df):
     events = []
 
-    event_idx = 0
     for emotion, threshold in EVENT_THRESHOLDS.items():
         emotion_values = emotion_df[emotion].values
         frames = emotion_df['frame'].values
@@ -50,7 +49,6 @@ def detect_events(emotion_df, au_df):
             start_indices = start_indices[:-1]
         
         for start_frame, end_frame in zip(frames[start_indices], frames[end_indices]):
-            event_idx = event_idx + 1
             event_length = end_frame - start_frame + 1
             if event_length < MIN_EVENT_LENGTH:
                 continue
@@ -76,8 +74,7 @@ def detect_events(emotion_df, au_df):
                 'Duration in Seconds': duration,
                 'Event Type': emotion,
                 'Start Frame': start_frame,
-                'End Frame': end_frame,
-                'Clip Name': f'{emotion}_{event_idx}.mp4'
+                'End Frame': end_frame
             }
 
             events.append(event_data)
@@ -115,7 +112,6 @@ for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)):
         print(f"Skipping {video_file}: OSError - {e}")
         continue
 
-    
     # Detect events in the video
     video_events = detect_events(emotion_df, au_df)
 
@@ -129,14 +125,12 @@ for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)):
 
         # Merge AU and emotion data
         event_data = pd.merge(event_au_df, event_emotion_df.drop(columns=['timestamp', 'success']), on='frame')
-    
 
         # Add event metadata to each row
         event_data['Filename'] = video_file
         event_data['Start Time'] = event['Start Time']
         event_data['Duration in Seconds'] = event['Duration in Seconds']
         event_data['Event Type'] = event['Event Type']
-        event_data['Clip Name'] = event['Clip Name']
 
         all_events.append(event_data)
 
@@ -146,6 +140,19 @@ if all_events:
 
     # Clean column names of the final DataFrame
     events_df = clean_column_names(events_df)
+
+    # Add Clip Name column
+    clip_name_list = []
+    clip_index = 1
+    current_event_type = events_df.iloc[0]['Event Type']
+
+    for i, row in events_df.iterrows():
+        if row['Event Type'] != current_event_type:
+            clip_index += 1
+            current_event_type = row['Event Type']
+        clip_name_list.append(f"{row['Event Type']}_{clip_index}.mp4")
+
+    events_df.insert(0, 'Clip Name', clip_name_list)  # Insert at the very left
 
     # Reorder columns so that meta columns are first
     meta_columns = ['Clip Name', 'Filename', 'Start Time', 'Duration in Seconds', 'Event Type']
