@@ -58,7 +58,7 @@ def detect_events(emotion_df, au_df, video_file):
                     seconds = int((frames[merged_start] // VIDEO_FPS) - (60 * minutes))
                     start_time = f"{minutes:02d}:{seconds:02d}"
 
-                    duration = round((frames[merged_end] - frames[merged_start]) / VIDEO_FPS, 1)
+                    duration = round(event_length / VIDEO_FPS, 1)
 
                     # Get all rows for this merged event
                     event_rows = emotion_df[(emotion_df['frame'] >= frames[merged_start]) & (emotion_df['frame'] <= frames[merged_end])].copy()
@@ -82,7 +82,7 @@ def detect_events(emotion_df, au_df, video_file):
             seconds = int((frames[merged_start] // VIDEO_FPS) - (60 * minutes))
             start_time = f"{minutes:02d}:{seconds:02d}"
 
-            duration = round((frames[merged_end] - frames[merged_start]) / VIDEO_FPS, 1)
+            duration = round(event_length / VIDEO_FPS, 1)
 
             # Get all rows for this merged event
             event_rows = emotion_df[(emotion_df['frame'] >= frames[merged_start]) & (emotion_df['frame'] <= frames[merged_end])].copy()
@@ -102,7 +102,7 @@ def detect_events(emotion_df, au_df, video_file):
 all_events = []
 
 # Loop through the first 5 subfolders in the given CSV directory
-for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)[:5]):
+for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)):
     video_file = subfolder
     
     # Load emotion and AU CSVs
