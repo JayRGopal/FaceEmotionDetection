@@ -18,10 +18,10 @@ EVENT_THRESHOLDS = dict(zip(thresholds_df['Emotion'], thresholds_df['Threshold']
 MIN_EVENT_LENGTH = 2  # Minimum length of each event in frames
 MERGE_TIME = 3  # Maximum frames apart to consider merging events
 
-FACEDX_FPS = 5  # FPS after down sampling
+FACEDX_FPS = 5  # FPS after downsampling
 VIDEO_FPS = 30  # FPS of original video (for time stamps!)
 
-# Function to detect events and generate multiple rows per event
+# Function to detect events
 def detect_events(emotion_df, au_df):
     events = []
 
@@ -50,7 +50,6 @@ def detect_events(emotion_df, au_df):
             # Merge close by events
             if events and start_frame - events[-1]['End Frame'] <= MERGE_TIME:
                 events[-1]['End Frame'] = end_frame
-                events[-1]['Duration in Seconds'] = round(events[-1]['Duration in Seconds'] + event_length / FACEDX_FPS, 1)
                 continue
 
             minutes = int((start_frame // VIDEO_FPS) // 60)
@@ -62,35 +61,24 @@ def detect_events(emotion_df, au_df):
             else:
                 start_time = f"{minutes:02d}:{seconds:02d}"
 
-            duration = round(event_length / FACEDX_FPS, 1)
+            # Get all rows for each event instead of averages
+            event_rows = emotion_df[(emotion_df['frame'] >= start_frame) & (emotion_df['frame'] <= end_frame)].copy()
+            event_rows['Start Time'] = start_time
+            event_rows['Event Type'] = emotion
 
-            # Get data for each frame in the event
-            for frame in range(start_frame, end_frame + 1):
-                event_data = {
-                    'Filename': video_file,
-                    'Start Time': start_time,
-                    'Duration in Seconds': duration,
-                    'Event Type': emotion,
-                    'Frame': frame
-                }
+            # Merge AU data
+            au_rows = au_df[(au_df['frame'] >= start_frame) & (au_df['frame'] <= end_frame)].drop(['frame', 'timestamp', 'success'], axis=1)
+            event_rows = event_rows.merge(au_rows, left_on='frame', right_on='frame', suffixes=('', '_au'))
 
-                # Add corresponding AU and emotion values
-                frame_au = au_df[au_df['frame'] == frame]
-                frame_emotion = emotion_df[emotion_df['frame'] == frame]
+            events.append(event_rows)
 
-                if not frame_au.empty and not frame_emotion.empty:
-                    event_data.update(frame_au.drop(columns=['frame', 'timestamp', 'success']).to_dict('records')[0])
-                    event_data.update(frame_emotion.drop(columns=['frame', 'timestamp', 'success']).to_dict('records')[0])
-
-                events.append(event_data)
-
-    return events
+    return pd.concat(events, ignore_index=True) if events else pd.DataFrame()
 
 # Process each video file
 all_events = []
 
 # Loop through the subfolders in the given CSV directory
-for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)[:5]):
+for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)):
     video_file = subfolder
     
     # Load emotion and AU CSVs
@@ -118,25 +106,13 @@ for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)[:5]):
     # Detect events in the video
     video_events = detect_events(emotion_df, au_df)
 
-    all_events.extend(video_events)
+    if not video_events.empty:
+        all_events.append(video_events)
 
-# Convert all events to a DataFrame
-events_df = pd.DataFrame(all_events)
-
-# Add Clip Name column based on unique Filename and Start Time combinations
-clip_name_list = []
-clip_index = 1
-current_combination = events_df.iloc[0][['Filename', 'Start Time']].to_tuple()
-
-for i, row in events_df.iterrows():
-    if (row['Filename'], row['Start Time']) != current_combination:
-        clip_index += 1
-        current_combination = (row['Filename'], row['Start Time'])
-    clip_name_list.append(f"{row['Event Type']}_{clip_index}.mp4")
-
-events_df.insert(0, 'Clip Name', clip_name_list)  # Insert at the very left
-
-# Save all events to a single CSV file
-events_df.to_csv(OUTPUT_CSV, index=False)
-
-print(f"Events saved to {OUTPUT_CSV}")
+# Concatenate all events across videos
+if all_events:
+    all_events_df = pd.concat(all_events, ignore_index=True)
+    all_events_df.to_csv(OUTPUT_CSV, index=False)
+    print(f"Events saved to {OUTPUT_CSV}")
+else:
+    print("No events detected.")
