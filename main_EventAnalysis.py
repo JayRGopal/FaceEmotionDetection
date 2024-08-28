@@ -115,13 +115,7 @@ for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)):
         print(f"Skipping {video_file}: OSError - {e}")
         continue
 
-    # Check if 'frame' column exists
-    if 'frame' not in emotion_df.columns or 'frame' not in au_df.columns:
-        print(f"Skipping {video_file}: 'frame' column not found in one of the DataFrames.")
-        print(f"emotion_df columns: {emotion_df.columns}")
-        print(f"au_df columns: {au_df.columns}")
-        continue
-
+    
     # Detect events in the video
     video_events = detect_events(emotion_df, au_df)
 
@@ -133,17 +127,12 @@ for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)):
         event_au_df = au_df[(au_df['frame'] >= start_frame) & (au_df['frame'] <= end_frame)]
         event_emotion_df = emotion_df[(emotion_df['frame'] >= start_frame) & (emotion_df['frame'] <= end_frame)]
 
-        # Print columns before merging
-        print(f"Merging data for event in {video_file}:")
-        print(f"event_au_df columns: {event_au_df.columns}")
-        print(f"event_emotion_df columns: {event_emotion_df.columns}")
+        event_au_df['frame'] = event_au_df['frame'].astype(int)
+        event_emotion_df['frame'] = event_emotion_df['frame'].astype(int)
 
-        try:
-            # Merge AU and emotion data
-            event_data = pd.merge(event_au_df, event_emotion_df.drop(columns=['frame', 'timestamp', 'success']), on='frame')
-        except KeyError as e:
-            print(f"Skipping event in {video_file}: KeyError during merging - {e}")
-            continue
+        # Merge AU and emotion data
+        event_data = pd.merge(event_au_df, event_emotion_df.drop(columns=['frame', 'timestamp', 'success']), on='frame')
+    
 
         # Add event metadata to each row
         event_data['Filename'] = video_file
