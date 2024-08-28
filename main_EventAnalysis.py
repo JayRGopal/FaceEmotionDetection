@@ -48,9 +48,7 @@ def detect_events(emotion_df, au_df):
         if start_indices[-1] > end_indices[-1]:
             start_indices = start_indices[:-1]
         
-        event_idx = 0
         for start_frame, end_frame in zip(frames[start_indices], frames[end_indices]):
-            event_idx = event_idx + 1
             event_length = end_frame - start_frame + 1
             if event_length < MIN_EVENT_LENGTH:
                 continue
@@ -76,8 +74,7 @@ def detect_events(emotion_df, au_df):
                 'Duration in Seconds': duration,
                 'Event Type': emotion,
                 'Start Frame': start_frame,
-                'End Frame': end_frame,
-                'Clip Name': f'{emotion}_{event_idx}.mp4'
+                'End Frame': end_frame
             }
 
             events.append(event_data)
@@ -126,7 +123,7 @@ for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)):
         # Get the frame-by-frame data for this event
         event_au_df = au_df[(au_df['frame'] >= start_frame) & (au_df['frame'] <= end_frame)]
         event_emotion_df = emotion_df[(emotion_df['frame'] >= start_frame) & (emotion_df['frame'] <= end_frame)]
-        
+
         # Merge AU and emotion data
         event_data = pd.merge(event_au_df, event_emotion_df.drop(columns=['timestamp', 'success']), on='frame')
     
@@ -136,7 +133,6 @@ for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)):
         event_data['Start Time'] = event['Start Time']
         event_data['Duration in Seconds'] = event['Duration in Seconds']
         event_data['Event Type'] = event['Event Type']
-        event_data['Clip Name'] = event['Clip Name']
 
         all_events.append(event_data)
 
