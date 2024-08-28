@@ -62,11 +62,13 @@ def detect_events(emotion_df, au_df, video_file):
                         start_time = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
                     else:
                         start_time = f"{minutes:02d}:{seconds:02d}"
+                    duration = round(event_length / FACEDX_FPS, 1)
 
                     event_rows = emotion_df[(emotion_df['frame'] >= frames[merged_start]) & (emotion_df['frame'] <= frames[merged_end])].copy()
                     event_rows['Start Time'] = start_time
                     event_rows['Event Type'] = emotion
                     event_rows['Filename'] = video_file
+                    event_rows['Duration in Seconds'] = duration
 
                     au_rows = au_df[(au_df['frame'] >= frames[merged_start]) & (au_df['frame'] <= frames[merged_end])].drop(['timestamp', 'success'], axis=1)
                     event_rows = event_rows.merge(au_rows, left_on='frame', right_on='frame', suffixes=('', '_au'))
@@ -87,11 +89,13 @@ def detect_events(emotion_df, au_df, video_file):
                 start_time = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
             else:
                 start_time = f"{minutes:02d}:{seconds:02d}"
+            duration = round(event_length / FACEDX_FPS, 1)
 
             event_rows = emotion_df[(emotion_df['frame'] >= frames[merged_start]) & (emotion_df['frame'] <= frames[merged_end])].copy()
             event_rows['Start Time'] = start_time
             event_rows['Event Type'] = emotion
             event_rows['Filename'] = video_file
+            event_rows['Duration in Seconds'] = duration
 
             au_rows = au_df[(au_df['frame'] >= frames[merged_start]) & (au_df['frame'] <= frames[merged_end])].drop(['timestamp', 'success'], axis=1)
             event_rows = event_rows.merge(au_rows, left_on='frame', right_on='frame', suffixes=('', '_au'))
