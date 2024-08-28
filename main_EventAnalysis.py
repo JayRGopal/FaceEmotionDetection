@@ -143,6 +143,12 @@ if all_events:
     # Clean column names of the final DataFrame
     events_df = clean_column_names(events_df)
 
+    # Reorder columns so that meta columns are first
+    meta_columns = ['Filename', 'Start Time', 'Duration in Seconds', 'Event Type', 'Start Frame', 'End Frame']
+    other_columns = [col for col in events_df.columns if col not in meta_columns]
+    ordered_columns = meta_columns + other_columns
+    events_df = events_df[ordered_columns]
+
     # Save all events to a single CSV file
     events_df.to_csv(OUTPUT_CSV, index=False)
 
