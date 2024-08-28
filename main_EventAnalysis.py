@@ -12,7 +12,6 @@ META_DATA_CSV_PATH = os.path.join(os.path.abspath(f'/home/jgopal/NAS/Analysis/ou
 
 # Load the thresholds from the meta data CSV
 thresholds_df = pd.read_csv(META_DATA_CSV_PATH)
-thresholds_df.columns = thresholds_df.columns.str.strip()  # Clean column names
 
 EVENT_THRESHOLDS = dict(zip(thresholds_df['Emotion'], thresholds_df['Threshold']))
 
@@ -22,12 +21,7 @@ MERGE_TIME = 3  # Maximum frames apart to consider merging events
 FACEDX_FPS = 5  # FPS after down sampling
 VIDEO_FPS = 30  # FPS of original video (for time stamps!)
 
-# Function to clean DataFrame column names
-def clean_column_names(df):
-    df.columns = df.columns.str.strip()
-    return df
-
-# Function to detect events
+# Function to detect events and generate multiple rows per event
 def detect_events(emotion_df, au_df):
     events = []
 
@@ -40,19 +34,14 @@ def detect_events(emotion_df, au_df):
         start_indices = np.where((above_threshold[:-1] == False) & (above_threshold[1:] == True))[0] + 1
         end_indices = np.where((above_threshold[:-1] == True) & (above_threshold[1:] == False))[0]
 
-        if len(above_threshold) > 0 and above_threshold[0]:
-            start_indices = np.insert(start_indices, 0, 0)
-        if len(above_threshold) > 1 and above_threshold[-1]:
-            end_indices = np.append(end_indices, len(above_threshold) - 1)
-
         if len(start_indices) == 0 or len(end_indices) == 0:
             continue
 
         if start_indices[0] > end_indices[0]:
             end_indices = end_indices[1:]
-        if len(start_indices) > len(end_indices):
+        if start_indices[-1] > end_indices[-1]:
             start_indices = start_indices[:-1]
-        
+
         for start_frame, end_frame in zip(frames[start_indices], frames[end_indices]):
             event_length = end_frame - start_frame + 1
             if event_length < MIN_EVENT_LENGTH:
@@ -62,25 +51,36 @@ def detect_events(emotion_df, au_df):
             if events and start_frame - events[-1]['End Frame'] <= MERGE_TIME:
                 events[-1]['End Frame'] = end_frame
                 events[-1]['Duration in Seconds'] = round(events[-1]['Duration in Seconds'] + event_length / FACEDX_FPS, 1)
+                continue
+
+            minutes = int((start_frame // VIDEO_FPS) // 60)
+            seconds = int((start_frame // VIDEO_FPS) - (60 * minutes))
+            if minutes >= 60:
+                hours = int(minutes // 60)
+                minutes = minutes % 60
+                start_time = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
             else:
-                minutes = int((start_frame // VIDEO_FPS) // 60)
-                seconds = int((start_frame // VIDEO_FPS) - (60 * minutes))
-                if minutes >= 60:
-                    hours = int(minutes // 60)
-                    minutes = minutes % 60
-                    start_time = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
-                else:
-                    start_time = f"{minutes:02d}:{seconds:02d}"
+                start_time = f"{minutes:02d}:{seconds:02d}"
 
-                duration = round(event_length / FACEDX_FPS, 1)
+            duration = round(event_length / FACEDX_FPS, 1)
 
+            # Get data for each frame in the event
+            for frame in range(start_frame, end_frame + 1):
                 event_data = {
+                    'Filename': video_file,
                     'Start Time': start_time,
                     'Duration in Seconds': duration,
                     'Event Type': emotion,
-                    'Start Frame': start_frame,
-                    'End Frame': end_frame
+                    'Frame': frame
                 }
+
+                # Add corresponding AU and emotion values
+                frame_au = au_df[au_df['frame'] == frame]
+                frame_emotion = emotion_df[emotion_df['frame'] == frame]
+
+                if not frame_au.empty and not frame_emotion.empty:
+                    event_data.update(frame_au.drop(columns=['frame', 'timestamp', 'success']).to_dict('records')[0])
+                    event_data.update(frame_emotion.drop(columns=['frame', 'timestamp', 'success']).to_dict('records')[0])
 
                 events.append(event_data)
 
@@ -90,9 +90,9 @@ def detect_events(emotion_df, au_df):
 all_events = []
 
 # Loop through the subfolders in the given CSV directory
-for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)[:5]):
+for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)):
     video_file = subfolder
-
+    
     # Load emotion and AU CSVs
     emotion_csv_path = os.path.join(FACEDX_CSV_DIRECTORY, subfolder, 'outputs_hse.csv')
     au_csv_path = os.path.join(FACEDX_CSV_DIRECTORY, subfolder, 'outputs_ogau.csv')
@@ -107,9 +107,7 @@ for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)[:5]):
 
     try:
         emotion_df = pd.read_csv(emotion_csv_path)
-        emotion_df = clean_column_names(emotion_df)
         au_df = pd.read_csv(au_csv_path)
-        au_df = clean_column_names(au_df)
     except pd.errors.EmptyDataError:
         print(f"Skipping {video_file}: empty CSV files.")
         continue
@@ -120,54 +118,25 @@ for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)[:5]):
     # Detect events in the video
     video_events = detect_events(emotion_df, au_df)
 
-    for event in video_events:
-        start_frame = event['Start Frame']
-        end_frame = event['End Frame']
+    all_events.extend(video_events)
 
-        # Get the frame-by-frame data for this event
-        event_au_df = au_df[(au_df['frame'] >= start_frame) & (au_df['frame'] <= end_frame)]
-        event_emotion_df = emotion_df[(emotion_df['frame'] >= start_frame) & (emotion_df['frame'] <= end_frame)]
+# Convert all events to a DataFrame
+events_df = pd.DataFrame(all_events)
 
-        # Merge AU and emotion data
-        event_data = pd.merge(event_au_df, event_emotion_df.drop(columns=['timestamp', 'success']), on='frame')
+# Add Clip Name column based on unique Filename and Start Time combinations
+clip_name_list = []
+clip_index = 1
+current_combination = events_df.iloc[0][['Filename', 'Start Time']].to_tuple()
 
-        # Add event metadata to each row
-        event_data['Filename'] = video_file
-        event_data['Start Time'] = event['Start Time']
-        event_data['Duration in Seconds'] = event['Duration in Seconds']
-        event_data['Event Type'] = event['Event Type']
+for i, row in events_df.iterrows():
+    if (row['Filename'], row['Start Time']) != current_combination:
+        clip_index += 1
+        current_combination = (row['Filename'], row['Start Time'])
+    clip_name_list.append(f"{row['Event Type']}_{clip_index}.mp4")
 
-        all_events.append(event_data)
+events_df.insert(0, 'Clip Name', clip_name_list)  # Insert at the very left
 
-# Concatenate all event data
-if all_events:
-    events_df = pd.concat(all_events, ignore_index=True)
+# Save all events to a single CSV file
+events_df.to_csv(OUTPUT_CSV, index=False)
 
-    # Clean column names of the final DataFrame
-    events_df = clean_column_names(events_df)
-
-    # Add Clip Name column
-    clip_name_list = []
-    clip_index = 1
-    current_start_time = events_df.iloc[0]['Start Time']
-
-    for i, row in events_df.iterrows():
-        if row['Start Time'] != current_start_time:
-            clip_index += 1
-            current_start_time = row['Start Time']
-        clip_name_list.append(f"{row['Event Type']}_{clip_index}.mp4")
-
-    events_df.insert(0, 'Clip Name', clip_name_list)  # Insert at the very left
-
-    # Reorder columns so that meta columns are first
-    meta_columns = ['Clip Name', 'Filename', 'Start Time', 'Duration in Seconds', 'Event Type']
-    other_columns = [col for col in events_df.columns if col not in meta_columns]
-    ordered_columns = meta_columns + other_columns
-    events_df = events_df[ordered_columns]
-
-    # Save all events to a single CSV file
-    events_df.to_csv(OUTPUT_CSV, index=False)
-
-    print(f"Events saved to {OUTPUT_CSV}")
-else:
-    print("No events to save.")
+print(f"Events saved to {OUTPUT_CSV}")
