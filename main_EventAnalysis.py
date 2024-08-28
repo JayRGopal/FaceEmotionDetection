@@ -119,4 +119,24 @@ for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)[:5]):
 
     try:
         emotion_df = pd.read_csv(emotion_csv_path)
-        au_df = pd.read_csv(au_csv_path
+        au_df = pd.read_csv(au_csv_path)
+    except pd.errors.EmptyDataError:
+        print(f"Skipping {video_file}: empty CSV files.")
+        continue
+    except OSError as e:
+        print(f"Skipping {video_file}: OSError - {e}")
+        continue
+
+    # Detect events in the video
+    video_events = detect_events(emotion_df, au_df)
+
+    if not video_events.empty:
+        all_events.append(video_events)
+
+# Concatenate all events across videos
+if all_events:
+    all_events_df = pd.concat(all_events, ignore_index=True)
+    all_events_df.to_csv(OUTPUT_CSV, index=False)
+    print(f"Events saved to {OUTPUT_CSV}")
+else:
+    print("No events detected.")
