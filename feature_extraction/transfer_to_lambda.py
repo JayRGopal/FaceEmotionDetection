@@ -23,4 +23,4 @@ missing_events_list = missing_events[['Filename', 'Start Time']]
 print(f"Missing events in SCRIPT 1:\n{missing_events_list}")
 
 # Save missing events to CSV for further analysis
-missing_events_list.to_csv('/home/jgopal/NAS/Analysis/outputs_EventAnalysis/missing_events.csv', index=False)
+missing_events_list.to_csv('/home/jgopal/Desktop/FaceEmotionDetection/feature_extraction/missing_events.csv', index=False)
