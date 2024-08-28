@@ -67,7 +67,7 @@ def detect_events(emotion_df, au_df):
             event_rows['Event Type'] = emotion
 
             # Merge AU data
-            au_rows = au_df[(au_df['frame'] >= start_frame) & (au_df['frame'] <= end_frame)].drop(['frame', 'timestamp', 'success'], axis=1)
+            au_rows = au_df[(au_df['frame'] >= start_frame) & (au_df['frame'] <= end_frame)].drop(['timestamp', 'success'], axis=1)
             event_rows = event_rows.merge(au_rows, left_on='frame', right_on='frame', suffixes=('', '_au'))
 
             events.append(event_rows)
