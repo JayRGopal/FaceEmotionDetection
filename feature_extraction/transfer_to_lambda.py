@@ -1,3 +1,1 @@
-ls /usr/lib/x86_64-linux-gnu/ | grep libavcodec.so
-libavcodec.so.58
-libavcodec.so.58.134.100
+/home/jgopal/Desktop/OpenFace/build/bin/FeatureExtraction: error while loading shared libraries: libswscale.so.5: cannot open shared object file: No such file or directory
