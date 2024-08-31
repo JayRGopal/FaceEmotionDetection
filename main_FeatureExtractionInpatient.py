@@ -1,6 +1,9 @@
 PAT_NOW = "S23_199"
 PAT_SHORT_NAME = "S_199"
 
+print(f'[LOG] Patient Now: {PAT_NOW}')
+
+
 MOOD_TRACKING_SHEET_PATH = f'/home/jgopal/NAS/Analysis/AudioFacialEEG/Behavioral Labeling/Mood_Tracking.xlsx'
 
 BEHAVIORAL_LABELS_SHEET_PATH = f'/home/jgopal/NAS/Analysis/AudioFacialEEG/Behavioral Labeling/Behavior_Labeling.xlsx'
@@ -80,6 +83,7 @@ def load_var(variable_name, RUNTIME_VAR_PATH=RUNTIME_VAR_PATH):
       return pickle.load(file)
 
 
+print('[LOG] Starter Functions Defined')
 df = pd.read_excel(MOOD_TRACKING_SHEET_PATH, sheet_name=f'{PAT_SHORT_NAME}')
 
 ## Preprocess the mood tracking sheet
@@ -174,6 +178,8 @@ df_videoTimestamps['Filename'] = df_videoTimestamps['Filename'].str.replace('.m2
 if PAT_SHORT_NAME == 'S_199':
   # There's no H01 video, so let's drop that filename
   df_videoTimestamps = df_videoTimestamps.drop(211)
+
+print('[LOG] Labels Processed')
 
 
 # Check for any missing videos!
@@ -420,6 +426,7 @@ def apply_function_to_dict(dictionary, func, **kwargs):
     """
     return {key: func(df, **kwargs) for key, df in dictionary.items()}
 
+print('[LOG] Loading in HSE Outputs')
 # Check and load or generate dfs_hsemotion
 if not os.path.exists(RUNTIME_VAR_PATH + f'dfs_hsemotion_{PAT_SHORT_NAME}.pkl'):
     # Generate dfs_hsemotion if not already saved
@@ -430,6 +437,9 @@ else:
     # Load dfs_hsemotion if it already exists
     dfs_hsemotion = load_var(f'dfs_hsemotion_{PAT_SHORT_NAME}')
 
+print('[LOG] HSE Outputs Loaded In')
+
+print('[LOG] Loading in OGAU Outputs')
 
 # Check and load or generate dfs_opengraphau
 if not os.path.exists(RUNTIME_VAR_PATH + f'dfs_opengraphau_{PAT_SHORT_NAME}.pkl'):
@@ -443,6 +453,8 @@ if not os.path.exists(RUNTIME_VAR_PATH + f'dfs_opengraphau_{PAT_SHORT_NAME}.pkl'
 else:
     # Load dfs_opengraphau if it already exists
     dfs_opengraphau = load_var(f'dfs_opengraphau_{PAT_SHORT_NAME}')
+
+print('[LOG] OGAU Outputs Loaded In')
 
 
 def get_data_within_duration(dfs_dict, df_video_timestamps, datetime, duration):
@@ -551,6 +563,7 @@ for i in TIME_RADIUS_LIST:
   opengraphau_radius_now = get_radius_dict(i, dfs_opengraphau, df_videoTimestamps, df_moodTracking, takeAll=takeAll)
   opengraphau_radius_dict[f'{i}'] = opengraphau_radius_now
 
+print('[LOG] Time Radius Dicts Created')
 
 def time_splitter(input_dict, splitter_times):
     # Initialize the output dictionary
@@ -670,6 +683,7 @@ def average_inner_dfs(dictionary):
                 new_dict[split_time][outer_key][timestamp] = avg_df
     return new_dict
 
+print('[LOG] Loading in Radius Dicts')
 # Check and load or generate openface_radius_dict
 if not os.path.exists(RUNTIME_VAR_PATH + f'openface_radius_dict_{PAT_SHORT_NAME}.pkl'):
     # Generate openface_radius_dict if not already saved
@@ -710,8 +724,11 @@ else:
     # Load openface_extras_radius_dict if it already exists
     openface_extras_radius_dict = load_var(f'openface_extras_radius_dict_{PAT_SHORT_NAME}')
 
+print('[LOG] Radius Dicts Loaded In')
 
 
+
+print('[LOG] Beginning Feature Extraction')
 # Define emotion to AU mapping
 
 # OpenDBM:
@@ -1925,6 +1942,7 @@ save_var(hsemotion_dict_list_dict, forced_name=f'hsemotion_dict_list_dict_{PAT_S
 
 save_var(ogauhsemotion_dict_list_dict, forced_name=f'ogauhsemotion_dict_list_dict_{PAT_SHORT_NAME}')
 
+print('[LOG] Saved Processed Feature Vectors')
 
 
 # LOAD VARIABLES - EMOTION & AFFECT
@@ -2040,6 +2058,8 @@ for i in opengraphau_dict_list_dict.keys():
   save_dicts_to_excel(hsemotion_dict_list_dict[i], FEATURE_VIS_PATH + f'hsemotion_{PAT_SHORT_NAME}_{int(i)}_minutes.xlsx')
   save_dicts_to_excel(ogauhsemotion_dict_list_dict[i], FEATURE_VIS_PATH + f'ogauhse_{PAT_SHORT_NAME}_{int(i)}_minutes.xlsx')
 
+
+print('[LOG] Feature Extraction Complete')
 
 
 import random
@@ -2988,7 +3008,10 @@ RESULTS_PREFIX_LIST = ['OF_L_', 'OGAU_L_', 'OGAUHSE_L_', 'HSE_L_']
 REMOVE_OUTLIERS = False
 
 
+
+
 for RESULTS_PREFIX in RESULTS_PREFIX_LIST:
+    print(f'[LOG] Generating Output Plots: {RESULTS_PREFIX}')
     do_lasso = False
     do_ridge = False
 
@@ -3096,4 +3119,6 @@ for RESULTS_PREFIX in RESULTS_PREFIX_LIST:
         # Save the predictions and true values for re-plotting later
         save_var(predictions_dict, forced_name=f'predictions_{PAT_SHORT_NAME}_{RESULTS_PREFIX}_{metric}')
 
+
+print(f'[LOG] Feature Extraction & Plotting Complete: {PAT_SHORT_NAME}')
 
