@@ -1,3 +1,6 @@
+# This script does feature extraction AND linear regression for plotting.
+# See main_FeatureExtractionInpatient_JustLinReg.py if feature extraction is complete, and you just need linear regression! 
+
 PAT_NOW = "S23_199"
 PAT_SHORT_NAME = "S_199"
 
