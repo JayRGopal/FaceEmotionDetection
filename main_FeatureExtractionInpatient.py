@@ -3108,8 +3108,8 @@ for RESULTS_PREFIX in RESULTS_PREFIX_LIST:
             'randShuffleR': randShuffleR[np.argmax(r_list)],
         }
 
-        # Save the predictions and true values for re-plotting later
-        save_var(predictions_dict, forced_name=f'predictions_{PAT_SHORT_NAME}_{results_prefix_unmodified}_{metric}')
+    # Save the predictions and true values for re-plotting later
+    save_var(predictions_dict, forced_name=f'predictions_{PAT_SHORT_NAME}_{results_prefix_unmodified}')
 
 
 print(f'[LOG] Feature Extraction & Plotting Complete: {PAT_SHORT_NAME}')
