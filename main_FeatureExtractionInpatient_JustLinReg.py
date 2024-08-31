@@ -72,13 +72,17 @@ def get_var_name(our_variable):
 
 # Save the dictionary to a file using pickle
 def save_var(our_variable, RUNTIME_VAR_PATH=RUNTIME_VAR_PATH, forced_name=None):
-  if forced_name is None:
-    name_now = get_var_name(our_variable)
-  else:
-    name_now = forced_name
+    if forced_name is None:
+        name_now = get_var_name(our_variable)
+    else:
+        name_now = forced_name
 
-  with open(RUNTIME_VAR_PATH + f'{name_now}.pkl', 'wb') as file:
-      pickle.dump(our_variable, file)
+    # Ensure the directory exists
+    os.makedirs(RUNTIME_VAR_PATH, exist_ok=True)
+
+    # Save the variable
+    with open(RUNTIME_VAR_PATH + f'{name_now}.pkl', 'wb') as file:
+        pickle.dump(our_variable, file)
 
 def load_var(variable_name, RUNTIME_VAR_PATH=RUNTIME_VAR_PATH):
   # Load from the file
