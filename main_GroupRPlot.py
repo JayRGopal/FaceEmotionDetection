@@ -2,12 +2,13 @@ import os
 import pickle
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 # Define the paths and prefixes
 RUNTIME_VAR_PATH = '/home/jgopal/NAS/Analysis/AudioFacialEEG/Runtime_Vars/'
 RESULTS_PATH_BASE = '/home/jgopal/NAS/Analysis/AudioFacialEEG/Results/Group/'
 PREFIX_1 = "OGAU_L_"
-PREFIX_1_PAIN = "OGAUHSE_L_" # Just for pain, we use AU + HSE
+PREFIX_1_PAIN = "OGAUHSE_L_"  # Just for pain, we use AU + HSE
 PREFIX_2 = "OF_L_"
 
 LABEL_1 = "FaceDx"
@@ -15,7 +16,7 @@ LABEL_2 = "OpenFace"
 
 METRICS = ['Mood', 'Depression', 'Anxiety', 'Hunger', 'Pain']  # Add all metrics you're interested in
 
-SHOW_PREFIX_2 = False  # Boolean flag to control whether PREFIX_2 should be included in the plots
+SHOW_PREFIX_2 = True  # Boolean flag to control whether PREFIX_2 should be included in the plots
 
 # Ensure the results directory exists
 os.makedirs(RESULTS_PATH_BASE, exist_ok=True)
@@ -39,6 +40,28 @@ def detect_patients():
     
     return list(patient_names)
 
+# Function to check if a patient meets the inclusion criteria
+def meets_inclusion_criteria(df, metric):
+    if metric not in df.columns:
+        return False
+    values = df[metric].dropna().unique()
+    return len(df[metric].dropna()) >= 5 and len(values) >= 4
+
+# Load and preprocess the mood tracking sheet
+def preprocess_mood_tracking(PAT_SHORT_NAME):
+    MOOD_TRACKING_SHEET_PATH = f'/home/jgopal/NAS/Analysis/AudioFacialEEG/Behavioral Labeling/Mood_Tracking.xlsx'
+    df = pd.read_excel(MOOD_TRACKING_SHEET_PATH, sheet_name=f'{PAT_SHORT_NAME}')
+
+    # Properly deal with the missing values
+    df = df.replace('', np.nan).replace(' ', np.nan).fillna(value=np.nan)
+
+    df['Datetime'] = pd.to_datetime(df['Datetime']).dt.strftime('%-m/%-d/%Y %H:%M:%S')
+
+    # Drop unnecessary columns
+    df = df.drop(columns=['Notes'], errors='ignore')
+
+    return df
+
 # Detect all patients
 patients = detect_patients()
 
@@ -53,11 +76,19 @@ for metric in METRICS:
     # Loop through each patient
     for patient in patients:
         try:
+            # Preprocess mood tracking for the patient
+            df_moodTracking = preprocess_mood_tracking(patient)
+
+            # Check if patient meets the inclusion criteria
+            if not meets_inclusion_criteria(df_moodTracking, metric):
+                print(f"{patient} excluded for {metric} due to not meeting inclusion criteria.")
+                continue
+
             # Load the predictions for both prefixes
             if metric == 'Pain':
-              predictions_prefix_1 = load_var(f'predictions_{patient}_{PREFIX_1_PAIN}', RUNTIME_VAR_PATH)[f'{metric}']
-            else:    
-              predictions_prefix_1 = load_var(f'predictions_{patient}_{PREFIX_1}', RUNTIME_VAR_PATH)[f'{metric}']
+                predictions_prefix_1 = load_var(f'predictions_{patient}_{PREFIX_1_PAIN}', RUNTIME_VAR_PATH)[f'{metric}']
+            else:
+                predictions_prefix_1 = load_var(f'predictions_{patient}_{PREFIX_1}', RUNTIME_VAR_PATH)[f'{metric}']
             predictions_prefix_2 = load_var(f'predictions_{patient}_{PREFIX_2}', RUNTIME_VAR_PATH)[f'{metric}'] if SHOW_PREFIX_2 else None
 
             # Calculate Pearson's R for each
