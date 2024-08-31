@@ -323,6 +323,9 @@ def apply_function_to_dict(dictionary, func, **kwargs):
     return {key: func(df, **kwargs) for key, df in dictionary.items()}
 
 
+
+print('[LOG] Loading in OpenFace Outputs')
+
 # Check and load or generate dfs_openface
 if not os.path.exists(RUNTIME_VAR_PATH + f'dfs_openface_{PAT_SHORT_NAME}.pkl'):
     # Generate dfs_openface if not already saved
@@ -344,6 +347,8 @@ if not os.path.exists(RUNTIME_VAR_PATH + f'dfs_openface_extras_{PAT_NOW}.pkl'):
 else:
     # Load dfs_openface_extras if it already exists
     dfs_openface_extras = load_var(f'dfs_openface_extras_{PAT_NOW}')
+
+print('[LOG] OpenFace Outputs Loaded In')
 
 
 
@@ -540,14 +545,19 @@ TIME_RADIUS_LIST = generate_number_list(start=15, interval=15, count=16)
 #TIME_RADIUS_LIST = [60, 120, 180, 240]
 
 
+
+
 ENABLE_OPENFACE = True
 
 if ENABLE_OPENFACE:
   openface_radius_dict = {}
   openface_extras_radius_dict = {}
+  
 
 hsemotion_radius_dict = {}
 opengraphau_radius_dict = {}
+
+print('[LOG] Creating Time Radius Dicts')
 
 for i in TIME_RADIUS_LIST:
   if ENABLE_OPENFACE:
@@ -683,48 +693,20 @@ def average_inner_dfs(dictionary):
                 new_dict[split_time][outer_key][timestamp] = avg_df
     return new_dict
 
-print('[LOG] Loading in Radius Dicts')
-# Check and load or generate openface_radius_dict
-if not os.path.exists(RUNTIME_VAR_PATH + f'openface_radius_dict_{PAT_SHORT_NAME}.pkl'):
-    # Generate openface_radius_dict if not already saved
-    openface_radius_dict = time_splitter(openface_radius_dict, [5, 10])
-    save_var(openface_radius_dict, forced_name=f'openface_radius_dict_{PAT_SHORT_NAME}')
-else:
-    # Load openface_radius_dict if it already exists
-    openface_radius_dict = load_var(f'openface_radius_dict_{PAT_SHORT_NAME}')
+
+print('[LOG] Applying 5 Min Time Split to Radius Dicts')
+
+openface_radius_dict = time_splitter(openface_radius_dict, [5, 10])
+save_var(openface_radius_dict, forced_name=f'openface_radius_dict_{PAT_SHORT_NAME}')
+hsemotion_radius_dict = time_splitter(hsemotion_radius_dict, [5, 10])
+save_var(hsemotion_radius_dict, forced_name=f'hsemotion_radius_dict_{PAT_SHORT_NAME}')
+opengraphau_radius_dict = time_splitter(opengraphau_radius_dict, [5, 10])
+save_var(opengraphau_radius_dict, forced_name=f'opengraphau_radius_dict_{PAT_SHORT_NAME}')
+openface_extras_radius_dict = time_splitter(openface_extras_radius_dict, [5, 10])
+save_var(openface_extras_radius_dict, forced_name=f'openface_extras_radius_dict_{PAT_SHORT_NAME}')
 
 
-# Check and load or generate hsemotion_radius_dict
-if not os.path.exists(RUNTIME_VAR_PATH + f'hsemotion_radius_dict_{PAT_SHORT_NAME}.pkl'):
-    # Generate hsemotion_radius_dict if not already saved
-    hsemotion_radius_dict = time_splitter(hsemotion_radius_dict, [5, 10])
-    save_var(hsemotion_radius_dict, forced_name=f'hsemotion_radius_dict_{PAT_SHORT_NAME}')
-else:
-    # Load hsemotion_radius_dict if it already exists
-    hsemotion_radius_dict = load_var(f'hsemotion_radius_dict_{PAT_SHORT_NAME}')
-
-
-
-# Check and load or generate opengraphau_radius_dict
-if not os.path.exists(RUNTIME_VAR_PATH + f'opengraphau_radius_dict_{PAT_SHORT_NAME}.pkl'):
-    # Generate opengraphau_radius_dict if not already saved
-    opengraphau_radius_dict = time_splitter(opengraphau_radius_dict, [5, 10])
-    save_var(opengraphau_radius_dict, forced_name=f'opengraphau_radius_dict_{PAT_SHORT_NAME}')
-else:
-    # Load opengraphau_radius_dict if it already exists
-    opengraphau_radius_dict = load_var(f'opengraphau_radius_dict_{PAT_SHORT_NAME}')
-
-
-# Check and load or generate openface_extras_radius_dict
-if not os.path.exists(RUNTIME_VAR_PATH + f'openface_extras_radius_dict_{PAT_SHORT_NAME}.pkl'):
-    # Generate openface_extras_radius_dict if not already saved
-    openface_extras_radius_dict = time_splitter(openface_extras_radius_dict, [5, 10])
-    save_var(openface_extras_radius_dict, forced_name=f'openface_extras_radius_dict_{PAT_SHORT_NAME}')
-else:
-    # Load openface_extras_radius_dict if it already exists
-    openface_extras_radius_dict = load_var(f'openface_extras_radius_dict_{PAT_SHORT_NAME}')
-
-print('[LOG] Radius Dicts Loaded In')
+print('[LOG] 5 Min Time Splitter Applied to Radius Dicts')
 
 
 
