@@ -3,6 +3,7 @@ import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import warnings
 
 # Define the paths and prefixes
 RUNTIME_VAR_PATH = '/home/jgopal/NAS/Analysis/AudioFacialEEG/Runtime_Vars/'
@@ -17,6 +18,14 @@ LABEL_2 = "OpenFace"
 METRICS = ['Mood', 'Depression', 'Anxiety', 'Hunger', 'Pain']  # Add all metrics you're interested in
 
 SHOW_PREFIX_2 = True  # Boolean flag to control whether PREFIX_2 should be included in the plots
+
+
+
+
+# Ignore all warnings
+pd.options.mode.chained_assignment = None
+pd.set_option('mode.chained_assignment', None)
+warnings.filterwarnings('ignore')
 
 # Ensure the results directory exists
 os.makedirs(RESULTS_PATH_BASE, exist_ok=True)
