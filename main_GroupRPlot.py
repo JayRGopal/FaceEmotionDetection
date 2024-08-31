@@ -48,8 +48,8 @@ for metric in METRICS:
     for patient in patients:
         try:
             # Load the predictions for both prefixes
-            predictions_prefix_1 = load_var(f'predictions_{patient}_{PREFIX_1}{metric}', RUNTIME_VAR_PATH)
-            predictions_prefix_2 = load_var(f'predictions_{patient}_{PREFIX_2}{metric}', RUNTIME_VAR_PATH)
+            predictions_prefix_1 = load_var(f'predictions_{patient}_{PREFIX_1}_{metric}', RUNTIME_VAR_PATH)
+            predictions_prefix_2 = load_var(f'predictions_{patient}_{PREFIX_2}_{metric}', RUNTIME_VAR_PATH)
 
             # Calculate Pearson's R for each
             r_1 = np.corrcoef(predictions_prefix_1['y_true'], predictions_prefix_1['preds'][predictions_prefix_1['best_time_radius']])[0, 1]
