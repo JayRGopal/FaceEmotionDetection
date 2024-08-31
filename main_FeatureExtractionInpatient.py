@@ -3109,7 +3109,7 @@ for RESULTS_PREFIX in RESULTS_PREFIX_LIST:
         }
 
         # Save the predictions and true values for re-plotting later
-        save_var(predictions_dict, forced_name=f'predictions_{PAT_SHORT_NAME}_{RESULTS_PREFIX}_{metric}')
+        save_var(predictions_dict, forced_name=f'predictions_{PAT_SHORT_NAME}_{results_prefix_unmodified}_{metric}')
 
 
 print(f'[LOG] Feature Extraction & Plotting Complete: {PAT_SHORT_NAME}')
