@@ -2738,105 +2738,6 @@ def plot_feat_scatterplots(vectors_array, y, feat_ind_list, metric, savepath, sp
     return r_list, p_list, fig
 
 
-# def extractOneMetric(metric, vectors_now, df_moodTracking=df_moodTracking, remove_outliers=False):
-#   # extracts the vectors needed for linear regression
-#   # e.g. Mood only, for all time windows
-#   # metric -- a string that is a self-report metric (ex. 'Mood' or 'Pain')
-#   # vectors_now -- our feature vectors (all)
-#   # df_moodTracking -- load in and pre-process self-report google sheet
-
-#   # returns vectors_return and y
-#   # vectors_return -- a dictionary mapping time radius (in minutes) to features
-#   # y -- a numpy array with labels (self-reported metrics)
-
-
-#   y = df_moodTracking[metric].values.astype(float)
-
-#   # # just valid indices (remove nan self-reports!)
-#   # valid_indices = ~pd.isna(y)
-#   # y = y[valid_indices]
-
-#   # Initially, set valid_indices to include all indices
-#   valid_indices = np.arange(len(y))
-
-#   # Step 1: Remove NaN values
-#   nan_mask = ~pd.isna(y)
-#   y = y[nan_mask]
-#   valid_indices = valid_indices[nan_mask]
-
-
-#   if remove_outliers:
-#     # Step 2: Remove outliers
-#     mean_y = np.mean(y)
-#     std_y = np.std(y)
-#     outlier_mask = (y >= mean_y - 2 * std_y) & (y <= mean_y + 2 * std_y)
-#     y = y[outlier_mask]
-#     valid_indices = valid_indices[outlier_mask]
-
-
-
-#   vectors_return = {}
-
-#   # We will delete indices of self-reports where at least one timestamp doesn't have ANY data at all!
-#   indices_to_delete = []
-
-#   # loop through the timestamps
-#   # Determine which timestamps to delete (indices_to_delete)
-#   for i in vectors_now.keys():
-
-#     vectors_one_timestamp = np.array([vectors_now[i][str_to_ts(dt)] for dt in df_moodTracking['Datetime']])
-
-#     # we want just the valid features (where self-report is not nan)
-#     vectors_one_timestamp = vectors_one_timestamp[valid_indices]
-
-#     # Figure out the correct size of the vector and delete all others
-#     correct_vector_dim = 0
-#     for enum_num, vector in enumerate(vectors_one_timestamp):
-#         if vector.size == 0:
-#             indices_to_delete.append(enum_num)
-#         elif vector.shape[0] > correct_vector_dim:
-#           correct_vector_dim = vector.shape[0]
-#     for enum_num, vector in enumerate(vectors_one_timestamp):
-#         if vector.size > 0 and vector.shape[0] < correct_vector_dim:
-#             indices_to_delete.append(enum_num)
-
-
-#   # Delete those indices from all timestamps
-#   for i in vectors_now.keys():
-
-#     vectors_one_timestamp = np.array([vectors_now[i][str_to_ts(dt)] for dt in df_moodTracking['Datetime']])
-
-#     # we want just the valid features (where self-report is not nan)
-#     vectors_one_timestamp = vectors_one_timestamp[valid_indices]
-
-#     # Delete indices from the full previous loop
-#     vectors_one_timestamp = np.delete(vectors_one_timestamp, indices_to_delete, axis=0)
-
-#     if vectors_one_timestamp.ndim == 1:
-#       print(f'WARNING: NEEDED TO RESHAPE FOR TIME WINDOW {i}')
-#       # Stack the arrays along a new axis to get a 2D array
-#       vectors_one_timestamp = np.stack(vectors_one_timestamp, axis=0)
-
-
-
-#     vectors_return[i] = vectors_one_timestamp
-
-#   y = np.delete(y, indices_to_delete, axis=0)
-
-#   # Make sure we get the right 2D shape for each time window
-#   for i in vectors_return.keys():
-
-#     vectors_one_timestamp = vectors_return[i]
-
-#     # If it's still 1d, then let's force the right 2D shape
-#     if vectors_one_timestamp.ndim == 1:
-#       print(f'WARNING: NEEDED TO DOUBLE RESHAPE FOR TIME WINDOW {i}')
-#       vectors_return[i] = vectors_one_timestamp.reshape(y.shape[0], -1)
-
-
-#   return vectors_return, y
-
-
 def extractOneMetric(metric, vectors_now, df_moodTracking=df_moodTracking, remove_outliers=False):
   # extracts the vectors needed for linear regression
   # e.g. Mood only, for all time windows
@@ -2927,132 +2828,132 @@ def plot_pearsons_r_vs_alpha(pearson_r_list, ALPHAS_FOR_SEARCH, method, save_pat
 
 
 
+# TODO: Add the alpha search back in!
+# # ALPHA PARAMETER SEARCH FOR LASSO - RUN THIS FIRST!
 
-# ALPHA PARAMETER SEARCH FOR LASSO - RUN THIS FIRST!
+# all_metrics = [col for col in df_moodTracking.columns if col != 'Datetime']
 
-all_metrics = [col for col in df_moodTracking.columns if col != 'Datetime']
+# FILE_ENDING = '.png'
 
-FILE_ENDING = '.png'
-
-# We are just searching using lasso regression
-#RESULTS_PREFIX_LIST = ['OF_L_', 'OGAU_L_', 'OFAUHSE_L_', 'OGAUHSE_L_', 'HSE_L_', 'ALL_L_']
-RESULTS_PREFIX_LIST = ['OF_L_', 'OGAU_L_', 'OGAUHSE_L_', 'HSE_L_']
-#RESULTS_PREFIX_LIST = ['OGAUHSE_L_']
-
-
-EMOTIONS_FOR_SEARCH = ['Mood', 'Depression', 'Anxiety', 'Hunger', 'Pain'] # We are just searching on Mood
-TIME_WINDOW_FOR_SEARCH = '180' # We are just searching 3 hours
-
-# List of alpha values to search through
-#ALPHAS_FOR_SEARCH = np.arange(0, 1.6, 0.1)
-ALPHAS_FOR_SEARCH = np.arange(0, 5, 0.2)
-#ALPHAS_FOR_SEARCH = np.arange(0, 10, 0.2)
-
-# This will populate with the best alphas for each prefix in RESULTS_PREFIX_LIST
-best_alphas_lasso = {}
-
-for RESULTS_PREFIX in RESULTS_PREFIX_LIST:
-    do_lasso = False
-    do_ridge = False
-
-    if '_L_' in RESULTS_PREFIX:
-        do_lasso = True
-
-    if '_R_' in RESULTS_PREFIX:
-        do_ridge = True
-
-    if 'OF_' in RESULTS_PREFIX:
-        spreadsheet_path = FEATURE_LABEL_PATH + f'experimental3_openface_0.5_hours.xlsx'
-        vectors_now = openface_vectors_dict
-        method_now = 'OpenFace'
-
-    elif 'OGAU_' in RESULTS_PREFIX:
-        spreadsheet_path = FEATURE_LABEL_PATH + 'opengraphau_0.5_hours.xlsx'
-        vectors_now = opengraphau_vectors_dict
-        method_now = 'OpenGraphAU'
-
-    elif 'OFAUHSE_' in RESULTS_PREFIX:
-        spreadsheet_path = FEATURE_LABEL_PATH + 'ofauhse_0.5_hours.xlsx'
-        vectors_now = ofauhsemotion_vectors_dict
-        method_now = 'OFAU+HSE'
-
-    elif 'OGAUHSE_' in RESULTS_PREFIX:
-        spreadsheet_path = FEATURE_LABEL_PATH + 'ogauhse_0.5_hours.xlsx'
-        vectors_now = ogauhsemotion_vectors_dict
-        method_now = 'OGAU+HSE'
-
-    elif 'HSE_' in RESULTS_PREFIX:
-        spreadsheet_path = FEATURE_LABEL_PATH + 'hsemotion_0.5_hours.xlsx'
-        vectors_now = hsemotion_vectors_dict
-        method_now = 'HSEmotion'
-
-    elif 'ALL_' in RESULTS_PREFIX:
-        spreadsheet_path = FEATURE_LABEL_PATH + 'all_0.5_hours.xlsx'
-        vectors_now = all_vectors_dict
-        method_now = 'ALL(OF+OG+HSE)'
-
-    # Let's put each setting in its own folder!
-    os.makedirs(RESULTS_PATH_BASE + 'SEARCH_Alpha_Lasso/' + RESULTS_PREFIX, exist_ok=True)
-    results_prefix_unmodified = RESULTS_PREFIX
-    RESULTS_PREFIX = 'SEARCH_Alpha_Lasso/' + RESULTS_PREFIX + '/' + RESULTS_PREFIX
-
-    # Initialize a dictionary to store the best alpha values for each emotion
-    best_alphas_lasso[results_prefix_unmodified] = {}
-
-    for metric in EMOTIONS_FOR_SEARCH:
-        print('METRIC NOW: ', metric)
-        pearson_r_list = []  # Reset the R list for each metric
-
-        for alpha_now in ALPHAS_FOR_SEARCH:
-
-            avg_best_R = 0
-
-            vectors_return, y = extractOneMetric(metric, vectors_now=vectors_now)
-
-            # Limit to just one time window for alpha search
-            tmp_vectors = vectors_return
-            vectors_return = {}
-            vectors_return[TIME_WINDOW_FOR_SEARCH] = tmp_vectors[TIME_WINDOW_FOR_SEARCH]
-            del tmp_vectors
-
-            scores, preds, y, models = linRegOneMetric(vectors_return, y, do_lasso=do_lasso, do_ridge=do_ridge, alpha=alpha_now)
-            scores_r, preds_r, _, models_r = linRegOneMetric(vectors_return, y, randShuffle=True, alpha=alpha_now)
-
-            # make scatterplots
-            randShuffleR, _, _ = plot_scatterplots(preds_r, y, f'{metric} Random Shuffle', RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_scatterRand_{alpha_now}{FILE_ENDING}')
-            r_list, p_list, scatterFig = plot_scatterplots(preds, y, metric, RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_scatterplots_{alpha_now}{FILE_ENDING}', randShuffleR=randShuffleR)
-
-            # Determine our best time radius for this metric based on Pearson's R
-            best_time_radius = list(scores.keys())[np.argmax(r_list)]
-            best_mse_list = scores[best_time_radius]
-            best_avg_mse = np.mean(scores[best_time_radius])
-            best_pearson_r = r_list[np.argmax(r_list)]
-
-            # Add to our avg best R
-            avg_best_R = avg_best_R + best_pearson_r
-
-            # bar plot for pearson r
-            rPlotFig = make_r_barplot(r_list, list(scores.keys()), metric, RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_R_{alpha_now}{FILE_ENDING}', method_now=method_now)
-
-            # make MSE plot
-            MSEPlotFig = make_mse_boxplot(scores, metric, RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_MSE_{alpha_now}{FILE_ENDING}', method_now=method_now)
-
-        # Add one R value for this alpha value to pearson_r_list
-        avg_best_R = avg_best_R / len(EMOTIONS_FOR_SEARCH)
-        pearson_r_list.append(avg_best_R)
-
-        # Plot R vs. alpha for this setting
-        plot_pearsons_r_vs_alpha(pearson_r_list=pearson_r_list, ALPHAS_FOR_SEARCH=ALPHAS_FOR_SEARCH, method=method_now, save_path=RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_Alpha_Search{FILE_ENDING}')
-
-        # Find best alpha for this metric and store it
-        best_index_of_alpha = np.argmax(pearson_r_list)
-        best_alpha_value = ALPHAS_FOR_SEARCH[best_index_of_alpha]
-        best_alphas_lasso[results_prefix_unmodified][metric] = best_alpha_value
+# # We are just searching using lasso regression
+# #RESULTS_PREFIX_LIST = ['OF_L_', 'OGAU_L_', 'OFAUHSE_L_', 'OGAUHSE_L_', 'HSE_L_', 'ALL_L_']
+# RESULTS_PREFIX_LIST = ['OF_L_', 'OGAU_L_', 'OGAUHSE_L_', 'HSE_L_']
+# #RESULTS_PREFIX_LIST = ['OGAUHSE_L_']
 
 
-# SAVE VARIABLES
+# EMOTIONS_FOR_SEARCH = ['Mood', 'Depression', 'Anxiety', 'Hunger', 'Pain'] # We are just searching on Mood
+# TIME_WINDOW_FOR_SEARCH = '180' # We are just searching 3 hours
 
-save_var(best_alphas_lasso, forced_name=f'best_alphas_lasso_{PAT_SHORT_NAME}')
+# # List of alpha values to search through
+# #ALPHAS_FOR_SEARCH = np.arange(0, 1.6, 0.1)
+# ALPHAS_FOR_SEARCH = np.arange(0, 5, 0.2)
+# #ALPHAS_FOR_SEARCH = np.arange(0, 10, 0.2)
+
+# # This will populate with the best alphas for each prefix in RESULTS_PREFIX_LIST
+# best_alphas_lasso = {}
+
+# for RESULTS_PREFIX in RESULTS_PREFIX_LIST:
+#     do_lasso = False
+#     do_ridge = False
+
+#     if '_L_' in RESULTS_PREFIX:
+#         do_lasso = True
+
+#     if '_R_' in RESULTS_PREFIX:
+#         do_ridge = True
+
+#     if 'OF_' in RESULTS_PREFIX:
+#         spreadsheet_path = FEATURE_LABEL_PATH + f'experimental3_openface_0.5_hours.xlsx'
+#         vectors_now = openface_vectors_dict
+#         method_now = 'OpenFace'
+
+#     elif 'OGAU_' in RESULTS_PREFIX:
+#         spreadsheet_path = FEATURE_LABEL_PATH + 'opengraphau_0.5_hours.xlsx'
+#         vectors_now = opengraphau_vectors_dict
+#         method_now = 'OpenGraphAU'
+
+#     elif 'OFAUHSE_' in RESULTS_PREFIX:
+#         spreadsheet_path = FEATURE_LABEL_PATH + 'ofauhse_0.5_hours.xlsx'
+#         vectors_now = ofauhsemotion_vectors_dict
+#         method_now = 'OFAU+HSE'
+
+#     elif 'OGAUHSE_' in RESULTS_PREFIX:
+#         spreadsheet_path = FEATURE_LABEL_PATH + 'ogauhse_0.5_hours.xlsx'
+#         vectors_now = ogauhsemotion_vectors_dict
+#         method_now = 'OGAU+HSE'
+
+#     elif 'HSE_' in RESULTS_PREFIX:
+#         spreadsheet_path = FEATURE_LABEL_PATH + 'hsemotion_0.5_hours.xlsx'
+#         vectors_now = hsemotion_vectors_dict
+#         method_now = 'HSEmotion'
+
+#     elif 'ALL_' in RESULTS_PREFIX:
+#         spreadsheet_path = FEATURE_LABEL_PATH + 'all_0.5_hours.xlsx'
+#         vectors_now = all_vectors_dict
+#         method_now = 'ALL(OF+OG+HSE)'
+
+#     # Let's put each setting in its own folder!
+#     os.makedirs(RESULTS_PATH_BASE + 'SEARCH_Alpha_Lasso/' + RESULTS_PREFIX, exist_ok=True)
+#     results_prefix_unmodified = RESULTS_PREFIX
+#     RESULTS_PREFIX = 'SEARCH_Alpha_Lasso/' + RESULTS_PREFIX + '/' + RESULTS_PREFIX
+
+#     # Initialize a dictionary to store the best alpha values for each emotion
+#     best_alphas_lasso[results_prefix_unmodified] = {}
+
+#     for metric in EMOTIONS_FOR_SEARCH:
+#         print('METRIC NOW: ', metric)
+#         pearson_r_list = []  # Reset the R list for each metric
+
+#         for alpha_now in ALPHAS_FOR_SEARCH:
+
+#             avg_best_R = 0
+
+#             vectors_return, y = extractOneMetric(metric, vectors_now=vectors_now)
+
+#             # Limit to just one time window for alpha search
+#             tmp_vectors = vectors_return
+#             vectors_return = {}
+#             vectors_return[TIME_WINDOW_FOR_SEARCH] = tmp_vectors[TIME_WINDOW_FOR_SEARCH]
+#             del tmp_vectors
+
+#             scores, preds, y, models = linRegOneMetric(vectors_return, y, do_lasso=do_lasso, do_ridge=do_ridge, alpha=alpha_now)
+#             scores_r, preds_r, _, models_r = linRegOneMetric(vectors_return, y, randShuffle=True, alpha=alpha_now)
+
+#             # make scatterplots
+#             randShuffleR, _, _ = plot_scatterplots(preds_r, y, f'{metric} Random Shuffle', RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_scatterRand_{alpha_now}{FILE_ENDING}')
+#             r_list, p_list, scatterFig = plot_scatterplots(preds, y, metric, RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_scatterplots_{alpha_now}{FILE_ENDING}', randShuffleR=randShuffleR)
+
+#             # Determine our best time radius for this metric based on Pearson's R
+#             best_time_radius = list(scores.keys())[np.argmax(r_list)]
+#             best_mse_list = scores[best_time_radius]
+#             best_avg_mse = np.mean(scores[best_time_radius])
+#             best_pearson_r = r_list[np.argmax(r_list)]
+
+#             # Add to our avg best R
+#             avg_best_R = avg_best_R + best_pearson_r
+
+#             # bar plot for pearson r
+#             rPlotFig = make_r_barplot(r_list, list(scores.keys()), metric, RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_R_{alpha_now}{FILE_ENDING}', method_now=method_now)
+
+#             # make MSE plot
+#             MSEPlotFig = make_mse_boxplot(scores, metric, RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_MSE_{alpha_now}{FILE_ENDING}', method_now=method_now)
+
+#         # Add one R value for this alpha value to pearson_r_list
+#         avg_best_R = avg_best_R / len(EMOTIONS_FOR_SEARCH)
+#         pearson_r_list.append(avg_best_R)
+
+#         # Plot R vs. alpha for this setting
+#         plot_pearsons_r_vs_alpha(pearson_r_list=pearson_r_list, ALPHAS_FOR_SEARCH=ALPHAS_FOR_SEARCH, method=method_now, save_path=RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_Alpha_Search{FILE_ENDING}')
+
+#         # Find best alpha for this metric and store it
+#         best_index_of_alpha = np.argmax(pearson_r_list)
+#         best_alpha_value = ALPHAS_FOR_SEARCH[best_index_of_alpha]
+#         best_alphas_lasso[results_prefix_unmodified][metric] = best_alpha_value
+
+
+# # SAVE VARIABLES
+
+# save_var(best_alphas_lasso, forced_name=f'best_alphas_lasso_{PAT_SHORT_NAME}')
 
 
 
@@ -3060,8 +2961,9 @@ save_var(best_alphas_lasso, forced_name=f'best_alphas_lasso_{PAT_SHORT_NAME}')
 
 # GENERATE ALL PLOTS! ONE CODE BLOCK
 
-if 'best_alphas_lasso' not in globals():
-    raise NameError("GO RUN THE LASSO ALPHA PARAMETER SEARCH BLOCK FIRST!")
+# TODO: Add the alpha search back in!
+# if 'best_alphas_lasso' not in globals():
+#     raise NameError("GO RUN THE LASSO ALPHA PARAMETER SEARCH BLOCK FIRST!")
 
 # if 'best_alphas_ridge' not in globals():
 #     raise NameError("GO RUN THE RIDGE ALPHA PARAMETER SEARCH BLOCK FIRST!")
@@ -3131,11 +3033,17 @@ for RESULTS_PREFIX in RESULTS_PREFIX_LIST:
     results_prefix_unmodified = RESULTS_PREFIX
     RESULTS_PREFIX = RESULTS_PREFIX + '/' + RESULTS_PREFIX
 
+    # Create a dictionary to store predictions and true values
+    predictions_dict = {}
+
+
     # Loop through metrics (Anxiety, Depression, Mood, etc.)
     for metric in all_metrics:
         print('METRIC NOW: ', metric)
         if do_lasso:
-            alpha_now = best_alphas_lasso[results_prefix_unmodified].get(metric, 1.0)  # Use the specific alpha for the metric
+            # TODO: Add the alpha search back in!
+            alpha_now = 1.0
+            #alpha_now = best_alphas_lasso[results_prefix_unmodified].get(metric, 1.0)  # Use the specific alpha for the metric
         elif do_ridge:
             alpha_now = best_alphas_ridge[results_prefix_unmodified].get(metric, 1.0)  # Use the specific alpha for the metric
         else:
@@ -3176,5 +3084,16 @@ for RESULTS_PREFIX in RESULTS_PREFIX_LIST:
         # Plot top n features vs. self-reported scores
         # PLOT_NOW = 3
         # plot_feat_scatterplots(vectors_array=vectors_return[best_time_radius], y=y, feat_ind_list=top_indices[:PLOT_NOW], metric=metric, savepath=RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_topFeats{FILE_ENDING}', spreadsheet_path=spreadsheet_path)
+
+        # Store predictions and true values for each time radius
+        predictions_dict[metric] = {
+            'y_true': y,
+            'preds': preds,
+            'best_time_radius': best_time_radius,
+            'randShuffleR': randShuffleR[np.argmax(r_list)],
+        }
+
+        # Save the predictions and true values for re-plotting later
+        save_var(predictions_dict, forced_name=f'predictions_{PAT_SHORT_NAME}_{RESULTS_PREFIX}_{metric}')
 
 
