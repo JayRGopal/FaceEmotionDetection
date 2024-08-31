@@ -44,6 +44,9 @@ for metric in METRICS:
     r_values_prefix_1 = []
     r_values_prefix_2 = []
 
+    # Print header for the metric
+    print(f"\nResults for {metric.capitalize()}:")
+
     # Loop through each patient
     for patient in patients:
         try:
@@ -58,6 +61,9 @@ for metric in METRICS:
             # Append to the respective list
             r_values_prefix_1.append(r_1)
             r_values_prefix_2.append(r_2)
+
+            # Print the scores for this patient
+            print(f"{patient}: {LABEL_1} = {r_1:.2f}, {LABEL_2} = {r_2:.2f}")
 
         except Exception as e:
             print(f"Error loading or processing data for patient {patient}, metric {metric}: {str(e)}")
