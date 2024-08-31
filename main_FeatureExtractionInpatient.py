@@ -102,7 +102,7 @@ df_moodTracking = df
 
 df_moodTracking = df_moodTracking.drop(columns=['Notes'], errors='ignore')
 
-df_moodTracking['Datetime'] = pd.to_datetime(df_moodTracking['Datetime']).dt.strftime('%-m/%d/%Y %H:%M:%S')
+df_moodTracking['Datetime'] = pd.to_datetime(df_moodTracking['Datetime']).dt.strftime('%-m/%-d/%Y %H:%M:%S')
 
 
 
