@@ -6,7 +6,8 @@ import numpy as np
 # Define the paths and prefixes
 RUNTIME_VAR_PATH = '/home/jgopal/NAS/Analysis/AudioFacialEEG/Runtime_Vars/'
 RESULTS_PATH_BASE = '/home/jgopal/NAS/Analysis/AudioFacialEEG/Results/Group/'
-PREFIX_1 = "OGAUHSE_L_"
+PREFIX_1 = "OGAU_L_"
+PREFIX_1_PAIN = "OGAUHSE_L_" # Just for pain, we use AU + HSE
 PREFIX_2 = "OF_L_"
 
 LABEL_1 = "FaceDx"
@@ -14,7 +15,7 @@ LABEL_2 = "OpenFace"
 
 METRICS = ['Mood', 'Depression', 'Anxiety', 'Hunger', 'Pain']  # Add all metrics you're interested in
 
-SHOW_PREFIX_2 = True  # Boolean flag to control whether PREFIX_2 should be included in the plots
+SHOW_PREFIX_2 = False  # Boolean flag to control whether PREFIX_2 should be included in the plots
 
 # Ensure the results directory exists
 os.makedirs(RESULTS_PATH_BASE, exist_ok=True)
@@ -53,7 +54,10 @@ for metric in METRICS:
     for patient in patients:
         try:
             # Load the predictions for both prefixes
-            predictions_prefix_1 = load_var(f'predictions_{patient}_{PREFIX_1}', RUNTIME_VAR_PATH)[f'{metric}']
+            if metric == 'Pain':
+              predictions_prefix_1 = load_var(f'predictions_{patient}_{PREFIX_1_PAIN}', RUNTIME_VAR_PATH)[f'{metric}']
+            else:    
+              predictions_prefix_1 = load_var(f'predictions_{patient}_{PREFIX_1}', RUNTIME_VAR_PATH)[f'{metric}']
             predictions_prefix_2 = load_var(f'predictions_{patient}_{PREFIX_2}', RUNTIME_VAR_PATH)[f'{metric}'] if SHOW_PREFIX_2 else None
 
             # Calculate Pearson's R for each
