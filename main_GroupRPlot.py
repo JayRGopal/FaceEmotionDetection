@@ -14,6 +14,8 @@ LABEL_2 = "OpenFace"
 
 METRICS = ['Mood', 'Depression', 'Anxiety', 'Hunger', 'Pain']  # Add all metrics you're interested in
 
+SHOW_PREFIX_2 = True  # Boolean flag to control whether PREFIX_2 should be included in the plots
+
 # Ensure the results directory exists
 os.makedirs(RESULTS_PATH_BASE, exist_ok=True)
 
@@ -52,26 +54,39 @@ for metric in METRICS:
         try:
             # Load the predictions for both prefixes
             predictions_prefix_1 = load_var(f'predictions_{patient}_{PREFIX_1}', RUNTIME_VAR_PATH)[f'{metric}']
-            predictions_prefix_2 = load_var(f'predictions_{patient}_{PREFIX_2}', RUNTIME_VAR_PATH)[f'{metric}']
+            predictions_prefix_2 = load_var(f'predictions_{patient}_{PREFIX_2}', RUNTIME_VAR_PATH)[f'{metric}'] if SHOW_PREFIX_2 else None
 
             # Calculate Pearson's R for each
             r_1 = np.corrcoef(predictions_prefix_1['y_true'], predictions_prefix_1['preds'][predictions_prefix_1['best_time_radius']])[0, 1]
-            r_2 = np.corrcoef(predictions_prefix_2['y_true'], predictions_prefix_2['preds'][predictions_prefix_2['best_time_radius']])[0, 1]
+            r_2 = np.corrcoef(predictions_prefix_2['y_true'], predictions_prefix_2['preds'][predictions_prefix_2['best_time_radius']])[0, 1] if SHOW_PREFIX_2 else None
+
+            # Exclude patient if either score is NaN
+            if np.isnan(r_1) or (SHOW_PREFIX_2 and np.isnan(r_2)):
+                print(f"{patient} excluded due to NaN values.")
+                continue
 
             # Append to the respective list
             r_values_prefix_1.append(r_1)
-            r_values_prefix_2.append(r_2)
+            if SHOW_PREFIX_2:
+                r_values_prefix_2.append(r_2)
 
             # Print the scores for this patient
-            print(f"{patient}: {LABEL_1} = {r_1:.2f}, {LABEL_2} = {r_2:.2f}")
+            if SHOW_PREFIX_2:
+                print(f"{patient}: {LABEL_1} = {r_1:.2f}, {LABEL_2} = {r_2:.2f}")
+            else:
+                print(f"{patient}: {LABEL_1} = {r_1:.2f}")
 
         except Exception as e:
             print(f"Error loading or processing data for patient {patient}, metric {metric}: {str(e)}")
             continue
 
     # Create the box and whisker plot
-    data = [r_values_prefix_1, r_values_prefix_2]
-    labels = [LABEL_1, LABEL_2]
+    data = [r_values_prefix_1]
+    labels = [LABEL_1]
+    
+    if SHOW_PREFIX_2:
+        data.append(r_values_prefix_2)
+        labels.append(LABEL_2)
 
     plt.figure(figsize=(10, 6))
     plt.boxplot(data, vert=False, labels=labels, showmeans=True, meanprops={'marker': 'o', 'markerfacecolor': 'red', 'markersize': 10})
@@ -79,8 +94,8 @@ for metric in METRICS:
     # Capitalize the first letter of the metric
     metric_label = metric.capitalize()
 
-    # Title with the metric and number of patients
-    plt.title(f'Predicting {metric_label}, N = {len(patients)}', fontsize=24)
+    # Title with the metric and number of patients (updated to reflect the current count)
+    plt.title(f'Predicting {metric_label}, N = {len(r_values_prefix_1)}', fontsize=24)
 
     # Set axis labels
     plt.xlabel("Pearson's R", fontsize=18)
