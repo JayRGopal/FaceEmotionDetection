@@ -31,7 +31,7 @@ def detect_patients():
         if file.startswith('predictions_S_'):
             # Extract the patient name assuming it starts with 'S_' and is followed by '_'
             parts = file.split('_')
-            patient_name = '_'.join(parts[1:2])  # This ensures you capture the full patient name after 'predictions_'
+            patient_name = '_'.join(parts[1:3])  # This ensures you capture the full patient name after 'predictions_'
             patient_names.add(patient_name)
     
     return list(patient_names)
