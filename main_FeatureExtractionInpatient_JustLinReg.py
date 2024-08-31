@@ -77,12 +77,16 @@ def save_var(our_variable, RUNTIME_VAR_PATH=RUNTIME_VAR_PATH, forced_name=None):
     else:
         name_now = forced_name
 
-    # Ensure the directory exists
-    os.makedirs(RUNTIME_VAR_PATH, exist_ok=True)
+    # Construct the full path including the file name
+    full_path = os.path.join(RUNTIME_VAR_PATH, f'{name_now}.pkl')
+
+    # Ensure the directory exists, including any nested folders in name_now
+    os.makedirs(os.path.dirname(full_path), exist_ok=True)
 
     # Save the variable
-    with open(RUNTIME_VAR_PATH + f'{name_now}.pkl', 'wb') as file:
+    with open(full_path, 'wb') as file:
         pickle.dump(our_variable, file)
+
 
 def load_var(variable_name, RUNTIME_VAR_PATH=RUNTIME_VAR_PATH):
   # Load from the file
