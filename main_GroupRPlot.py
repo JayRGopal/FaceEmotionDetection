@@ -417,6 +417,12 @@ for metric in METRICS:
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
 
+    # Add random chance performance region
+    random_chance_25th, random_chance_75th = np.mean(random_distributions, axis=0)
+    plt.axvspan(random_chance_25th, random_chance_75th, color='gray', alpha=0.3)
+    plt.axvline(random_chance_25th, color='gray', linestyle='dotted')
+    plt.axvline(random_chance_75th, color='gray', linestyle='dotted')
+
     plt.savefig(os.path.join(RESULTS_PATH_BASE, f'{metric}_groupRviolin.png'), bbox_inches='tight')
     plt.close()
 
