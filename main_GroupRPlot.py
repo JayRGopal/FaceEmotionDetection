@@ -343,13 +343,29 @@ for metric in METRICS:
     plt.savefig(os.path.join(RESULTS_PATH_BASE, f'{metric}_groupR.png'), bbox_inches='tight')
     plt.close()
 
+    # Ensure the lists for variance and sample size correspond to the included patients only
+    variance_list = []
+    sample_size_list = []
+
+    # Loop through each patient to calculate variance and sample size
+    for i, patient in enumerate(patients):
+        try:
+            predictions_prefix_1 = load_var(f'predictions_{patient}_{PREFIX_1 if metric != "Pain" else PREFIX_1_PAIN}', RUNTIME_VAR_PATH)[f'{metric}']
+            y_true = predictions_prefix_1['y_true']
+
+            # Calculate variance and sample size only for the included patients
+            variance_list.append(calculate_variance_percentage(y_true, metric))
+            sample_size_list.append(len(y_true))
+
+        except Exception as e:
+            # If any patient does not match, skip them
+            continue
+
     # Create and save the dot plot colored by variance
     plt.figure(figsize=(10, 6))
-
-    # Plot each patient's Pearson's R value for both prefixes
-    plt.scatter(r_values_prefix_1, np.full_like(r_values_prefix_1, 1), c=[calculate_variance_percentage(load_var(f'predictions_{patient}_{PREFIX_1 if metric != "Pain" else PREFIX_1_PAIN}', RUNTIME_VAR_PATH)[f'{metric}']['y_true'], metric) for patient in patients], cmap='viridis', s=100, label=LABEL_1)
+    plt.scatter(r_values_prefix_1, np.full_like(r_values_prefix_1, 1), c=variance_list[:len(r_values_prefix_1)], cmap='viridis', s=100, label=LABEL_1)
     if SHOW_PREFIX_2:
-        plt.scatter(r_values_prefix_2, np.full_like(r_values_prefix_2, 2), c=[calculate_variance_percentage(load_var(f'predictions_{patient}_{PREFIX_2}', RUNTIME_VAR_PATH)[f'{metric}']['y_true'], metric) for patient in patients], cmap='viridis', s=100, label=LABEL_2)
+        plt.scatter(r_values_prefix_2, np.full_like(r_values_prefix_2, 2), c=variance_list[:len(r_values_prefix_2)], cmap='viridis', s=100, label=LABEL_2)
 
     # Add the random chance performance region
     random_chance_25th, random_chance_75th = np.mean(random_distributions, axis=0)
@@ -367,11 +383,9 @@ for metric in METRICS:
 
     # Create and save the dot plot colored by sample size
     plt.figure(figsize=(10, 6))
-
-    # Plot each patient's Pearson's R value for both prefixes
-    plt.scatter(r_values_prefix_1, np.full_like(r_values_prefix_1, 1), c=sample_size_list, cmap='plasma', s=100, label=LABEL_1)
+    plt.scatter(r_values_prefix_1, np.full_like(r_values_prefix_1, 1), c=sample_size_list[:len(r_values_prefix_1)], cmap='plasma', s=100, label=LABEL_1)
     if SHOW_PREFIX_2:
-        plt.scatter(r_values_prefix_2, np.full_like(r_values_prefix_2, 2), c=sample_size_list, cmap='plasma', s=100, label=LABEL_2)
+        plt.scatter(r_values_prefix_2, np.full_like(r_values_prefix_2, 2), c=sample_size_list[:len(r_values_prefix_2)], cmap='plasma', s=100, label=LABEL_2)
 
     # Add the random chance performance region
     random_chance_25th, random_chance_75th = np.mean(random_distributions, axis=0)
