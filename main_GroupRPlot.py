@@ -233,8 +233,20 @@ def generate_random_chance_distribution(y_true, preds, num_shuffles=100):
         random_rs.append(r)
     return np.percentile(random_rs, [25, 75])
 
+# Calculate variance as the percentage of possible variation covered
+def calculate_variance_percentage(y_true, metric):
+    num_unique_values = len(np.unique(y_true))
+    if metric == 'Pain':
+        max_possible_values = 8  # Pain scale has 8 distinct values
+    else:
+        max_possible_values = 11  # Other metrics have 11 distinct values
+    variance_percentage = (num_unique_values / max_possible_values) * 100
+    return variance_percentage
+
+
 # Detect all patients
 patients = detect_patients()
+
 
 # Loop through each metric
 for metric in METRICS:
@@ -333,21 +345,45 @@ for metric in METRICS:
 
     # Create and save the dot plot colored by variance
     plt.figure(figsize=(10, 6))
-    plt.scatter(r_values_prefix_1, r_values_prefix_2, c=variance_list, cmap='viridis', s=100)
-    plt.colorbar(label='Variance')
+
+    # Plot each patient's Pearson's R value for both prefixes
+    plt.scatter(r_values_prefix_1, np.full_like(r_values_prefix_1, 1), c=[calculate_variance_percentage(load_var(f'predictions_{patient}_{PREFIX_1 if metric != "Pain" else PREFIX_1_PAIN}', RUNTIME_VAR_PATH)[f'{metric}']['y_true'], metric) for patient in patients], cmap='viridis', s=100, label=LABEL_1)
+    if SHOW_PREFIX_2:
+        plt.scatter(r_values_prefix_2, np.full_like(r_values_prefix_2, 2), c=[calculate_variance_percentage(load_var(f'predictions_{patient}_{PREFIX_2}', RUNTIME_VAR_PATH)[f'{metric}']['y_true'], metric) for patient in patients], cmap='viridis', s=100, label=LABEL_2)
+
+    # Add the random chance performance region
+    random_chance_25th, random_chance_75th = np.mean(random_distributions, axis=0)
+    plt.axvspan(random_chance_25th, random_chance_75th, color='gray', alpha=0.3)
+    plt.axvline(random_chance_25th, color='gray', linestyle='dotted')
+    plt.axvline(random_chance_75th, color='gray', linestyle='dotted')
+
+    plt.colorbar(label='Variance Percentage')
     plt.title(f'{metric_label} - Correlation Coefficients Colored by Variance')
-    plt.xlabel(LABEL_1)
-    plt.ylabel(LABEL_2)
+    plt.yticks([1, 2], [LABEL_1, LABEL_2])
+    plt.xlabel("Pearson's R")
+    plt.ylabel("Prefix")
     plt.savefig(os.path.join(RESULTS_PATH_BASE, f'{metric}_groupRdots_variance.png'), bbox_inches='tight')
     plt.close()
 
     # Create and save the dot plot colored by sample size
     plt.figure(figsize=(10, 6))
-    plt.scatter(r_values_prefix_1, r_values_prefix_2, c=sample_size_list, cmap='plasma', s=100)
+
+    # Plot each patient's Pearson's R value for both prefixes
+    plt.scatter(r_values_prefix_1, np.full_like(r_values_prefix_1, 1), c=sample_size_list, cmap='plasma', s=100, label=LABEL_1)
+    if SHOW_PREFIX_2:
+        plt.scatter(r_values_prefix_2, np.full_like(r_values_prefix_2, 2), c=sample_size_list, cmap='plasma', s=100, label=LABEL_2)
+
+    # Add the random chance performance region
+    random_chance_25th, random_chance_75th = np.mean(random_distributions, axis=0)
+    plt.axvspan(random_chance_25th, random_chance_75th, color='gray', alpha=0.3)
+    plt.axvline(random_chance_25th, color='gray', linestyle='dotted')
+    plt.axvline(random_chance_75th, color='gray', linestyle='dotted')
+
     plt.colorbar(label='Sample Size')
     plt.title(f'{metric_label} - Correlation Coefficients Colored by Sample Size')
-    plt.xlabel(LABEL_1)
-    plt.ylabel(LABEL_2)
+    plt.yticks([1, 2], [LABEL_1, LABEL_2])
+    plt.xlabel("Pearson's R")
+    plt.ylabel("Prefix")
     plt.savefig(os.path.join(RESULTS_PATH_BASE, f'{metric}_groupRdots_samples.png'), bbox_inches='tight')
     plt.close()
 
