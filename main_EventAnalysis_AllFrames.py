@@ -7,9 +7,13 @@ from tqdm import tqdm
 PAT_NOW = "S23_199"
 FACEDX_CSV_DIRECTORY = os.path.abspath(f'/home/jgopal/NAS/Analysis/outputs_Combined/{PAT_NOW}/')
 OPENFACE_CSV_DIRECTORY = os.path.abspath(f'/home/jgopal/NAS/Analysis/outputs_OpenFace/{PAT_NOW}/')
-OUTPUT_CSV = os.path.join(os.path.abspath(f'/home/jgopal/NAS/Analysis/outputs_EventAnalysis/'), f'combined_events_{PAT_NOW}.csv')
+OUTPUT_DIRECTORY = os.path.abspath(f'/home/jgopal/NAS/Analysis/outputs_EventAnalysis/')
+OUTPUT_CSV = os.path.join(OUTPUT_DIRECTORY, f'combined_events_{PAT_NOW}.csv')
 
 META_DATA_CSV_PATH = os.path.join(os.path.abspath(f'/home/jgopal/NAS/Analysis/outputs_EventAnalysis/'), f'chosen_thresholds_{PAT_NOW}.csv')
+
+# Create the output directory if it doesn't exist
+os.makedirs(OUTPUT_DIRECTORY, exist_ok=True)
 
 # Load the thresholds from the meta data CSV
 thresholds_df = pd.read_csv(META_DATA_CSV_PATH)
