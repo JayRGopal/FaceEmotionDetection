@@ -160,6 +160,7 @@ for event in all_events:
 
 # Save all events to a single CSV file
 events_df = pd.DataFrame(all_events)
+import pdb; pdb.set_trace()
 events_df.to_csv(OUTPUT_CSV, index=False)
 
 print(f"Events saved to {OUTPUT_CSV}")
