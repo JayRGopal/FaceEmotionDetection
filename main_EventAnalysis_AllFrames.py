@@ -43,6 +43,8 @@ def detect_events(emotion_df, au_df, openface_df):
             start_indices = start_indices[:-1]
 
         for start_frame, end_frame in zip(frames[start_indices], frames[end_indices]):
+            start_frame = int(start_frame)
+            end_frame = int(end_frame)
             event_length = end_frame - start_frame + 1
             if event_length < MIN_EVENT_LENGTH:
                 continue
