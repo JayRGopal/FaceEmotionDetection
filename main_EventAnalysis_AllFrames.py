@@ -79,11 +79,22 @@ def detect_events(emotion_df, au_df, openface_df):
                 frame_au = au_df[au_df['frame'] == frame].drop(['frame', 'timestamp', 'success'], axis=1)
                 frame_emotion = emotion_df[emotion_df['frame'] == frame].drop(['frame', 'timestamp', 'success'], axis=1)
 
+                # Check if the frame exists in the data
+                if frame_au.empty or frame_emotion.empty:
+                    print(f"Skipping frame {frame} as no corresponding data was found.")
+                    continue
+
                 # Handle potential variations in column names (with or without leading space)
                 au45_r_col = ' AU45_r' if ' AU45_r' in openface_df.columns else 'AU45_r'
                 au45_c_col = ' AU45_c' if ' AU45_c' in openface_df.columns else 'AU45_c'
-                
+
                 frame_openface = openface_df[openface_df['frame'] == frame][[au45_r_col, au45_c_col]]
+
+                # Check if OpenFace data exists for the current frame
+                if frame_openface.empty:
+                    print(f"Skipping frame {frame} as no OpenFace data was found.")
+                    continue
+
                 frame_openface = frame_openface.rename(index={au45_r_col: 'OpenFace_AU45_r', au45_c_col: 'OpenFace_AU45_c'})
 
                 frame_data = event_data.copy()
@@ -100,7 +111,7 @@ def detect_events(emotion_df, au_df, openface_df):
 all_events = []
 
 # Loop through the subfolders in the given CSV directory
-for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)):
+for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)[:5]):
     video_file = subfolder
     
     # Load emotion and AU CSVs
