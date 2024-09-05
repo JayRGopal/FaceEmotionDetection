@@ -86,7 +86,6 @@ def detect_events(emotion_df, au_df, openface_df):
 
                 # Check if the frame exists in the data
                 if frame_au.empty or frame_emotion.empty:
-                    print(f"Skipping frame {frame} as no corresponding data was found.")
                     continue
 
                 # Handle potential variations in column names (with or without leading space)
