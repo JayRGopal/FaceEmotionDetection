@@ -90,12 +90,11 @@ def detect_events(emotion_df, au_df, openface_df):
 
                 frame_openface = openface_df[openface_df['frame'] == frame][[au45_r_col, au45_c_col]]
 
-                # Check if OpenFace data exists for the current frame
+                # If no OpenFace data is found, set the OpenFace columns to NaN
                 if frame_openface.empty:
-                    print(f"Skipping frame {frame} as no OpenFace data was found.")
-                    continue
-
-                frame_openface = frame_openface.rename(index={au45_r_col: 'OpenFace_AU45_r', au45_c_col: 'OpenFace_AU45_c'})
+                    frame_openface = pd.DataFrame({'OpenFace_AU45_r': [np.nan], 'OpenFace_AU45_c': [np.nan]})
+                else:
+                    frame_openface = frame_openface.rename(index={au45_r_col: 'OpenFace_AU45_r', au45_c_col: 'OpenFace_AU45_c'})
 
                 frame_data = event_data.copy()
                 frame_data['Frame'] = frame
