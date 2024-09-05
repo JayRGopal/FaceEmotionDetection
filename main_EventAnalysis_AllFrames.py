@@ -43,14 +43,18 @@ def detect_events(emotion_df, au_df, openface_df):
             start_indices = start_indices[:-1]
 
         for start_frame, end_frame in zip(frames[start_indices], frames[end_indices]):
-            start_frame = int(start_frame)
-            end_frame = int(end_frame)
+            start_frame = int(start_frame)  # Ensure it's an integer
+            end_frame = int(end_frame)      # Ensure it's an integer
             event_length = end_frame - start_frame + 1
             if event_length < MIN_EVENT_LENGTH:
                 continue
 
             # Merge close by events
             if events and start_frame - events[-1]['End Frame'] <= MERGE_TIME:
+                # Ensure 'Duration in Seconds' exists before updating it
+                if 'Duration in Seconds' not in events[-1]:
+                    events[-1]['Duration in Seconds'] = 0
+
                 events[-1]['End Frame'] = end_frame
                 events[-1]['Duration in Seconds'] = round(events[-1]['Duration in Seconds'] + event_length / FACEDX_FPS, 1)
                 continue
@@ -69,6 +73,7 @@ def detect_events(emotion_df, au_df, openface_df):
             event_data = {
                 'Filename': video_file,
                 'Start Time': start_time,
+                'Duration in Seconds': duration,  # Ensure duration is set initially
                 'Event Type': emotion,
                 'End Frame': end_frame
             }
