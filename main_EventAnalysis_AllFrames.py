@@ -123,7 +123,7 @@ def detect_events(emotion_df, au_df, openface_df):
 all_events = []
 
 # Loop through the subfolders in the given CSV directory
-for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)[:5]):
+for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)[:3]):
     video_file = subfolder
     
     # Load emotion and AU CSVs
