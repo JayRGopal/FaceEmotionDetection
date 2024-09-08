@@ -49,7 +49,8 @@ def detect_events(emotion_df, au_df, openface_df):
         for start_frame, end_frame in zip(frames[start_indices], frames[end_indices]):
             start_frame = int(start_frame)  # Ensure it's an integer
             end_frame = int(end_frame)      # Ensure it's an integer
-            event_length = end_frame - start_frame + 1
+            # Calculate event length based on the available rows in hse or ogau CSV
+            event_length = len(au_df[(au_df['frame'] >= start_frame) & (au_df['frame'] <= end_frame)])
             if event_length < MIN_EVENT_LENGTH:
                 continue
 
@@ -94,10 +95,8 @@ def detect_events(emotion_df, au_df, openface_df):
                 frame_emotion = emotion_df[emotion_df['frame'] == int(frame)].drop(['frame', 'timestamp', 'success'], axis=1)
 
                 # Check if the frame exists in the data, otherwise skip this frame
-                if frame_au.empty:
-                    print(f'empty au for frame {frame}')
-                if frame_emotion.empty:
-                    print(f'empty emotion for frame {frame}')
+                if frame_au.empty or frame_emotion.empty:
+                    continue
 
                 # Handle potential variations in column names (with or without leading space)
                 au45_r_col = ' AU45_r' if ' AU45_r' in openface_df.columns else 'AU45_r'
