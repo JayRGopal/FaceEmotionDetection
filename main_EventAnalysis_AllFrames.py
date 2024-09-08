@@ -94,8 +94,10 @@ def detect_events(emotion_df, au_df, openface_df):
                 frame_emotion = emotion_df[emotion_df['frame'] == int(frame)].drop(['frame', 'timestamp', 'success'], axis=1)
 
                 # Check if the frame exists in the data, otherwise skip this frame
-                if frame_au.empty or frame_emotion.empty:
-                    continue
+                if frame_au.empty:
+                    print(f'empty au for frame {frame}')
+                if frame_emotion.empty:
+                    print(f'empty emotion for frame {frame}')
 
                 # Handle potential variations in column names (with or without leading space)
                 au45_r_col = ' AU45_r' if ' AU45_r' in openface_df.columns else 'AU45_r'
