@@ -84,11 +84,16 @@ def detect_events(emotion_df, au_df, openface_df):
 
             # Add the full range of frames (at 5 FPS) for this event
             for frame in range(start_frame, end_frame + 1):
-                # AU and emotion values from 5 fps sampling (no averaging)
-                frame_au = au_df[au_df['frame'] == frame].drop(['frame', 'timestamp', 'success'], axis=1)
-                frame_emotion = emotion_df[emotion_df['frame'] == frame].drop(['frame', 'timestamp', 'success'], axis=1)
+                # Convert frame columns to integers for consistent comparison
+                au_df['frame'] = au_df['frame'].astype(int)
+                emotion_df['frame'] = emotion_df['frame'].astype(int)
+                openface_df['frame'] = openface_df['frame'].astype(int)
 
-                # Check if the frame exists in the data
+                # Use integer comparison for frames
+                frame_au = au_df[au_df['frame'] == int(frame)].drop(['frame', 'timestamp', 'success'], axis=1)
+                frame_emotion = emotion_df[emotion_df['frame'] == int(frame)].drop(['frame', 'timestamp', 'success'], axis=1)
+
+                # Check if the frame exists in the data, otherwise skip this frame
                 if frame_au.empty or frame_emotion.empty:
                     continue
 
@@ -102,13 +107,13 @@ def detect_events(emotion_df, au_df, openface_df):
                 if frame_openface.empty:
                     frame_openface = pd.DataFrame({'OpenFace_AU45_r': [np.nan], 'OpenFace_AU45_c': [np.nan]})
                 else:
-                    frame_openface = frame_openface.rename(index={au45_r_col: 'OpenFace_AU45_r', au45_c_col: 'OpenFace_AU45_c'})
+                    frame_openface = frame_openface.rename(columns={au45_r_col: 'OpenFace_AU45_r', au45_c_col: 'OpenFace_AU45_c'})
 
                 frame_data = event_data.copy()
                 frame_data['Frame'] = frame
-                frame_data.update(frame_au.to_dict(orient='records')[0])
-                frame_data.update(frame_emotion.to_dict(orient='records')[0])
-                frame_data.update(frame_openface.to_dict(orient='records')[0])
+                frame_data.update(frame_au.to_dict(orient='records')[0] if not frame_au.empty else {})
+                frame_data.update(frame_emotion.to_dict(orient='records')[0] if not frame_emotion.empty else {})
+                frame_data.update(frame_openface.to_dict(orient='records')[0] if not frame_openface.empty else {})
 
                 events.append(frame_data)
 
