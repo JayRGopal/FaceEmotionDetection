@@ -124,7 +124,7 @@ def detect_events(emotion_df, au_df, openface_df):
 all_events = []
 
 # Loop through the subfolders in the given CSV directory
-for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)[:3]):
+for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)):
     video_file = subfolder
     
     # Load emotion and AU CSVs
@@ -166,7 +166,6 @@ for event in all_events:
 
 # Save all events to a single CSV file
 events_df = pd.DataFrame(all_events)
-import pdb; pdb.set_trace()
 events_df.to_csv(OUTPUT_CSV, index=False)
 
 print(f"Events saved to {OUTPUT_CSV}")
