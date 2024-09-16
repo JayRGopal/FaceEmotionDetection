@@ -5,8 +5,8 @@ import cv2
 
 # Main parameters
 PAT_NOW = "S23_199"
-VIDEO_DIRECTORY = os.path.abspath(f'/home/klab/NAS/Analysis/MP4/{PAT_NOW}_MP4')
-OUTPUT_DIRECTORY_PYFEAT = os.path.abspath(f'/home/klab/NAS/Analysis/outputs_PyFeat/{PAT_NOW}/')
+VIDEO_DIRECTORY = os.path.abspath(f'/home/jgopal/NAS/Analysis/MP4/{PAT_NOW}_MP4')
+OUTPUT_DIRECTORY_PYFEAT = os.path.abspath(f'/home/jgopal/NAS/Analysis/outputs_PyFeat/{PAT_NOW}/')
 
 # Create PyFeat output directory if it doesn't exist
 if not os.path.exists(OUTPUT_DIRECTORY_PYFEAT):
