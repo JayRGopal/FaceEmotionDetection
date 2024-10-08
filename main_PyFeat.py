@@ -25,7 +25,7 @@ unprocessed_videos = get_valid_vids(VIDEO_DIRECTORY)
 # Initialize PyFeat detector
 detector = Detector()
 
-# Loop through all videos and process with PyFeat
+# Loop through all videos and process each frame with detect_aus
 for video_name in unprocessed_videos:
     video_path = os.path.join(VIDEO_DIRECTORY, video_name)
     
@@ -34,18 +34,48 @@ for video_name in unprocessed_videos:
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
     
-    # Run PyFeat detection on the video
-    print(f'Running PyFeat on {video_path}...')
-    pyfeat_output = detector.detect_video(video_path, skip_frames=6)
+    # Open video and set up frame skipping
+    cap = cv2.VideoCapture(video_path)
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    frame_interval = int(fps / 5)  # Down-sample to 5 fps
     
-    # Save PyFeat output to CSV
-    save_path = SAVE_PATH_PYFEAT(video_name)
-    pyfeat_output.to_csv(save_path, index=False)
-    print(f'Saved PyFeat CSV to {save_path}!')
+    all_frames_data = []
+    frame_index = 0
+    
+    print(f'Processing frames for {video_path}...')
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
+        
+        if frame_index % frame_interval == 0:
+            # Detect landmarks for the current frame
+            landmarks = extract_landmarks(frame)
+            
+            # Check if landmarks were successfully detected
+            if landmarks is not None:
+                # Detect AUs using the frame and detected landmarks
+                aus_data = detector.detect_aus(frame, landmarks)
+                
+                # Append AU data to list (convert to DataFrame for ease)
+                aus_df = pd.DataFrame([aus_data])
+                all_frames_data.append(aus_df)
+        
+        frame_index += 1
+    
+    cap.release()
+    
+    # Combine all frame data into a single DataFrame
+    if all_frames_data:
+        pyfeat_output = pd.concat(all_frames_data, ignore_index=True)
+    
+        # Save the output to CSV
+        save_path = SAVE_PATH_PYFEAT(video_name)
+        pyfeat_output.to_csv(save_path, index=False)
+        print(f'Saved PyFeat CSV to {save_path}!')
     
     # Clear memory after processing each video
     gc.collect()
 
 print("Processing complete!")
-
 
