@@ -2,6 +2,7 @@ from feat import Detector
 import os
 import gc
 import cv2
+import pandas as pd
 
 # Main parameters
 PAT_NOW = "S23_199"
@@ -49,17 +50,12 @@ for video_name in unprocessed_videos:
             break
         
         if frame_index % frame_interval == 0:
-            # Detect landmarks for the current frame
-            landmarks = extract_landmarks(frame)
+            # Detect AUs for the current frame without landmarks
+            aus_data = detector.detect_aus(frame)
             
-            # Check if landmarks were successfully detected
-            if landmarks is not None:
-                # Detect AUs using the frame and detected landmarks
-                aus_data = detector.detect_aus(frame, landmarks)
-                
-                # Append AU data to list (convert to DataFrame for ease)
-                aus_df = pd.DataFrame([aus_data])
-                all_frames_data.append(aus_df)
+            # Append AU data to list (convert to DataFrame for ease)
+            aus_df = pd.DataFrame([aus_data])
+            all_frames_data.append(aus_df)
         
         frame_index += 1
     
@@ -78,4 +74,3 @@ for video_name in unprocessed_videos:
     gc.collect()
 
 print("Processing complete!")
-
