@@ -50,12 +50,20 @@ for video_name in unprocessed_videos:
             break
         
         if frame_index % frame_interval == 0:
-            # Detect AUs for the current frame without landmarks
-            aus_data = detector.detect_aus(frame)
+            # Detect faces in the current frame
+            detected_faces = detector.detect_faces(frame)
             
-            # Append AU data to list (convert to DataFrame for ease)
-            aus_df = pd.DataFrame([aus_data])
-            all_frames_data.append(aus_df)
+            # Proceed only if at least one face is detected
+            if detected_faces:
+                # Detect landmarks for the detected faces
+                landmarks = detector.detect_landmarks(frame, detected_faces)
+                
+                # Detect AUs using the frame and landmarks
+                if landmarks:
+                    aus_data = detector.detect_aus(frame, landmarks)
+                    # Append AU data to list (convert to DataFrame for ease)
+                    aus_df = pd.DataFrame([aus_data])
+                    all_frames_data.append(aus_df)
         
         frame_index += 1
     
