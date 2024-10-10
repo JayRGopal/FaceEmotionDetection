@@ -58,7 +58,7 @@ all_events = []
 for patient, videos in patients_videos.items():
     meta_data_path = os.path.join('/home/jgopal/NAS/Analysis/outputs_EventAnalysis/', f'chosen_thresholds_{patient}.csv')
     thresholds_df = pd.read_csv(meta_data_path)
-    happiness_threshold = thresholds_df.set_index('Emotion').at['Happiness', 'Threshold'] - 0.05
+    happiness_threshold = thresholds_df.set_index('Emotion').at['Happiness', 'Threshold'] - 0.1
 
     for video in tqdm(videos, desc=f"Processing videos for patient {patient}"):
         emotion_csv_path = os.path.join(FACEDX_CSV_DIRECTORY, patient, f'{video}.mp4', 'outputs_hse.csv')
