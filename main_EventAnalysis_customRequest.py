@@ -18,6 +18,7 @@ MERGE_TIME = 3  # Maximum frames apart to consider merging events
 FACEDX_FPS = 5
 VIDEO_FPS = 30
 MIN_EVENTS = 10  # Minimum number of happiness events required
+MIN_THRESHOLD = 0.05  # Minimum threshold limit to prevent excessive events
 
 def detect_happiness_events(emotion_df, threshold):
     events = []
@@ -60,10 +61,10 @@ for patient, videos in patients_videos.items():
     thresholds_df = pd.read_csv(meta_data_path)
     happiness_threshold = thresholds_df.set_index('Emotion').at['Happiness', 'Threshold']
 
-    # Adjust threshold until we reach at least 10 events
+    # Adjust threshold until we reach at least 10 events or hit the minimum threshold
     total_events = 0
     events_list = []
-    while total_events < MIN_EVENTS:
+    while total_events < MIN_EVENTS and happiness_threshold >= MIN_THRESHOLD:
         events_list = []
         for video in tqdm(videos, desc=f"Processing videos for patient {patient} with threshold {happiness_threshold:.2f}"):
             emotion_csv_path = os.path.join(FACEDX_CSV_DIRECTORY, patient, video, 'outputs_hse.csv')
@@ -87,6 +88,8 @@ for patient, videos in patients_videos.items():
         total_events = len(events_list)
         if total_events < MIN_EVENTS:
             happiness_threshold -= 0.05
+            if happiness_threshold < MIN_THRESHOLD:
+                happiness_threshold = MIN_THRESHOLD
 
     all_events.extend(events_list)
 
