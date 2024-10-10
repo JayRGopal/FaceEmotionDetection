@@ -11,13 +11,13 @@ patients_videos = {
 }
 
 FACEDX_CSV_DIRECTORY = '/home/jgopal/NAS/Analysis/outputs_Combined/'
-OPENFACE_CSV_DIRECTORY = '/home/jgopal/NAS/Analysis/outputs_OpenFace/'
 OUTPUT_CSV = '/home/jgopal/NAS/Analysis/outputs_EventAnalysis/selected_happiness_events.csv'
 
 MIN_EVENT_LENGTH = 2  # Minimum length of each event in frames
 MERGE_TIME = 3  # Maximum frames apart to consider merging events
 FACEDX_FPS = 5
 VIDEO_FPS = 30
+MIN_EVENTS = 10  # Minimum number of happiness events required
 
 def detect_happiness_events(emotion_df, threshold):
     events = []
@@ -60,26 +60,37 @@ for patient, videos in patients_videos.items():
     thresholds_df = pd.read_csv(meta_data_path)
     happiness_threshold = thresholds_df.set_index('Emotion').at['Happiness', 'Threshold']
 
-    for video in tqdm(videos, desc=f"Processing videos for patient {patient}"):
-        emotion_csv_path = os.path.join(FACEDX_CSV_DIRECTORY, patient, f'{video}.mp4', 'outputs_hse.csv')
-        if not os.path.exists(emotion_csv_path) or os.path.getsize(emotion_csv_path) == 0:
-            continue
+    # Adjust threshold until we reach at least 10 events
+    total_events = 0
+    events_list = []
+    while total_events < MIN_EVENTS:
+        events_list = []
+        for video in tqdm(videos, desc=f"Processing videos for patient {patient} with threshold {happiness_threshold:.2f}"):
+            emotion_csv_path = os.path.join(FACEDX_CSV_DIRECTORY, patient, video, 'outputs_hse.csv')
+            if not os.path.exists(emotion_csv_path) or os.path.getsize(emotion_csv_path) == 0:
+                continue
 
-        try:
-            emotion_df = pd.read_csv(emotion_csv_path)
-        except pd.errors.EmptyDataError:
-            continue
+            try:
+                emotion_df = pd.read_csv(emotion_csv_path)
+            except pd.errors.EmptyDataError:
+                continue
 
-        video_events = detect_happiness_events(emotion_df, happiness_threshold)
-        for event in video_events:
-            all_events.append({
-                'Patient': patient,
-                'Video': video,
-                'Start Time': event['Start Time'],
-                'End Time': event['End Time']
-            })
+            video_events = detect_happiness_events(emotion_df, happiness_threshold)
+            for event in video_events:
+                events_list.append({
+                    'Patient': patient,
+                    'Video': video,
+                    'Start Time': event['Start Time'],
+                    'End Time': event['End Time']
+                })
 
-# Save events to a single CSV file
+        total_events = len(events_list)
+        if total_events < MIN_EVENTS:
+            happiness_threshold -= 0.05
+
+    all_events.extend(events_list)
+
+# Save all events to a single CSV file
 events_df = pd.DataFrame(all_events)
 events_df.to_csv(OUTPUT_CSV, index=False)
 print(f"Events saved to {OUTPUT_CSV}")
