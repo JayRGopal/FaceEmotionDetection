@@ -163,27 +163,24 @@ for i in range(1, len(events_df)):
         if events_df.loc[i, 'Duration in Seconds'] != events_df.loc[i-1, 'Duration in Seconds']:
             events_df.loc[i, 'Duration in Seconds'] = events_df.loc[i-1, 'Duration in Seconds']
 
-# Step 2: Assign each event a number based on its order in the DataFrame
-# Initialize a dictionary to store the count for each event type
-event_counts = {}
-
-# Create a new column for the "Clip" value
+# Step 2: Assign each event a sequential number based on its order in the DataFrame (not by event type)
 clip_values = []
+event_counter = 1  # Start a global counter across all events
 
 # Iterate over the rows to assign a sequential number to each event
 for i in range(len(events_df)):
     event_type = events_df.loc[i, 'Event Type']
     
-    # Initialize the counter for this event type if not already done
-    if event_type not in event_counts:
-        event_counts[event_type] = 1
-    else:
-        # Increment the counter for each new event type found
-        event_counts[event_type] += 1
-    
     # Create the Clip name in the format {Event Type}_{Number}.mp4
-    clip_name = f"{event_type}_{event_counts[event_type]}.mp4"
+    clip_name = f"{event_type}_{event_counter}.mp4"
     clip_values.append(clip_name)
+    
+    # Increment the counter for each new event
+    # Check for event change by comparing the current and next rows
+    if i == len(events_df) - 1 or \
+       events_df.loc[i, 'Filename'] != events_df.loc[i+1, 'Filename'] or \
+       events_df.loc[i, 'Start Time'] != events_df.loc[i+1, 'Start Time']:
+        event_counter += 1
 
 # Add the "Clip" column to the DataFrame
 events_df['Clip'] = clip_values
