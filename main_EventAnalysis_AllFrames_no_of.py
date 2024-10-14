@@ -55,20 +55,16 @@ def detect_events(emotion_df, au_df):
                 continue
 
             # Merge close by events
-            # if events and start_frame - events[-1]['End Frame'] <= MERGE_TIME:
-            #     # Ensure 'Duration in Seconds' exists before updating it
-            #     if 'Duration in Seconds' not in events[-1]:
-            #         events[-1]['Duration in Seconds'] = 0
-
-            #     events[-1]['End Frame'] = end_frame
-            #     events[-1]['Duration in Seconds'] = round(events[-1]['Duration in Seconds'] + event_length / FACEDX_FPS, 1)
-            #     continue
-
             if events and start_frame - events[-1]['End Frame'] <= MERGE_TIME:
-                if end_frame > events[-1]['End Frame']:  # Only update if the end frame is extending the event
-                    events[-1]['End Frame'] = end_frame
-                    additional_duration = round((end_frame - events[-1]['End Frame']) / FACEDX_FPS, 1)
-                    events[-1]['Duration in Seconds'] += additional_duration
+                # Ensure 'Duration in Seconds' exists before updating it
+                if 'Duration in Seconds' not in events[-1]:
+                    events[-1]['Duration in Seconds'] = 0
+
+                events[-1]['End Frame'] = end_frame
+                #events[-1]['Duration in Seconds'] = round(events[-1]['Duration in Seconds'] + event_length / FACEDX_FPS, 1)
+                new_duration = (end_frame - events[-1]['End Frame']) / FACEDX_FPS
+                if new_duration > 0:
+                    events[-1]['Duration in Seconds'] += round(new_duration, 1)
                 continue
 
             minutes = int((start_frame // VIDEO_FPS) // 60)
@@ -80,7 +76,7 @@ def detect_events(emotion_df, au_df):
             else:
                 start_time = f"{minutes:02d}:{seconds:02d}"
             
-            duration = round(event_length / FACEDX_FPS, 1)
+            duration = round((end_frame - start_frame + 1) / FACEDX_FPS, 1)
 
             event_data = {
                 'Filename': video_file,
