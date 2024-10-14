@@ -153,7 +153,7 @@ print(f"Events saved to {OUTPUT_CSV}")
 
 # Load the saved CSV into a DataFrame for post-processing
 events_df = pd.read_csv(OUTPUT_CSV)
-import pdb; pdb.set_trace()
+
 # Step 1: Check for duration discrepancies in the last frame of each event
 # Loop through the events to adjust any incorrect durations
 for i in range(1, len(events_df)):
@@ -163,7 +163,7 @@ for i in range(1, len(events_df)):
         # If the duration is different, correct it to match the previous row's duration
         if events_df.loc[i, 'Duration in Seconds'] != events_df.loc[i-1, 'Duration in Seconds']:
             events_df.loc[i, 'Duration in Seconds'] = events_df.loc[i-1, 'Duration in Seconds']
-import pdb; pdb.set_trace()
+
 # Step 2: Assign each event a sequential number based on its order in the DataFrame (not by event type)
 clip_values = []
 event_counter = 1  # Start a global counter across all events
