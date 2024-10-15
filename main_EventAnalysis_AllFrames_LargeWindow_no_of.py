@@ -8,7 +8,7 @@ PAT_NOW = "S23_199"
 user_name = "bkakusa"
 FACEDX_CSV_DIRECTORY = os.path.abspath(f'/home/{user_name}/NAS/Analysis/outputs_Combined/{PAT_NOW}/')
 OUTPUT_DIRECTORY = os.path.abspath(f'/home/{user_name}/NAS/Analysis/outputs_EventAnalysis/')
-OUTPUT_CSV = os.path.join(OUTPUT_DIRECTORY, f'combined_events_{PAT_NOW}.csv')
+OUTPUT_CSV = os.path.join(OUTPUT_DIRECTORY, f'combined_events_{PAT_NOW}_LargeWindow.csv')
 
 META_DATA_CSV_PATH = os.path.join(os.path.abspath(f'/home/{user_name}/NAS/Analysis/outputs_EventAnalysis/'), f'chosen_thresholds_{PAT_NOW}.csv')
 
@@ -76,6 +76,7 @@ def detect_events(emotion_df, au_df):
                 start_indices.append(event_indices[merge_idx])
             last_value = merge_value # Keep track of last value
 
+
         # NEED TO FIX SO THAT END EVENTS BETWEEN FILES MERGE IF INDICATED
         if len(start_indices) > len(end_indices) and last_value == 1:
             loop_event = 1
@@ -89,10 +90,23 @@ def detect_events(emotion_df, au_df):
         end_indices = end_indices[event_length >= MIN_EVENT_LENGTH - 1]
         start_indices = start_indices[event_length >= MIN_EVENT_LENGTH - 1]
 
+
         # Skip if no more events
         if len(start_indices) == 0:
             continue
 
+        # Remove Events within 5 seconds of the start and 5 seconds of the end
+        MIN_MARGIN = 5
+        MAX_DURATION = 3600
+        keep_val = np.divide(frames[start_indices], VIDEO_FPS) > MIN_MARGIN
+        keep_val = np.logical_and(keep_val, np.divide(frames[-1] - frames[end_indices+1], VIDEO_FPS) > MIN_MARGIN)
+
+        end_indices = end_indices[keep_val]
+        start_indices = start_indices[keep_val]
+
+        # Skip if no more events
+        if len(start_indices) == 0:
+            continue
 
         # Ensure lists are same size and in correct order
         assert len(start_indices) == len(end_indices)
@@ -119,6 +133,9 @@ def detect_events(emotion_df, au_df):
         au_df['frame'] = au_df['frame'].astype(int)
         emotion_df['frame'] = emotion_df['frame'].astype(int)
 
+        win_event = np.array([-5, 5])
+        win_event_pnt = win_event * FACEDX_FPS
+
         # Iterate through each event to add inbetween frames
         for event_idx, _ in enumerate(start_indices):
             event_data = {
@@ -128,7 +145,7 @@ def detect_events(emotion_df, au_df):
                 'Event Type': emotion,
                 'End Frame': frames[end_indices[event_idx]],
             }
-            for frame_idx in range(start_indices[event_idx], end_indices[event_idx] + 1):
+            for frame_idx in range(start_indices[event_idx] + win_event_pnt[0], start_indices[event_idx] + win_event_pnt[1]):
 
                 # Use integer comparison for frames
                 frame_au = au_df[au_df['frame'] == int(frames[frame_idx])].drop(['frame', 'timestamp', 'success'], axis=1)
@@ -140,8 +157,8 @@ def detect_events(emotion_df, au_df):
 
                 frame_data = event_data.copy()
                 frame_data['Frame'] = frames[frame_idx]
-                frame_data['Frame Num'] = (frame_idx - start_indices[event_idx]) + 1
-                frame_data['Time'] = np.round(np.divide((frame_data['Frame Num'] - 1), FACEDX_FPS), 1)
+                frame_data['Frame_Num'] = frame_idx - (start_indices[event_idx] + win_event_pnt[0]) + 1
+                frame_data['Time'] = np.round(np.divide(frame_idx - start_indices[event_idx], FACEDX_FPS), 1)
                 frame_data.update(frame_au.to_dict(orient='records')[0] if not frame_au.empty else {})
                 frame_data.update(frame_emotion.to_dict(orient='records')[0] if not frame_emotion.empty else {})
 
@@ -154,7 +171,8 @@ def detect_events(emotion_df, au_df):
 all_events = []
 
 # Loop through the subfolders in the given CSV directory
-for subfolder in tqdm(os.listdir(FACEDX_CSV_DIRECTORY)):
+for _, subfolder in enumerate(tqdm(os.listdir(FACEDX_CSV_DIRECTORY))):
+
     video_file = subfolder
     
     # Load emotion and AU CSVs
