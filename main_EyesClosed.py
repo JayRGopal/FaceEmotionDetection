@@ -11,8 +11,8 @@ import csv
 
 # Main parameters
 PAT_NOW = "S23_199"
-VIDEO_DIRECTORY = os.path.abspath(f'/home/klab/NAS/Analysis/MP4/{PAT_NOW}_MP4')
-OUTPUT_DIRECTORY = os.path.abspath(f'/home/klab/NAS/Analysis/outputs_Combined/{PAT_NOW}/')
+VIDEO_DIRECTORY = os.path.abspath(f'/home/jgopal/NAS/Analysis/MP4/{PAT_NOW}_MP4')
+OUTPUT_DIRECTORY = os.path.abspath(f'/home/jgopal/NAS/Analysis/outputs_Combined/{PAT_NOW}/')
 MODEL_PATH = os.path.abspath('eyes_closed_models/shape_predictor_68_face_landmarks.dat')
 
 # Create output directory if it doesn't exist
