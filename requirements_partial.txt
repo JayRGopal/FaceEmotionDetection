@@ -5,6 +5,7 @@ deepface
 numpy>=1.23.5
 opencv-python>=4.6.0
 dlib
+imutils
 timm>=0.6.13
 torchvision
 pykalman>=0.9.5
