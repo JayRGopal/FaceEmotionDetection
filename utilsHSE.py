@@ -297,3 +297,13 @@ def csv_save_bboxes(labels, is_null, frames, save_path, fps):
 
 
 
+def csv_save_drowsiness(data, save_path):
+    if not os.path.exists(save_path):  # Create the CSV with headers if it doesn't exist
+        with open(save_path, 'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(['frame', 'timestamp', 'success', 'drowsiness_detected', 'drowsiness_score'])
+    
+    # Append data to CSV
+    with open(save_path, 'a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerows(data)
