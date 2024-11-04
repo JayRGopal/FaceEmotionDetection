@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 # Parameters
 PAT_NOW = "S23_199"
-user_name = "bkakusa"
+user_name = "jgopal"
 FACEDX_CSV_DIRECTORY = os.path.abspath(f'/home/{user_name}/NAS/Analysis/outputs_Combined/{PAT_NOW}/')
 OUTPUT_DIRECTORY = os.path.abspath(f'/home/{user_name}/NAS/Analysis/outputs_EventAnalysis/')
 OUTPUT_CSV = os.path.join(OUTPUT_DIRECTORY, f'combined_events_{PAT_NOW}.csv')
