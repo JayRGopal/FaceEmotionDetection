@@ -56,7 +56,7 @@ def detect_events(emotion_df, threshold, emotion):
     return events
 
 # Initialize a dictionary to hold event counts
-event_counts = {emotion: {threshold: 0 for threshold in THRESHOLDS} for emotion in ['Happiness', 'Anger', 'Sadness', 'Neutral']}
+event_counts = {emotion: {threshold: 0 for threshold in THRESHOLDS} for emotion in ['Happiness', 'Anger', 'Sadness', 'Neutral', 'Surprise', 'Fear', 'Disgust']}
 
 # Process each video file
 for subfolder in tqdm(os.listdir(CSV_DIRECTORY)):
