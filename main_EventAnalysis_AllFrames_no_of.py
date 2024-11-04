@@ -218,8 +218,8 @@ for i in range(len(events_df)):
        events_df.loc[i, 'Start Time'] != events_df.loc[i+1, 'Start Time']:
         event_counter += 1
 
-# Add the "Clip" column to the DataFrame
-events_df['Clip'] = clip_values
+# Add the "Clip Name" column to the DataFrame
+events_df['Clip Name'] = clip_values
 
 # Save the updated DataFrame back to the CSV
 events_df.to_csv(OUTPUT_CSV, index=False)

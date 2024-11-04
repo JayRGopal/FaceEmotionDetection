@@ -9,9 +9,6 @@ def save_event_clips(input_folder, event_analysis_csv, clips_output_folder):
     # Ensure the output folder exists
     os.makedirs(clips_output_folder, exist_ok=True)
     
-    # Add a new column for clip names
-    events_df['Clip Name'] = ''
-    
     for index, event in events_df.iterrows():
         video_file = event['Filename']
         video_path = os.path.join(input_folder, video_file)

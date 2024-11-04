@@ -111,11 +111,14 @@ happiness_threshold = find_highest_threshold('Happiness')
 anger_threshold = find_highest_threshold('Anger')
 neutral_threshold = find_highest_threshold('Neutral')
 sadness_threshold = find_highest_threshold('Sadness')
+surprise_threshold = find_highest_threshold('Surprise')
+fear_threshold = find_highest_threshold('Fear')
+disgust_threshold = find_highest_threshold('Disgust')
 
 # Create a DataFrame to store the chosen thresholds
 thresholds_meta = pd.DataFrame({
-    'Emotion': ['Happiness', 'Anger', 'Neutral', 'Sadness'],
-    'Threshold': [happiness_threshold, anger_threshold, neutral_threshold, sadness_threshold]
+    'Emotion': ['Happiness', 'Anger', 'Neutral', 'Sadness', 'Surprise', 'Fear', 'Disgust'],
+    'Threshold': [happiness_threshold, anger_threshold, neutral_threshold, sadness_threshold, surprise_threshold, fear_threshold, disgust_threshold]
 })
 
 # Define the path for the meta data CSV
