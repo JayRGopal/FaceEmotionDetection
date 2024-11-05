@@ -1,14 +1,19 @@
-wget https://github.com/AcademySoftwareFoundation/openexr/archive/refs/tags/v2.5.7.tar.gz
-tar -xzf v2.5.7.tar.gz
-cd openexr-2.5.7
-
-sudo apt update
-sudo apt install -y cmake build-essential
-
-mkdir build && cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
-make
-sudo make install
-
-sudo ldconfig
-
+(cvmonitor) jgopal@klab-lambda-vector:~$ find . -name "libIlmImf*"
+./miniconda3/pkgs/openexr-2.5.5-hf817b99_0/lib/libIlmImf.so.25
+./miniconda3/pkgs/openexr-2.5.5-hf817b99_0/lib/libIlmImfUtil.so
+./miniconda3/pkgs/openexr-2.5.5-hf817b99_0/lib/libIlmImf.so
+./miniconda3/pkgs/openexr-2.5.5-hf817b99_0/lib/libIlmImfUtil.so.25
+./miniconda3/pkgs/openexr-2.5.5-hf817b99_0/lib/libIlmImfUtil.so.25.0.4
+./miniconda3/pkgs/openexr-2.5.5-hf817b99_0/lib/libIlmImf.so.25.0.4
+./miniconda3/envs/cvmonitor/lib/libIlmImf.so.25
+./miniconda3/envs/cvmonitor/lib/libIlmImfUtil.so
+./miniconda3/envs/cvmonitor/lib/libIlmImf.so
+./miniconda3/envs/cvmonitor/lib/libIlmImfUtil.so.25
+./miniconda3/envs/cvmonitor/lib/libIlmImfUtil.so.25.0.4
+./miniconda3/envs/cvmonitor/lib/libIlmImf.so.25.0.4
+./miniconda3/envs/cvquant/lib/libIlmImf.so.25
+./miniconda3/envs/cvquant/lib/libIlmImfUtil.so
+./miniconda3/envs/cvquant/lib/libIlmImf.so
+./miniconda3/envs/cvquant/lib/libIlmImfUtil.so.25
+./miniconda3/envs/cvquant/lib/libIlmImfUtil.so.25.0.4
+./miniconda3/envs/cvquant/lib/libIlmImf.so.25.0.4
