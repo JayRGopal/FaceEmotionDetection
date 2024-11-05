@@ -1,9 +1,7 @@
-sudo apt install libavcodec-extra libavformat58 libavutil58
-Reading package lists... Done
-Building dependency tree... Done
-Reading state information... Done
-Package libavformat58 is not available, but is referred to by another package.
-This may mean that the package is missing, has been obsoleted, or
-is only available from another source
-
-E: Package 'libavformat58' has no installation candidate
+sudo apt install -y build-essential yasm pkg-config libx264-dev libx265-dev libfdk-aac-dev
+wget https://ffmpeg.org/releases/ffmpeg-4.3.1.tar.bz2
+tar xjf ffmpeg-4.3.1.tar.bz2
+cd ffmpeg-4.3.1
+./configure --enable-gpl --enable-libx264 --enable-libx265 --enable-nonfree
+make
+sudo make install
