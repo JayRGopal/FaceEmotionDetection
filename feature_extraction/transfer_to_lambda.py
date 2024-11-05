@@ -1,19 +1,2 @@
-(cvmonitor) jgopal@klab-lambda-vector:~$ find . -name "libIlmImf*"
-./miniconda3/pkgs/openexr-2.5.5-hf817b99_0/lib/libIlmImf.so.25
-./miniconda3/pkgs/openexr-2.5.5-hf817b99_0/lib/libIlmImfUtil.so
-./miniconda3/pkgs/openexr-2.5.5-hf817b99_0/lib/libIlmImf.so
-./miniconda3/pkgs/openexr-2.5.5-hf817b99_0/lib/libIlmImfUtil.so.25
-./miniconda3/pkgs/openexr-2.5.5-hf817b99_0/lib/libIlmImfUtil.so.25.0.4
-./miniconda3/pkgs/openexr-2.5.5-hf817b99_0/lib/libIlmImf.so.25.0.4
-./miniconda3/envs/cvmonitor/lib/libIlmImf.so.25
-./miniconda3/envs/cvmonitor/lib/libIlmImfUtil.so
-./miniconda3/envs/cvmonitor/lib/libIlmImf.so
-./miniconda3/envs/cvmonitor/lib/libIlmImfUtil.so.25
-./miniconda3/envs/cvmonitor/lib/libIlmImfUtil.so.25.0.4
-./miniconda3/envs/cvmonitor/lib/libIlmImf.so.25.0.4
-./miniconda3/envs/cvquant/lib/libIlmImf.so.25
-./miniconda3/envs/cvquant/lib/libIlmImfUtil.so
-./miniconda3/envs/cvquant/lib/libIlmImf.so
-./miniconda3/envs/cvquant/lib/libIlmImfUtil.so.25
-./miniconda3/envs/cvquant/lib/libIlmImfUtil.so.25.0.4
-./miniconda3/envs/cvquant/lib/libIlmImf.so.25.0.4
+export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
+echo $LD_LIBRARY_PATH
