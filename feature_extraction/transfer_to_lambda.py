@@ -1,4 +1,14 @@
-export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
-echo 'export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH' > $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh
+wget https://github.com/AcademySoftwareFoundation/openexr/archive/refs/tags/v2.5.7.tar.gz
+tar -xzf v2.5.7.tar.gz
+cd openexr-2.5.7
 
-/home/jgopal/Desktop/OpenFace/build/bin/FeatureExtraction: error while loading shared libraries: libIlmImf-2_5.so.25: cannot open shared object file: No such file or directory
+sudo apt update
+sudo apt install -y cmake build-essential
+
+mkdir build && cd build
+cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
+make
+sudo make install
+
+sudo ldconfig
+
