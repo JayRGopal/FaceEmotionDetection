@@ -663,7 +663,7 @@ def get_label_from_index(index, spreadsheet_path=FEATURE_LABEL_PATH+'openface_0.
       print('BUG IN THE CODE! CHECK get_label_from_index')
       print('spreadsheet path is ', spreadsheet_path)
 
-
+    index_orig = index
     xls = pd.ExcelFile(spreadsheet_path)
 
     for i, matrix in enumerate(matrices):
@@ -705,6 +705,7 @@ def get_label_from_index(index, spreadsheet_path=FEATURE_LABEL_PATH+'openface_0.
 
     # Return None if the index is out of range or no suitable sheets found
     print('BUG IN THE CODE! INDEX TOO LARGE! CHECK get_label_from_index')
+    print(f'Original index was {index_orig}')
     print('spreadsheet path is ', spreadsheet_path)
     return None
 
