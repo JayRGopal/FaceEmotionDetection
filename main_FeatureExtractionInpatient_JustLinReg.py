@@ -1084,7 +1084,7 @@ def extractOneMetric(metric, vectors_now, df_moodTracking=df_moodTracking, remov
     shapes = []
     for j in range(len(df_moodTracking['Datetime'])):
         shapes.append(vectors_now_dict_fixed[df_moodTracking['Datetime'][j]].shape[0])
-    vector_proper_shape = np.min(vector_proper_shape, np.min(shapes))
+    vector_proper_shape = np.min(vector_proper_shape, int(np.min(shapes)))
     
     vectors_one_timestamp = np.array([vectors_now_dict_fixed[fn][:vector_proper_shape] for fn in df_moodTracking['Datetime']])
     
