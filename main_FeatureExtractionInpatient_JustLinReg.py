@@ -1343,6 +1343,7 @@ for RESULTS_PREFIX in RESULTS_PREFIX_LIST:
             alpha_now = 1.0
 
         vectors_return, y = extractOneMetric(metric, vectors_now=vectors_now, remove_outliers=REMOVE_OUTLIERS)
+        import pdb; pdb.set_trace()
         scores, preds, y, models = linRegOneMetric(vectors_return, y, do_lasso=do_lasso, do_ridge=do_ridge, alpha=alpha_now)
         scores_r, preds_r, _, models_r = linRegOneMetric(vectors_return, y, randShuffle=True, alpha=alpha_now)
 
