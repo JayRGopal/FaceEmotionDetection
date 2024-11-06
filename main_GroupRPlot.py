@@ -269,9 +269,9 @@ for metric in METRICS:
             df_moodTracking = preprocess_mood_tracking(patient)
 
             # Check if patient meets the inclusion criteria
-            if not meets_inclusion_criteria(df_moodTracking, metric):
-                print(f"{patient} excluded for {metric} due to not meeting inclusion criteria.")
-                continue
+            # if not meets_inclusion_criteria(df_moodTracking, metric):
+            #     print(f"{patient} excluded for {metric} due to not meeting inclusion criteria.")
+            #     continue
 
             # Load the predictions for both prefixes
             if metric == 'Pain':
