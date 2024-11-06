@@ -1071,6 +1071,7 @@ def extractOneMetric(metric, vectors_now, df_moodTracking=df_moodTracking, remov
     # with keys that have spaces removed
     return {ts_to_str(key): value for key, value in dictionary.items()}
 
+  vector_proper_shape = 10000
   # loop through the inpatient videos at each time window before each timestamp we're considering (e.g. 10 mins)
   for i in vectors_now.keys():
     vectors_now_dict = vectors_now[i]
@@ -1083,7 +1084,7 @@ def extractOneMetric(metric, vectors_now, df_moodTracking=df_moodTracking, remov
     shapes = []
     for j in range(len(df_moodTracking['Datetime'])):
         shapes.append(vectors_now_dict_fixed[df_moodTracking['Datetime'][j]].shape[0])
-    vector_proper_shape = np.min(shapes)
+    vector_proper_shape = np.min(vector_proper_shape, np.min(shapes))
     
     vectors_one_timestamp = np.array([vectors_now_dict_fixed[fn][:vector_proper_shape] for fn in df_moodTracking['Datetime']])
     
@@ -1343,7 +1344,6 @@ for RESULTS_PREFIX in RESULTS_PREFIX_LIST:
             alpha_now = 1.0
 
         vectors_return, y = extractOneMetric(metric, vectors_now=vectors_now, remove_outliers=REMOVE_OUTLIERS)
-        import pdb; pdb.set_trace()
         scores, preds, y, models = linRegOneMetric(vectors_return, y, do_lasso=do_lasso, do_ridge=do_ridge, alpha=alpha_now)
         scores_r, preds_r, _, models_r = linRegOneMetric(vectors_return, y, randShuffle=True, alpha=alpha_now)
 
