@@ -1260,8 +1260,7 @@ def plot_pearsons_r_vs_alpha(pearson_r_list, ALPHAS_FOR_SEARCH, method, save_pat
 
 #all_metrics = [col for col in df_moodTracking.columns if col != 'Datetime']
 #all_metrics = ['Mood', 'Anxiety', 'Hunger']
-#all_metrics = ['Mood', 'Depression', 'Anxiety', 'Hunger', 'Pain']
-all_metrics = ['Pain']
+all_metrics = ['Mood', 'Depression', 'Anxiety', 'Hunger', 'Pain']
 
 
 FILE_ENDING = '.png'
