@@ -73,7 +73,7 @@ print("Overview Numbers:")
 print(f"Total Patients Processed: {len(patients_to_include)}")
 print(f"Patients with Data: {overview_df.filter(like='Num_Self_Reports').sum(axis=1).gt(0).sum()}")
 
-for mood in ['Mood', 'Depression', 'Anxiety']:
+for mood in ['Mood', 'Depression', 'Anxiety', 'Hunger', 'Pain']:
     mood_columns = overview_df.filter(like=f"Num_Distinct_Scores_{mood}").columns
     if not mood_columns.empty:
         print(f"\n{mood} Statistics:")
