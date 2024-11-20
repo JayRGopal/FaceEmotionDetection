@@ -24,7 +24,7 @@ for sheet_name in patients_to_include:
         df = pd.read_excel(xls, sheet_name=sheet_name)
         
         # Get columns related to moods (e.g., Mood, Depression, Anxiety)
-        mood_columns = [col for col in df.columns if col.lower() in ['mood', 'depression', 'anxiety']]
+        mood_columns = [col for col in df.columns if col.lower() in ['mood', 'depression', 'anxiety', 'hunger', 'pain']]
         
         # Skip if no mood columns are found
         if not mood_columns:
@@ -58,8 +58,8 @@ for sheet_name in patients_to_include:
         # Append empty row for patients with no data
         overview_data.append({
             'Patient': sheet_name,
-            **{f"Num_Self_Reports_{mood}": 0 for mood in ['Mood', 'Depression', 'Anxiety']},
-            **{f"Num_Distinct_Scores_{mood}": 0 for mood in ['Mood', 'Depression', 'Anxiety']}
+            **{f"Num_Self_Reports_{mood}": 0 for mood in ['Mood', 'Depression', 'Anxiety', 'Hunger', 'Pain']},
+            **{f"Num_Distinct_Scores_{mood}": 0 for mood in ['Mood', 'Depression', 'Anxiety', 'Hunger', 'Pain']}
         })
 
 # Create a DataFrame from the overview data
