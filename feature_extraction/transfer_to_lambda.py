@@ -18,3 +18,15 @@ Mean Num Distinct Scores: 3.53
 Median Num Distinct Scores: 3.00
 Mean Num Total Scores: 14.67
 Median Num Total Scores: 13.00
+
+Hunger Statistics:
+Mean Num Distinct Scores: 4.13
+Median Num Distinct Scores: 4.00
+Mean Num Total Scores: 14.50
+Median Num Total Scores: 13.00
+
+Pain Statistics:
+Mean Num Distinct Scores: 3.73
+Median Num Distinct Scores: 4.00
+Mean Num Total Scores: 14.60
+Median Num Total Scores: 13.00
