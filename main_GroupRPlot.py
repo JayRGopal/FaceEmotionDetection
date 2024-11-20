@@ -511,7 +511,7 @@ for metric in METRICS:
     plt.figure(figsize=(10, 6))
     plt.boxplot(data, vert=False, labels=labels, showmeans=True,
                 meanprops={'marker': 'o', 'markerfacecolor': 'red', 'markersize': 10})
-    plt.title(f'Group $R^2$ for {metric.capitalize()}, N = {len(r2_values_prefix_1)}', fontsize=24)
+    plt.title(f'Group $R^2$ for {metric.capitalize()}, N = {len(r2_values_prefix_1_included)}', fontsize=24)
     plt.xlabel("$R^2$", fontsize=18)
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
