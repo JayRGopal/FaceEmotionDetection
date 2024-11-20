@@ -357,6 +357,8 @@ patients = detect_patients()
 for metric in METRICS:
     r2_values_prefix_1 = []
     r2_values_prefix_2 = []
+    r2_values_prefix_1_included = []
+    r2_values_prefix_2_included = []
     variance_list = []
     sample_size_list = []
     patient_permutation_distributions_prefix_1 = []
@@ -392,6 +394,10 @@ for metric in METRICS:
             if np.isnan(r2_2):
                 print(f"{patient} excluded due to NaN values.")
                 continue
+            
+            if meets_inclusion_criteria(df_moodTracking, metric):
+                r2_values_prefix_1_included.append(r2_1)
+                r2_values_prefix_2_included.append(r2_2)
 
             # Variance and sample size
             variance = np.var(df_moodTracking[metric].dropna())
@@ -454,6 +460,52 @@ for metric in METRICS:
 
     if SHOW_PREFIX_2:
         data.append(r2_values_prefix_2)
+        labels.append(LABEL_2)
+
+    plt.figure(figsize=(10, 6))
+    plt.boxplot(data, vert=False, labels=labels, showmeans=True,
+                meanprops={'marker': 'o', 'markerfacecolor': 'red', 'markersize': 10})
+    plt.title(f'Group $R^2$ for {metric.capitalize()}, N = {len(r2_values_prefix_1)}', fontsize=24)
+    plt.xlabel("$R^2$", fontsize=18)
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
+
+    # Add random chance performance region
+    random_chance_25th, random_chance_75th = np.mean(random_distributions, axis=0)
+    plt.axvspan(random_chance_25th, random_chance_75th, color='gray', alpha=0.3)
+    plt.axvline(random_chance_25th, color='gray', linestyle='dotted')
+    plt.axvline(random_chance_75th, color='gray', linestyle='dotted')
+
+    plt.savefig(os.path.join(RESULTS_PATH_BASE, f'{metric}_groupR2_ALL.png'), bbox_inches='tight')
+    plt.close()
+
+    # Create and save the violin plot
+    plt.figure(figsize=(10, 6))
+    plt.violinplot(data, vert=False, showmeans=True, showmedians=True)
+    if SHOW_PREFIX_2:
+        plt.yticks([1, 2], labels)
+    else:
+        plt.yticks([1], labels)
+    plt.title(f'{metric.capitalize()} - Violin Plot of $R^2$', fontsize=24)
+    plt.xlabel("$R^2$", fontsize=18)
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
+    plt.axvspan(random_chance_25th, random_chance_75th, color='gray', alpha=0.3)
+    plt.axvline(random_chance_25th, color='gray', linestyle='dotted')
+    plt.axvline(random_chance_75th, color='gray', linestyle='dotted')
+
+
+    plt.savefig(os.path.join(RESULTS_PATH_BASE, f'{metric}_groupR2_violin_ALL.png'), bbox_inches='tight')
+    plt.close()
+
+
+    # ONLY MEETING INCLUSION CRITERIA
+    # Create and save the group R^2 boxplot
+    data = [r2_values_prefix_1_included]
+    labels = [LABEL_1]
+
+    if SHOW_PREFIX_2:
+        data.append(r2_values_prefix_2_included)
         labels.append(LABEL_2)
 
     plt.figure(figsize=(10, 6))
