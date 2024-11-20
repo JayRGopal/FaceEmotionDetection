@@ -324,6 +324,14 @@ def preprocess_mood_tracking(PAT_SHORT_NAME):
     df = df.drop(columns=['Notes'], errors='ignore')
     return df
 
+# Function to check if a patient meets the inclusion criteria
+def meets_inclusion_criteria(df, metric):
+    if metric not in df.columns:
+        return False
+    values = df[metric].dropna().unique()
+    return len(df[metric].dropna()) >= 5 and len(values) >= 4
+
+
 # Generate permutation test distribution
 def permutation_test(y_true, preds, num_permutations=10000):
     random_r2s = []
@@ -406,4 +414,59 @@ for metric in METRICS:
     plt.ylabel('Frequency')
     plt.savefig(os.path.join(RESULTS_PATH_BASE, f'{metric}_permutation_histogram.png'), bbox_inches='tight')
     plt.close()
+
+
+    # Create and save the group R^2 boxplot
+    data = [r2_values_prefix_1]
+    labels = [LABEL_1]
+
+    plt.figure(figsize=(10, 6))
+    plt.boxplot(data, vert=False, labels=labels, showmeans=True,
+                meanprops={'marker': 'o', 'markerfacecolor': 'red', 'markersize': 10})
+    plt.title(f'Group $R^2$ for {metric.capitalize()}, N = {len(r2_values_prefix_1)}', fontsize=24)
+    plt.xlabel("$R^2$", fontsize=18)
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
+    plt.savefig(os.path.join(RESULTS_PATH_BASE, f'{metric}_groupR2.png'), bbox_inches='tight')
+    plt.close()
+
+    # Create and save the violin plot
+    plt.figure(figsize=(10, 6))
+    data_inclusion = [r2_values_prefix_1]
+    labels_inclusion = [LABEL_1]
+    plt.violinplot(data_inclusion, vert=False, showmeans=True, showmedians=True)
+    plt.yticks([1], labels_inclusion)
+    plt.title(f'{metric.capitalize()} - Violin Plot of $R^2$', fontsize=24)
+    plt.xlabel("$R^2$", fontsize=18)
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
+    plt.savefig(os.path.join(RESULTS_PATH_BASE, f'{metric}_groupR2_violin.png'), bbox_inches='tight')
+    plt.close()
+
+    # For inclusion criteria-specific plots
+    if meets_inclusion_criteria(df_moodTracking, metric):
+        # Inclusion-specific group R^2 plot
+        plt.figure(figsize=(10, 6))
+        plt.boxplot(data, vert=False, labels=labels, showmeans=True,
+                    meanprops={'marker': 'o', 'markerfacecolor': 'blue', 'markersize': 10})
+        plt.title(f'Group $R^2$ with Inclusion Criteria for {metric.capitalize()}', fontsize=24)
+        plt.xlabel("$R^2$", fontsize=18)
+        plt.xticks(fontsize=16)
+        plt.yticks(fontsize=16)
+        plt.savefig(os.path.join(RESULTS_PATH_BASE, f'{metric}_groupR2_inclusion.png'), bbox_inches='tight')
+        plt.close()
+
+        # Inclusion-specific violin plot
+        plt.figure(figsize=(10, 6))
+        plt.violinplot(data_inclusion, vert=False, showmeans=True, showmedians=True)
+        plt.yticks([1], labels_inclusion)
+        plt.title(f'{metric.capitalize()} - Violin Plot of $R^2$ with Inclusion Criteria', fontsize=24)
+        plt.xlabel("$R^2$", fontsize=18)
+        plt.xticks(fontsize=16)
+        plt.yticks(fontsize=16)
+        plt.savefig(os.path.join(RESULTS_PATH_BASE, f'{metric}_groupR2_violin_inclusion.png'), bbox_inches='tight')
+        plt.close()
+
+
+
 
