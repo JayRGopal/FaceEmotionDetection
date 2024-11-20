@@ -452,7 +452,10 @@ for metric in METRICS:
     # Create and save the violin plot
     plt.figure(figsize=(10, 6))
     plt.violinplot(data, vert=False, showmeans=True, showmedians=True)
-    plt.yticks([1], labels)
+    if SHOW_PREFIX_2:
+        plt.yticks([1, 2], labels)
+    else:
+        plt.yticks([1], labels)
     plt.title(f'{metric.capitalize()} - Violin Plot of $R^2$', fontsize=24)
     plt.xlabel("$R^2$", fontsize=18)
     plt.xticks(fontsize=16)
