@@ -1116,6 +1116,30 @@ def plot_pearsons_r_vs_alpha(pearson_r_list, ALPHAS_FOR_SEARCH, method, save_pat
     plt.close()
 
 
+def get_top_AU_features(models, threshold, spreadsheet_path=FEATURE_LABEL_PATH + 'opengraphau_2.0_hours.xlsx'):
+    """
+    Extracts and filters AU-related features based on model coefficients.
+
+    :param models: List of trained regression models.
+    :param threshold: Threshold for feature significance.
+    :param spreadsheet_path: Path to spreadsheet for feature labeling.
+    :return: List of top AU features above the threshold.
+    """
+    coef_array = [model.coef_ for model in models]
+    coef_avg = np.mean(coef_array, axis=0)
+
+    # Filter features by significance threshold
+    significant_indices = np.where(np.abs(coef_avg) > threshold)[0]
+
+    # Convert indices to feature names, focusing on AUs
+    top_features = [
+        get_label_from_index(ind, spreadsheet_path=spreadsheet_path)
+        for ind in significant_indices
+        if 'AU' in get_label_from_index(ind, spreadsheet_path=spreadsheet_path)
+    ]
+
+    return top_features
+
 
 # TODO: Add the alpha search back in!
 # # ALPHA PARAMETER SEARCH FOR LASSO - RUN THIS FIRST!
@@ -1346,6 +1370,7 @@ for RESULTS_PREFIX in RESULTS_PREFIX_LIST:
         scores, preds, y, models = linRegOneMetric(vectors_return, y, do_lasso=do_lasso, do_ridge=do_ridge, alpha=alpha_now)
         scores_r, preds_r, _, models_r = linRegOneMetric(vectors_return, y, randShuffle=True, alpha=alpha_now)
 
+        
         # make scatterplots
         randShuffleR, _, _ = plot_scatterplots(preds_r, y, f'{metric} Random Shuffle', RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_scatterRand{FILE_ENDING}')
         r_list, p_list, scatterFig = plot_scatterplots(preds, y, metric, RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_scatterplots{FILE_ENDING}', randShuffleR=randShuffleR)
@@ -1356,17 +1381,20 @@ for RESULTS_PREFIX in RESULTS_PREFIX_LIST:
         best_avg_mse = np.mean(scores[best_time_radius])
         best_pearson_r = r_list[np.argmax(r_list)]
 
+        top_AUs = get_top_AU_features(models[best_time_radius], threshold=0.1, spreadsheet_path=spreadsheet_path)
+        print(f"Top AUs for {metric}: {top_AUs}")
+
         # bar plot for pearson r
         rPlotFig = make_r_barplot(r_list, list(scores.keys()), metric, RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_R{FILE_ENDING}', method_now=method_now)
 
         # make MSE plot
-        MSEPlotFig = make_mse_boxplot(scores, metric, RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_MSE{FILE_ENDING}', method_now=method_now)
+        # MSEPlotFig = make_mse_boxplot(scores, metric, RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_MSE{FILE_ENDING}', method_now=method_now)
 
         # Feature ablation
-        feat_ab_scores, feat_ab_prs = featureAblate(vectors_return[best_time_radius], y, do_lasso=do_lasso, do_ridge=do_ridge)
+        # feat_ab_scores, feat_ab_prs = featureAblate(vectors_return[best_time_radius], y, do_lasso=do_lasso, do_ridge=do_ridge)
 
-        top_indices, featAbMSEFig = plotFeatAbMSEs(feat_ab_scores, best_mse_list, metric, best_time_radius, savepath=RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_featAblate_MSEs{FILE_ENDING}', spreadsheet_path=spreadsheet_path)
-        plotFeatAbPRs(feat_ab_prs, best_pearson_r, metric, best_time_radius, savepath=RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_featAblate_R{FILE_ENDING}', spreadsheet_path=spreadsheet_path)
+        # top_indices, featAbMSEFig = plotFeatAbMSEs(feat_ab_scores, best_mse_list, metric, best_time_radius, savepath=RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_featAblate_MSEs{FILE_ENDING}', spreadsheet_path=spreadsheet_path)
+        # plotFeatAbPRs(feat_ab_prs, best_pearson_r, metric, best_time_radius, savepath=RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_featAblate_R{FILE_ENDING}', spreadsheet_path=spreadsheet_path)
 
         # extract just ONE scatterplot (the best pearson's R) and save it individually
         plt.rcParams['lines.markersize'] = 9
@@ -1375,7 +1403,7 @@ for RESULTS_PREFIX in RESULTS_PREFIX_LIST:
 
         # Plot top n features vs. self-reported scores
         PLOT_NOW = 3
-        plot_feat_scatterplots(vectors_array=vectors_return[best_time_radius], y=y, feat_ind_list=top_indices[:PLOT_NOW], metric=metric, savepath=RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_topFeats{FILE_ENDING}', spreadsheet_path=spreadsheet_path)
+        # plot_feat_scatterplots(vectors_array=vectors_return[best_time_radius], y=y, feat_ind_list=top_indices[:PLOT_NOW], metric=metric, savepath=RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_topFeats{FILE_ENDING}', spreadsheet_path=spreadsheet_path)
 
         # Store predictions and true values for each time radius
         predictions_dict[metric] = {
