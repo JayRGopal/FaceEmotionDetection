@@ -1,6 +1,6 @@
 import pandas as pd
 
-# Path to the xlsx file
+# Updated paths
 MOOD_TRACKING_SHEET_PATH = '/home/jgopal/NAS/Analysis/AudioFacialEEG/Behavioral Labeling/Mood_Tracking.xlsx'
 OUTPUT_SPREADSHEET_PATH = '/home/jgopal/NAS/Analysis/AudioFacialEEG/Behavioral Labeling/Mood_Tracking_Overview.xlsx'
 
@@ -68,9 +68,17 @@ overview_df = pd.DataFrame(overview_data)
 # Save the DataFrame to an Excel file
 overview_df.to_excel(OUTPUT_SPREADSHEET_PATH, index=False)
 
-# Print some overview numbers
+# Print overview numbers with updated statistics
 print("Overview Numbers:")
 print(f"Total Patients Processed: {len(patients_to_include)}")
 print(f"Patients with Data: {overview_df.filter(like='Num_Self_Reports').sum(axis=1).gt(0).sum()}")
-print(f"Total Self-Reports (All Moods): {overview_df.filter(like='Num_Self_Reports').sum().sum()}")
-print(f"Average Distinct Scores per Patient (All Moods): {overview_df.filter(like='Num_Distinct_Scores').mean().mean():.2f}")
+
+for mood in ['Mood', 'Depression', 'Anxiety']:
+    mood_columns = overview_df.filter(like=f"Num_Distinct_Scores_{mood}").columns
+    if not mood_columns.empty:
+        print(f"\n{mood} Statistics:")
+        print(f"Mean Num Distinct Scores: {overview_df[mood_columns].mean().mean():.2f}")
+        print(f"Median Num Distinct Scores: {overview_df[mood_columns].median().median():.2f}")
+        total_score_columns = overview_df.filter(like=f"Num_Self_Reports_{mood}").columns
+        print(f"Mean Num Total Scores: {overview_df[total_score_columns].mean().mean():.2f}")
+        print(f"Median Num Total Scores: {overview_df[total_score_columns].median().median():.2f}")
