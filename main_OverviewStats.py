@@ -2,7 +2,7 @@ import pandas as pd
 
 # Path to the xlsx file
 MOOD_TRACKING_SHEET_PATH = '/home/jgopal/NAS/Analysis/AudioFacialEEG/Behavioral Labeling/Mood_Tracking.xlsx'
-OUTPUT_SPREADSHEET_PATH = '/home/jgopal/NAS/Analysis/Behavioral Labeling/Mood_Tracking_Overview.xlsx'
+OUTPUT_SPREADSHEET_PATH = '/home/jgopal/NAS/Analysis/AudioFacialEEG/Behavioral Labeling/Mood_Tracking_Overview.xlsx'
 
 # Expanded list of patients
 patients_to_include = [
