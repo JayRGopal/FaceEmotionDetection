@@ -346,9 +346,10 @@ patients = detect_patients()
 
 for metric in METRICS:
     r2_values_prefix_1 = []
+    r2_values_prefix_2 = []
     variance_list = []
     sample_size_list = []
-    patient_permutation_distributions = []
+    patient_permutation_distributions_prefix_1 = []
 
     print(f"\nResults for {metric.capitalize()}:")
 
@@ -359,14 +360,25 @@ for metric in METRICS:
 
             # Load predictions
             predictions_prefix_1 = load_var(f'predictions_{patient}_{PREFIX_1_PAIN if metric == "Pain" else PREFIX_1}', RUNTIME_VAR_PATH)[metric]
+            predictions_prefix_2 = load_var(f'predictions_{patient}_{PREFIX_2}', RUNTIME_VAR_PATH)[metric]
 
-            y_true = predictions_prefix_1['y_true']
-            preds = predictions_prefix_1['preds'][predictions_prefix_1['best_time_radius']]
+            y_true_1 = predictions_prefix_1['y_true']
+            preds_1 = predictions_prefix_1['preds'][predictions_prefix_1['best_time_radius']]
 
             # Calculate R^2
-            r2 = pearsonr(y_true, preds)[0] ** 2
+            r2_1 = pearsonr(y_true_1, preds_1)[0] ** 2
 
-            if np.isnan(r2):
+            if np.isnan(r2_1):
+                print(f"{patient} excluded due to NaN values.")
+                continue
+
+            y_true_2 = predictions_prefix_2['y_true']
+            preds_2 = predictions_prefix_2['preds'][predictions_prefix_2['best_time_radius']]
+
+            # Calculate R^2
+            r2_2 = pearsonr(y_true_2, preds_2)[0] ** 2
+
+            if np.isnan(r2_2):
                 print(f"{patient} excluded due to NaN values.")
                 continue
 
@@ -376,22 +388,25 @@ for metric in METRICS:
 
             variance_list.append(variance)
             sample_size_list.append(sample_size)
-            r2_values_prefix_1.append(r2)
+
+            r2_values_prefix_1.append(r2_1)
+
+            r2_values_prefix_2.append(r2_2)
 
             # Permutation test
-            perm_distribution = permutation_test(y_true, preds)
-            patient_permutation_distributions.append(perm_distribution)
+            perm_distribution_1 = permutation_test(y_true_1, preds_1)
+            patient_permutation_distributions_prefix_1.append(perm_distribution_1)
 
         except Exception as e:
             print(f"Error processing {patient}: {e}")
             continue
 
     # Permutation test summary
-    true_mean_r2 = np.mean(r2_values_prefix_1)
-    perm_means = [np.mean(perm) for perm in patient_permutation_distributions]
-    t_stat, p_value = ttest_1samp(perm_means, true_mean_r2)
+    true_mean_r2_1 = np.mean(r2_values_prefix_1)
+    perm_means_1 = [np.mean(perm) for perm in patient_permutation_distributions_prefix_1]
+    t_stat_1, p_value_1 = ttest_1samp(perm_means_1, true_mean_r2_1)
 
-    print(f"Permutation Test Mean R^2: {true_mean_r2:.3f}, p-value: {p_value:.3g}")
+    print(f"Permutation Test Mean R^2: {true_mean_r2_1:.3f}, p-value: {p_value_1:.3g}")
 
     # Scatterplot: x = sample size, y = variance, color = R^2
     plt.figure(figsize=(10, 6))
@@ -405,9 +420,9 @@ for metric in METRICS:
 
     # Histogram of permutation test results
     plt.figure(figsize=(10, 6))
-    for perm_dist in patient_permutation_distributions:
+    for perm_dist in patient_permutation_distributions_prefix_1:
         plt.hist(perm_dist, bins=30, alpha=0.3, label=f"Patient")
-    plt.axvline(true_mean_r2, color='red', linestyle='dotted', label='True Mean $R^2$')
+    plt.axvline(true_mean_r2_1, color='red', linestyle='dotted', label='True Mean $R^2$')
     plt.legend()
     plt.title(f'Permutation Test Distribution for {metric.capitalize()}')
     plt.xlabel('$R^2$')
@@ -419,6 +434,10 @@ for metric in METRICS:
     # Create and save the group R^2 boxplot
     data = [r2_values_prefix_1]
     labels = [LABEL_1]
+
+    if SHOW_PREFIX_2:
+        data.append(r2_values_prefix_2)
+        labels.append(LABEL_2)
 
     plt.figure(figsize=(10, 6))
     plt.boxplot(data, vert=False, labels=labels, showmeans=True,
@@ -432,40 +451,14 @@ for metric in METRICS:
 
     # Create and save the violin plot
     plt.figure(figsize=(10, 6))
-    data_inclusion = [r2_values_prefix_1]
-    labels_inclusion = [LABEL_1]
-    plt.violinplot(data_inclusion, vert=False, showmeans=True, showmedians=True)
-    plt.yticks([1], labels_inclusion)
+    plt.violinplot(data, vert=False, showmeans=True, showmedians=True)
+    plt.yticks([1], labels)
     plt.title(f'{metric.capitalize()} - Violin Plot of $R^2$', fontsize=24)
     plt.xlabel("$R^2$", fontsize=18)
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
     plt.savefig(os.path.join(RESULTS_PATH_BASE, f'{metric}_groupR2_violin.png'), bbox_inches='tight')
     plt.close()
-
-    # For inclusion criteria-specific plots
-    if meets_inclusion_criteria(df_moodTracking, metric):
-        # Inclusion-specific group R^2 plot
-        plt.figure(figsize=(10, 6))
-        plt.boxplot(data, vert=False, labels=labels, showmeans=True,
-                    meanprops={'marker': 'o', 'markerfacecolor': 'blue', 'markersize': 10})
-        plt.title(f'Group $R^2$ with Inclusion Criteria for {metric.capitalize()}', fontsize=24)
-        plt.xlabel("$R^2$", fontsize=18)
-        plt.xticks(fontsize=16)
-        plt.yticks(fontsize=16)
-        plt.savefig(os.path.join(RESULTS_PATH_BASE, f'{metric}_groupR2_inclusion.png'), bbox_inches='tight')
-        plt.close()
-
-        # Inclusion-specific violin plot
-        plt.figure(figsize=(10, 6))
-        plt.violinplot(data_inclusion, vert=False, showmeans=True, showmedians=True)
-        plt.yticks([1], labels_inclusion)
-        plt.title(f'{metric.capitalize()} - Violin Plot of $R^2$ with Inclusion Criteria', fontsize=24)
-        plt.xlabel("$R^2$", fontsize=18)
-        plt.xticks(fontsize=16)
-        plt.yticks(fontsize=16)
-        plt.savefig(os.path.join(RESULTS_PATH_BASE, f'{metric}_groupR2_violin_inclusion.png'), bbox_inches='tight')
-        plt.close()
 
 
 
