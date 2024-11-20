@@ -341,6 +341,16 @@ def permutation_test(y_true, preds, num_permutations=10000):
         random_r2s.append(r**2)
     return random_r2s
 
+# Function to generate random chance performance distribution
+def generate_random_chance_distribution(y_true, preds, num_shuffles=10000):
+    random_r2s = []
+    for _ in range(num_shuffles):
+        y_true_shuffled = np.random.permutation(y_true)
+        r, _ = pearsonr(preds, y_true_shuffled)
+        random_r2s.append(r ** 2)  # Store R^2 instead of R
+    return np.percentile(random_r2s, [25, 75])  # Return 25th and 75th percentiles for shading
+
+
 # Detect patients
 patients = detect_patients()
 
@@ -350,6 +360,7 @@ for metric in METRICS:
     variance_list = []
     sample_size_list = []
     patient_permutation_distributions_prefix_1 = []
+    random_distributions = []
 
     print(f"\nResults for {metric.capitalize()}:")
 
@@ -396,6 +407,12 @@ for metric in METRICS:
             # Permutation test
             perm_distribution_1 = permutation_test(y_true_1, preds_1)
             patient_permutation_distributions_prefix_1.append(perm_distribution_1)
+
+
+            # Generate random chance performance distribution using the correct method
+            random_chance_distribution = generate_random_chance_distribution(predictions_prefix_1['y_true'], predictions_prefix_1['preds'][predictions_prefix_1['best_time_radius']])
+            random_distributions.append(random_chance_distribution)
+
 
         except Exception as e:
             print(f"Error processing {patient}: {e}")
@@ -446,6 +463,13 @@ for metric in METRICS:
     plt.xlabel("$R^2$", fontsize=18)
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
+
+    # Add random chance performance region
+    random_chance_25th, random_chance_75th = np.mean(random_distributions, axis=0)
+    plt.axvspan(random_chance_25th, random_chance_75th, color='gray', alpha=0.3)
+    plt.axvline(random_chance_25th, color='gray', linestyle='dotted')
+    plt.axvline(random_chance_75th, color='gray', linestyle='dotted')
+
     plt.savefig(os.path.join(RESULTS_PATH_BASE, f'{metric}_groupR2.png'), bbox_inches='tight')
     plt.close()
 
@@ -460,6 +484,11 @@ for metric in METRICS:
     plt.xlabel("$R^2$", fontsize=18)
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
+    plt.axvspan(random_chance_25th, random_chance_75th, color='gray', alpha=0.3)
+    plt.axvline(random_chance_25th, color='gray', linestyle='dotted')
+    plt.axvline(random_chance_75th, color='gray', linestyle='dotted')
+
+
     plt.savefig(os.path.join(RESULTS_PATH_BASE, f'{metric}_groupR2_violin.png'), bbox_inches='tight')
     plt.close()
 
