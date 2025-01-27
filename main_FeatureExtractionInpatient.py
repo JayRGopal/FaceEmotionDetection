@@ -2076,66 +2076,146 @@ from scipy.stats import pearsonr
 import seaborn as sns
 from sklearn.linear_model import Ridge
 from sklearn.linear_model import Lasso
+from sklearn.model_selection import LeaveOneOut, GridSearchCV
 
 
-def linRegOneMetric(vectors_dict, y, randShuffle=False, do_lasso=False, do_ridge=False, alpha=1.0):
-  # runs simple linear regression via one-left-out
-  # vectors_dict -- dictionary mapping time radius (in minutes) to features
-  # y -- a numpy array with labels (self-reported metrics)
-  # randShuffle -- do we shuffle the self-report labels?
-  # if do_lasso, does lasso regression
-  # if do_ridge, does ridge regression. Overrides do_lasso
-  # alpha - this is the weighting of either lasso or ridge
+# def linRegOneMetric(vectors_dict, y, randShuffle=False, do_lasso=False, do_ridge=False, alpha=1.0):
+#   # runs simple linear regression via one-left-out
+#   # vectors_dict -- dictionary mapping time radius (in minutes) to features
+#   # y -- a numpy array with labels (self-reported metrics)
+#   # randShuffle -- do we shuffle the self-report labels?
+#   # if do_lasso, does lasso regression
+#   # if do_ridge, does ridge regression. Overrides do_lasso
+#   # alpha - this is the weighting of either lasso or ridge
 
-  # returns a dictionary with several results:
-  # scores -- dictionary mapping each time radius to list of MSEs from each one-left-out
-  # preds -- dictionary mapping each time radius to a list of each one-left-out model's prediction
-  # y -- returns y again for convenience
-  # models -- dictionary mapping each time radius to a list of each one-left-out trained model (simple linear regression)
+#   # returns a dictionary with several results:
+#   # scores -- dictionary mapping each time radius to list of MSEs from each one-left-out
+#   # preds -- dictionary mapping each time radius to a list of each one-left-out model's prediction
+#   # y -- returns y again for convenience
+#   # models -- dictionary mapping each time radius to a list of each one-left-out trained model (simple linear regression)
 
-  scores = {}
-  preds = {}
-  models = {}
+#   scores = {}
+#   preds = {}
+#   models = {}
 
-  if randShuffle:
-    y_using = np.random.permutation(y)
-  else:
-    y_using = y
+#   if randShuffle:
+#     y_using = np.random.permutation(y)
+#   else:
+#     y_using = y
 
-  for i in vectors_dict.keys():
-    model = LinearRegression()
-    if do_lasso:
-      model = Lasso(alpha=alpha)
-    if do_ridge:
-      model = Ridge(alpha=alpha)
+#   for i in vectors_dict.keys():
+#     model = LinearRegression()
+#     if do_lasso:
+#       model = Lasso(alpha=alpha)
+#     if do_ridge:
+#       model = Ridge(alpha=alpha)
 
-    # Compute MSEs via scikitlearn cross_val_score
-    scores_temp = cross_val_score(model, vectors_dict[i], y_using, cv=vectors_dict[i].shape[0], scoring='neg_mean_squared_error')
-    scores[i] = -1 * scores_temp
+#     # Compute MSEs via scikitlearn cross_val_score
+#     scores_temp = cross_val_score(model, vectors_dict[i], y_using, cv=vectors_dict[i].shape[0], scoring='neg_mean_squared_error')
+#     scores[i] = -1 * scores_temp
 
-    # Predictions via cross_val_predict
-    preds[i] = cross_val_predict(model, vectors_dict[i], y_using, cv=vectors_dict[i].shape[0])
+#     # Predictions via cross_val_predict
+#     preds[i] = cross_val_predict(model, vectors_dict[i], y_using, cv=vectors_dict[i].shape[0])
 
-    # Now we need to iterate through and actually save the models themselves, since cross_val_score doesn't let us do that!
-    models_i_building = []
-    for test_index in range(vectors_dict[i].shape[0]):
+#     # Now we need to iterate through and actually save the models themselves, since cross_val_score doesn't let us do that!
+#     models_i_building = []
+#     for test_index in range(vectors_dict[i].shape[0]):
 
-      X_train = np.delete(vectors_dict[i], test_index, axis=0)
+#       X_train = np.delete(vectors_dict[i], test_index, axis=0)
 
-      y_train = np.delete(y_using, test_index, axis=0)
+#       y_train = np.delete(y_using, test_index, axis=0)
 
-      model = LinearRegression()
-      if do_lasso:
-        model = Lasso(alpha=alpha)
-      if do_ridge:
-        model = Ridge(alpha=alpha)
-      model.fit(X_train, y_train)
-      models_i_building.append(model)
+#       model = LinearRegression()
+#       if do_lasso:
+#         model = Lasso(alpha=alpha)
+#       if do_ridge:
+#         model = Ridge(alpha=alpha)
+#       model.fit(X_train, y_train)
+#       models_i_building.append(model)
 
-    models[i] = models_i_building
+#     models[i] = models_i_building
 
-  return scores, preds, y, models
+#   return scores, preds, y, models
 
+def linRegOneMetric(vectors_dict, y, randShuffle=False, do_lasso=False, do_ridge=False, alpha=1.0, ALPHAS_FOR_SEARCH=None, num_permutations=0):
+    """
+    Runs regression (LASSO/Ridge/Linear) with optional nested alpha search and permutation testing.
+
+    Args:
+        vectors_dict (dict): Dictionary mapping time radius to feature arrays (numpy arrays).
+        y (np.array): Labels (self-reported metrics).
+        randShuffle (bool): Shuffle labels for random testing (default False).
+        do_lasso (bool): Use LASSO regression (default False).
+        do_ridge (bool): Use Ridge regression (default False).
+        alpha (float): Regularization strength (default 1.0).
+        ALPHAS_FOR_SEARCH (list or np.array): List of alphas to search in nested cross-validation (optional).
+        num_permutations (int): Number of permutations for testing (default 0).
+
+    Returns:
+        dict: scores (MSE for each sample for each time radius),
+        dict: preds (predicted values for each sample for each time radius),
+        np.array: y (original or shuffled labels, based on randShuffle),
+        dict: models (trained model objects for each time radius).
+    """
+    if randShuffle:
+        y = np.random.permutation(y)
+
+    # Default alpha search grid if not provided
+    if ALPHAS_FOR_SEARCH is None:
+        ALPHAS_FOR_SEARCH = np.arange(0.1, 5.0, 0.2)
+
+    scores = {}
+    preds = {}
+    models = {}
+
+    for time_radius, X in vectors_dict.items():
+        # Determine the model
+        if do_lasso:
+            model = Lasso()
+            param_grid = {'alpha': ALPHAS_FOR_SEARCH}
+        elif do_ridge:
+            model = Ridge()
+            param_grid = {'alpha': ALPHAS_FOR_SEARCH}
+        else:
+            raise ValueError("Only LASSO or Ridge regression is supported for nested alpha search.")
+
+        # Nested cross-validation for alpha search using LOOCV
+        grid_search = GridSearchCV(estimator=model, param_grid=param_grid, cv=LeaveOneOut(), scoring='neg_mean_squared_error')
+        grid_search.fit(X, y)
+
+        # Best model after alpha search
+        best_model = grid_search.best_estimator_
+        best_alpha = grid_search.best_params_['alpha']
+
+        # Predictions using LOOCV
+        preds[time_radius] = cross_val_predict(best_model, X, y, cv=LeaveOneOut())
+        
+        # MSE scores using LOOCV
+        scores[time_radius] = -1 * cross_val_score(best_model, X, y, cv=LeaveOneOut(), scoring='neg_mean_squared_error')
+
+        # Save the trained model (one per time radius)
+        models[time_radius] = best_model
+
+        print(f"Time Radius: {time_radius}, Best Alpha: {best_alpha}")
+
+    # Optional: Permutation testing
+    if num_permutations > 0:
+        print(f"Running {num_permutations} permutations for statistical testing...")
+        permuted_r_list = []
+        for _ in range(num_permutations):
+            y_shuffled = np.random.permutation(y)
+            permuted_preds = cross_val_predict(best_model, X, y_shuffled, cv=LeaveOneOut())
+            permuted_r, _ = pearsonr(y_shuffled, permuted_preds)
+            permuted_r_list.append(permuted_r)
+
+        # Calculate actual Pearson's R
+        actual_r, _ = pearsonr(y, preds[time_radius])
+        
+        # P-value computation
+        p_value = np.mean([abs(r) >= abs(actual_r) for r in permuted_r_list])
+        print(f"Permutation Test Pearson's R: {actual_r:.4f}, P-value: {p_value:.4f}")
+
+    return scores, preds, y, models
 
 
 def plot_predictions(y, y_pred, randShuffleR=None, ax=None, time_rad=None, metric=None):
@@ -3066,8 +3146,29 @@ for RESULTS_PREFIX in RESULTS_PREFIX_LIST:
             alpha_now = 1.0
 
         vectors_return, y = extractOneMetric(metric, vectors_now=vectors_now, remove_outliers=REMOVE_OUTLIERS)
-        scores, preds, y, models = linRegOneMetric(vectors_return, y, do_lasso=do_lasso, do_ridge=do_ridge, alpha=alpha_now)
-        scores_r, preds_r, _, models_r = linRegOneMetric(vectors_return, y, randShuffle=True, alpha=alpha_now)
+        # scores, preds, y, models = linRegOneMetric(vectors_return, y, do_lasso=do_lasso, do_ridge=do_ridge, alpha=alpha_now)
+        # scores_r, preds_r, _, models_r = linRegOneMetric(vectors_return, y, randShuffle=True, alpha=alpha_now)
+
+        # Run LASSO with nested alpha search and permutation testing
+        scores, preds, y, models = linRegOneMetric(
+            vectors_return, 
+            y, 
+            do_lasso=do_lasso, 
+            do_ridge=do_ridge, 
+            ALPHAS_FOR_SEARCH=np.arange(0.1, 5.0, 0.2),  # Provide the alpha search grid
+            num_permutations=0  # Set to 0 if no permutation testing is needed
+        )
+
+        # Run permutation testing by enabling randShuffle and specifying num_permutations
+        scores_r, preds_r, _, models_r = linRegOneMetric(
+            vectors_return, 
+            y, 
+            randShuffle=True,  # Enable random shuffling for permutation testing
+            do_lasso=do_lasso, 
+            do_ridge=do_ridge, 
+            ALPHAS_FOR_SEARCH=np.arange(0.1, 5.0, 0.2),  # Use the same alpha search grid
+            num_permutations=100  # Number of permutations
+        )
 
         # make scatterplots
         randShuffleR, _, _ = plot_scatterplots(preds_r, y, f'{metric} Random Shuffle', RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_scatterRand{FILE_ENDING}')
