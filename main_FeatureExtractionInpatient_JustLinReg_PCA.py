@@ -1362,8 +1362,8 @@ for RESULTS_PREFIX in RESULTS_PREFIX_LIST:
         best_avg_mse = np.mean(scores[best_time_radius])
         best_pearson_r = r_list[np.argmax(r_list)]
 
-        top_AUs = get_top_AU_features(models[best_time_radius], threshold=0.1, spreadsheet_path=spreadsheet_path)
-        print(f"Top AUs for {metric}: {top_AUs}")
+        # top_AUs = get_top_AU_features(models[best_time_radius], threshold=0.1, spreadsheet_path=spreadsheet_path)
+        # print(f"Top AUs for {metric}: {top_AUs}")
 
         # bar plot for pearson r
         rPlotFig = make_r_barplot(r_list, list(scores.keys()), metric, RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_R{FILE_ENDING}', method_now=method_now)
