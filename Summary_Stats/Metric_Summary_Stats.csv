@@ -1,7 +1,0 @@
-Metric,Num Patients Included,Mean Datapoints (Included),Median Datapoints (Included),Mean Range (Included),Median Range (Included),Total Patients w/ Non-Zero
-Anxiety,9,23.22222222222222,18.0,6.444444444444445,6.0,31
-Depression,4,28.5,17.0,6.0,5.5,30
-Hunger,17,19.529411764705884,18.0,6.588235294117647,6.0,35
-Mood,13,16.76923076923077,13.0,5.923076923076923,6.0,35
-Pain,7,28.142857142857142,18.0,5.571428571428571,5.0,35
-Sleepiness,10,21.6,18.0,5.75,5.25,29
