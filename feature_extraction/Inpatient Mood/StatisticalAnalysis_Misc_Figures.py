@@ -5,7 +5,8 @@ import matplotlib.dates as mdates
 import os
 from openpyxl import load_workbook
 from openpyxl.styles import Font
-import itertools  # for cycling through colors
+import itertools
+import re
 
 # Path to the xlsx file
 MOOD_TRACKING_SHEET_PATH = '/home/jgopal/NAS/Analysis/AudioFacialEEG/Behavioral Labeling/Mood_Tracking.xlsx'
@@ -16,7 +17,9 @@ xls = pd.ExcelFile(MOOD_TRACKING_SHEET_PATH)
 sheet_names = [sheet for sheet in xls.sheet_names if sheet.startswith("S_")]
 
 ###############################################################################
-# 2) Dynamically discover all self-report metrics (exclude first col, "Notes", "Datetime")
+# 2) Dynamically discover all metrics
+#    Skip: first column, "notes"/"datetime", columns containing "catch trial",
+#          columns with "p" followed by digits anywhere in name.
 ###############################################################################
 all_metrics = set()
 for sheet_name in sheet_names:
@@ -24,20 +27,32 @@ for sheet_name in sheet_names:
     if df.empty:
         continue
     
-    # Build a list of columns to examine, skipping the first column
+    # Exclude the first column (assumed datetime)
     candidate_cols = df.columns[1:]
     
     for col in candidate_cols:
-        col_lower = col.lower()
-        # Exclude if the col is named "notes" or "datetime" (in any case)
-        if col_lower not in ['notes', 'datetime']:
-            all_metrics.add(col)
+        col_lower = col.lower().strip()
+        
+        # Conditions for ignoring this column:
+        #   - If it's named "notes" or "datetime"
+        #   - If it contains "catch trial"
+        #   - If it matches pattern p\d+ anywhere in the name
+        if col_lower == 'notes':
+            continue
+        if col_lower == 'datetime':
+            continue
+        if 'catch trial' in col_lower:
+            continue
+        if re.search(r'p\d+', col_lower):
+            continue
+        
+        all_metrics.add(col)
 
 # Convert set to a sorted list
 all_metrics = sorted(all_metrics)
 
 ###############################################################################
-# 3) Prepare color cycling so each metric has a distinct color
+# 3) Prepare color cycling so each metric has a distinct color in the same plot
 ###############################################################################
 color_cycle = itertools.cycle(plt.cm.tab10(np.linspace(0, 1, 10)))  
 metric_color_map = {}
@@ -45,7 +60,7 @@ for metric in all_metrics:
     metric_color_map[metric] = next(color_cycle)
 
 ###############################################################################
-# 4) Inclusion criteria and plotting
+# 4) Inclusion criteria and plotting per sheet
 ###############################################################################
 patient_data = []
 
@@ -64,15 +79,15 @@ for sheet_name in sheet_names:
     plt.figure(figsize=(10, 6))
     
     for metric in all_metrics:
+        # If metric doesn't exist, set default stats and skip
         if metric not in df.columns:
-            # If metric doesn't exist, record zero stats
             patient_info[f'Num Datapoints - {metric}'] = 0
             patient_info[f'Num Unique - {metric}'] = 0
             patient_info[f'Range - {metric}'] = 0
             patient_info[f'Is Included - {metric}'] = 'No'
             continue
         
-        # Drop rows with NaN or zero in this metric
+        # Filter out rows with NaN or zero (False) in this metric
         metric_df = df.dropna(subset=[metric])
         metric_df = metric_df[metric_df[metric].astype(bool)]
         if metric_df.empty:
@@ -82,6 +97,7 @@ for sheet_name in sheet_names:
             patient_info[f'Is Included - {metric}'] = 'No'
             continue
         
+        # Ensure chronological order
         metric_df = metric_df.sort_values(by=df.columns[0])
         
         # Calculate stats
@@ -96,7 +112,7 @@ for sheet_name in sheet_names:
         patient_info[f'Num Unique - {metric}'] = num_unique
         patient_info[f'Range - {metric}'] = val_range
         
-        # Inclusion criteria: >=5 datapoints, >=3 unique, range>5
+        # Check inclusion (>=5 datapoints, >=3 unique, range>5)
         if (num_datapoints >= 5) and (num_unique >= 3) and (val_range > 5):
             patient_info[f'Is Included - {metric}'] = 'Yes'
         else:
@@ -141,7 +157,7 @@ ws = wb['Data_Overview']
 
 include_cols = [c for c in patient_df.columns if c.startswith('Is Included - ')]
 for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
-    # See if any "Is Included - {metric}" cell in this row is 'Yes'
+    # Check if any "Is Included - {metric}" cell is 'Yes'
     if any(cell.value == 'Yes' for cell in row if ws.cell(row=1, column=cell.column).value in include_cols):
         for cell in row:
             cell.font = Font(bold=True)
