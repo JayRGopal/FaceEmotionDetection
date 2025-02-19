@@ -178,8 +178,12 @@ wb.save(new_file_path)
 # Path where your overview Excel is stored. You can adapt this if needed.
 OVERVIEW_EXCEL_PATH = new_file_path
 
-# Folder where you want to save summary plots
-SUMMARY_FIGURES_PATH = os.path.dirname(OVERVIEW_EXCEL_PATH)
+# Create a subfolder named "Summary_Stats" in the same directory as the overview Excel
+BASE_FOLDER = os.path.dirname(OVERVIEW_EXCEL_PATH)
+SUMMARY_FIGURES_PATH = os.path.join(BASE_FOLDER, "Summary_Stats")
+
+# Make sure the subfolder exists (creates if missing)
+os.makedirs(SUMMARY_FIGURES_PATH, exist_ok=True)
 
 ###############################################################################
 # 1) Read the overview data
