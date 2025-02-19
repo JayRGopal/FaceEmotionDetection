@@ -6,9 +6,10 @@ OUTPUT_SPREADSHEET_PATH = '/home/jgopal/NAS/Analysis/AudioFacialEEG/Behavioral L
 
 # Expanded list of patients
 patients_to_include = [
-    'S_199', 'S_201', 'S_202', 'S_203', 'S_205', 'S_206', 'S_207', 'S_208', 'S_209', 'S_10b',
+    'S_199', 'S_201', 'S_202', 'S_203', 'S_205', 'S_206', 'S_207', 'S_208', 'S_209', 'S_210', 'S_10b',
     'S_211', 'S_212', 'S_214', 'S_199b', 'S_174', 'S_217', 'S_218', 'S_219', 'S_221', 'S_224',
-    'S_226', 'S_227', 'S_230', 'S_231', 'S_233', 'S_234', 'S_236', 'S_237', 'S_238', 'S_239'
+    'S_226', 'S_227', 'S_230', 'S_231', 'S_233', 'S_234', 'S_236', 'S_237', 'S_238', 'S_239',
+    'S_240', 'S_242', 'S_244'
 ]
 
 # Read the Excel file
