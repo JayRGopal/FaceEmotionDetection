@@ -43,6 +43,10 @@ for sheet_name in sheet_names:
             continue
         if 'catch trial' in col_lower:
             continue
+        if 'panas' in col_lower:
+            continue
+        if 'unnamed' in col_lower:
+            continue
         if re.search(r'p\d+', col_lower):
             continue
         
