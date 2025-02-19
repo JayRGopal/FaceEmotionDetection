@@ -386,6 +386,7 @@ for metric in metrics:
     # Plot
     plt.figure(figsize=(8, 5))
     plt.plot(x_vals, y_vals, marker='o', linestyle='--')
+    plt.axhline(y=5, color='red', linestyle='--', linewidth=1.5)
     plt.title(f"# of Datapoints over Patient Recency for {metric}")
     plt.xlabel("Patient Recency (sorted by sheet numeric)")
     plt.ylabel("Num Self-Reports")
