@@ -116,8 +116,8 @@ for sheet_name in sheet_names:
         patient_info[f'Num Unique - {metric}'] = num_unique
         patient_info[f'Range - {metric}'] = val_range
         
-        # Check inclusion (>=5 datapoints, >=3 unique, range>5)
-        if (num_datapoints >= 5) and (num_unique >= 3) and (val_range > 5):
+        # Check inclusion (>=5 datapoints, >=3 unique, range>=5)
+        if (num_datapoints >= 5) and (num_unique >= 3) and (val_range >= 5):
             patient_info[f'Is Included - {metric}'] = 'Yes'
         else:
             patient_info[f'Is Included - {metric}'] = 'No'
