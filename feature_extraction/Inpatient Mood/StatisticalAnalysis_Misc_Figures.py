@@ -167,3 +167,233 @@ for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
             cell.font = Font(bold=True)
 
 wb.save(new_file_path)
+
+
+
+
+###############################################################################
+# 0) Paths and constants
+###############################################################################
+
+# Path where your overview Excel is stored. You can adapt this if needed.
+OVERVIEW_EXCEL_PATH = new_file_path
+
+# Folder where you want to save summary plots
+SUMMARY_FIGURES_PATH = os.path.dirname(OVERVIEW_EXCEL_PATH)
+
+###############################################################################
+# 1) Read the overview data
+###############################################################################
+
+df_overview = pd.read_excel(OVERVIEW_EXCEL_PATH)
+
+# Example columns in df_overview for each metric "Mood":
+# - "Num Datapoints - Mood"
+# - "Num Unique - Mood"
+# - "Range - Mood"
+# - "Is Included - Mood"
+#
+# We also have "Sheet Name" for each patient.
+
+###############################################################################
+# 2) Extract the list of metrics from the columns
+#    (We look for columns that match "Num Datapoints - XYZ", etc.)
+###############################################################################
+
+pattern_metric = re.compile(r"^Num Datapoints - (.+)$")  
+# This pattern captures the part after "Num Datapoints - " as the metric name.
+
+metrics = []
+for col in df_overview.columns:
+    match = pattern_metric.match(col)
+    if match:
+        metrics.append(match.group(1))
+
+metrics = sorted(set(metrics))  # unique, sorted metric names
+
+###############################################################################
+# 3) Create a helper function to parse "S_###" or "S_###something"
+#    and return the numeric part (e.g., "199" -> 199).
+###############################################################################
+
+def extract_numeric_suffix(sheet_name):
+    """
+    Extracts the integer that appears after 'S_' at the start of sheet_name.
+    For example:
+      "S_199" -> 199
+      "S_202b" -> 202
+    If no recognizable integer is found, returns None.
+    """
+    # If it strictly starts with S_ we take the substring after that
+    # Then we parse out any leading digits
+    match = re.match(r"^S_(\d+)", sheet_name)
+    if match:
+        return int(match.group(1))
+    else:
+        return None
+
+###############################################################################
+# 4) Summaries for each metric
+###############################################################################
+
+summary_records = []
+for metric in metrics:
+    # Build column names
+    col_datapoints = f"Num Datapoints - {metric}"
+    col_range = f"Range - {metric}"
+    col_included = f"Is Included - {metric}"
+    
+    # Subset the DF for patients that actually have >0 data for this metric
+    # (meaning "Num Datapoints - metric" > 0)
+    mask_nonzero = df_overview[col_datapoints] > 0
+    df_nonzero = df_overview[mask_nonzero].copy()
+    
+    # Among these, how many are "included"?
+    # Note: a patient is included if "Is Included - metric" == "Yes"
+    mask_included = (df_nonzero[col_included] == "Yes")
+    df_included = df_nonzero[mask_included].copy()
+    
+    # 1) Number of patients included
+    num_included = len(df_included)
+    
+    # 2) Among included patients: mean/median # of datapoints, mean/median range
+    if num_included > 0:
+        mean_datapoints_included = df_included[col_datapoints].mean()
+        median_datapoints_included = df_included[col_datapoints].median()
+        mean_range_included = df_included[col_range].mean()
+        median_range_included = df_included[col_range].median()
+    else:
+        mean_datapoints_included = 0
+        median_datapoints_included = 0
+        mean_range_included = 0
+        median_range_included = 0
+    
+    # 3) Total number of patients with non-zero scores
+    num_nonzero = len(df_nonzero)
+    
+    summary_records.append({
+        "Metric": metric,
+        "Num Patients Included": num_included,
+        "Mean Datapoints (Included)": mean_datapoints_included,
+        "Median Datapoints (Included)": median_datapoints_included,
+        "Mean Range (Included)": mean_range_included,
+        "Median Range (Included)": median_range_included,
+        "Total Patients w/ Non-Zero": num_nonzero
+    })
+
+# Convert to DataFrame for easy viewing
+df_summary = pd.DataFrame(summary_records)
+
+###############################################################################
+# 5) Print or save summary to CSV (optional)
+###############################################################################
+
+print("===== Summary Statistics by Metric =====")
+print(df_summary)
+
+summary_csv_path = os.path.join(SUMMARY_FIGURES_PATH, "Metric_Summary_Stats.csv")
+df_summary.to_csv(summary_csv_path, index=False)
+
+###############################################################################
+# 6) Make a "nice concise bar or box plot" for each metric
+#    showing distribution of (# datapoints) or (range) for:
+#      (a) all patients with non-zero data
+#      (b) included patients only
+###############################################################################
+
+# We'll make 2 subplots:
+#   Left: distribution of # datapoints
+#   Right: distribution of range
+# We do a box plot with two boxes each: "All Non-Zero" vs. "Included".
+#
+# Then we save each figure as: "{metric}_Distribution.png"
+
+for metric in metrics:
+    col_datapoints = f"Num Datapoints - {metric}"
+    col_range = f"Range - {metric}"
+    col_included = f"Is Included - {metric}"
+    
+    # All non-zero
+    mask_nonzero = df_overview[col_datapoints] > 0
+    data_all_datapoints = df_overview.loc[mask_nonzero, col_datapoints]
+    data_all_range = df_overview.loc[mask_nonzero, col_range]
+    
+    # Included subset
+    mask_included = (mask_nonzero & (df_overview[col_included] == "Yes"))
+    data_incl_datapoints = df_overview.loc[mask_included, col_datapoints]
+    data_incl_range = df_overview.loc[mask_included, col_range]
+
+    # Create figure
+    fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+    fig.suptitle(f"Distribution for Metric: {metric}", fontsize=16)
+    
+    # Left subplot: # of datapoints
+    axes[0].boxplot(
+        [data_all_datapoints.dropna(), data_incl_datapoints.dropna()],
+        labels=["All Non-Zero", "Included"]
+    )
+    axes[0].set_title("Num Datapoints")
+    
+    # Right subplot: range
+    axes[1].boxplot(
+        [data_all_range.dropna(), data_incl_range.dropna()],
+        labels=["All Non-Zero", "Included"]
+    )
+    axes[1].set_title("Range")
+    
+    plt.tight_layout()
+    
+    # Save figure
+    outname = f"{metric}_Distribution.png"
+    outpath = os.path.join(SUMMARY_FIGURES_PATH, outname)
+    plt.savefig(outpath, dpi=300)
+    plt.close(fig)
+
+###############################################################################
+# 7) For each metric, make a plot of # datapoints vs. the numeric suffix of sheet
+#    We'll call that suffix "Patient Recency."
+#    Save as "Metric_Recency_Plot_{metric}.png".
+###############################################################################
+
+# First, let's parse the numeric suffix for each patient (Sheet Name).
+df_overview["Sheet Numeric"] = df_overview["Sheet Name"].apply(extract_numeric_suffix)
+
+# We’ll store the numeric suffix in a new column "Sheet Numeric" to help with sorting.
+
+for metric in metrics:
+    col_datapoints = f"Num Datapoints - {metric}"
+    
+    # Consider only patients who have at least one datapoint (non-zero).
+    sub = df_overview[df_overview[col_datapoints] > 0].copy()
+    
+    # If "Sheet Numeric" is None for some reason, we exclude them from the plot
+    sub = sub.dropna(subset=["Sheet Numeric"])
+    
+    # Sort by numeric suffix ascending
+    sub = sub.sort_values("Sheet Numeric")
+    
+    # X = sorted numeric suffix
+    x_vals = np.arange(len(sub))  # 0,1,2,... for however many we have
+    y_vals = sub[col_datapoints].values
+    
+    # For labeling or debugging, we might store their actual suffix in text
+    # but we won't put it on the axis if you don't want to crowd it.
+    
+    # Plot
+    plt.figure(figsize=(8, 5))
+    plt.plot(x_vals, y_vals, marker='o', linestyle='--')
+    plt.title(f"# of Datapoints over Patient Recency for {metric}")
+    plt.xlabel("Patient Recency (sorted by sheet numeric)")
+    plt.ylabel("Num Self-Reports")
+    
+    # Optional: If you'd like some x-tick labels showing the actual S_###:
+    #   labels = sub["Sheet Name"].values
+    #   plt.xticks(x_vals, labels, rotation=45)
+    # Otherwise, we leave them blank or minimal.
+    
+    plt.tight_layout()
+    
+    outname = f"Metric_Recency_Plot_{metric}.png"
+    outpath = os.path.join(SUMMARY_FIGURES_PATH, outname)
+    plt.savefig(outpath, dpi=300)
+    plt.close()
