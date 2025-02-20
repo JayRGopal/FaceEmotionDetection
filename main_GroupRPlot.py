@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import warnings
 from scipy.stats import pearsonr, ttest_1samp
+from scipy.stats import spearmanr
 
 # Paths and configurations
 RUNTIME_VAR_PATH = '/home/jgopal/NAS/Analysis/AudioFacialEEG/Runtime_Vars/'
@@ -38,6 +39,37 @@ def detect_patients():
             patient_name = '_'.join(parts[1:3])
             patient_names.add(patient_name)
     return list(patient_names)
+
+def concordance_correlation_coefficient(y_true, y_pred):
+    mean_true = np.mean(y_true)
+    mean_pred = np.mean(y_pred)
+    var_true = np.var(y_true)
+    var_pred = np.var(y_pred)
+    cov = np.mean((y_true - mean_true) * (y_pred - mean_pred))
+    ccc = (2 * cov) / (var_true + var_pred + (mean_true - mean_pred)**2)
+    return ccc
+
+def permutation_test_r2(y_true, y_pred, num_permutations=100):
+    """
+    Simple permutation test using R^2:
+      1. Compute real_r2 = Pearson’s R^2 on (y_true, y_pred).
+      2. Shuffle y_true multiple times. For each shuffle, compute r^2.
+      3. p-value = fraction of shuffles that have r^2 >= real_r2.
+    """
+
+    # Compute actual R^2
+    real_r, _ = pearsonr(y_true, y_pred)
+    real_r2 = real_r ** 2
+
+    count = 0
+    for _ in range(num_permutations):
+        y_shuffled = np.random.permutation(y_true)
+        shuffle_r, _ = pearsonr(y_shuffled, y_pred)
+        if (shuffle_r ** 2) >= real_r2:
+            count += 1
+
+    p_value = count / num_permutations
+    return real_r2, p_value
 
 # Preprocess mood tracking
 def preprocess_mood_tracking(PAT_SHORT_NAME):
@@ -74,23 +106,6 @@ def meets_inclusion_criteria(df, metric):
     return True
 
 
-# Generate permutation test distribution
-def permutation_test(y_true, preds, num_permutations=10000):
-    random_r2s = []
-    for _ in range(num_permutations):
-        y_true_shuffled = np.random.permutation(y_true)
-        r, _ = pearsonr(preds, y_true_shuffled)
-        random_r2s.append(r**2)
-    return random_r2s
-
-# Function to generate random chance performance distribution
-def generate_random_chance_distribution(y_true, preds, num_shuffles=10000):
-    random_r2s = []
-    for _ in range(num_shuffles):
-        y_true_shuffled = np.random.permutation(y_true)
-        r, _ = pearsonr(preds, y_true_shuffled)
-        random_r2s.append(r ** 2)  # Store R^2 instead of R
-    return np.percentile(random_r2s, [25, 75])  # Return 25th and 75th percentiles for shading
 
 
 # Detect patients
@@ -101,9 +116,17 @@ for metric in METRICS:
     r2_values_prefix_2 = []
     r2_values_prefix_1_included = []
     r2_values_prefix_2_included = []
+    p_values_prefix_1 = []
+    p_values_prefix_2 = []
+    p_values_prefix_1_included = []
+    p_values_prefix_2_included = []
+    spearman_values_prefix_1_included = []
+    spearman_values_prefix_2_included = []
+    ccc_values_prefix_1_included = []
+    ccc_values_prefix_2_included = []
+
     variance_list = []
     sample_size_list = []
-    patient_permutation_distributions_prefix_1 = []
     random_distributions = []
 
     print(f"\nResults for {metric.capitalize()}:")
@@ -120,26 +143,42 @@ for metric in METRICS:
             y_true_1 = predictions_prefix_1['y_true']
             preds_1 = predictions_prefix_1['preds'][predictions_prefix_1['best_time_radius']]
 
-            # Calculate R^2
-            r2_1 = pearsonr(y_true_1, preds_1)[0] ** 2
-
-            if np.isnan(r2_1):
+            # Calculate R^2 + Perm test - prefix 1
+            real_r2_1, p_value_1 = permutation_test_r2(y_true_1, preds_1, num_permutations=100)
+            if np.isnan(real_r2_1):
                 print(f"{patient} excluded due to NaN values.")
                 continue
+
+            print(f"[{patient} -- {metric} -- {PREFIX_1_PAIN if metric == 'Pain' else PREFIX_1}] Permutation Test R^2 = {real_r2_1:.3f}, p = {p_value_1:.3f}")
 
             y_true_2 = predictions_prefix_2['y_true']
             preds_2 = predictions_prefix_2['preds'][predictions_prefix_2['best_time_radius']]
 
-            # Calculate R^2
-            r2_2 = pearsonr(y_true_2, preds_2)[0] ** 2
-
-            if np.isnan(r2_2):
+            # Calculate R^2 + Perm test - prefix 2
+            real_r2_2, p_value_2 = permutation_test_r2(y_true_2, preds_2, num_permutations=100)
+            if np.isnan(real_r2_2):
                 print(f"{patient} excluded due to NaN values.")
                 continue
-            
+            print(f"[{patient} -- {metric} -- {PREFIX_2}] Permutation Test R^2 = {real_r2_2:.3f}, p = {p_value_2:.3f}")
+
+
             if meets_inclusion_criteria(df_moodTracking, metric):
-                r2_values_prefix_1_included.append(r2_1)
-                r2_values_prefix_2_included.append(r2_2)
+                r2_values_prefix_1_included.append(real_r2_1)
+                r2_values_prefix_2_included.append(real_r2_2)
+                p_values_prefix_1_included.append(p_value_1)
+                p_values_prefix_2_included.append(p_value_2)
+
+                # Spearman Correlation
+                spearman_1, _ = spearmanr(y_true_1, preds_1)
+                spearman_2, _ = spearmanr(y_true_2, preds_2)
+                spearman_values_prefix_1_included.append(spearman_1)
+                spearman_values_prefix_2_included.append(spearman_2)
+
+                # CCC
+                ccc_1 = concordance_correlation_coefficient(y_true_1, preds_1)
+                ccc_2 = concordance_correlation_coefficient(y_true_2, preds_2)
+                ccc_values_prefix_1_included.append(ccc_1)
+                ccc_values_prefix_2_included.append(ccc_2)
 
             # Variance and sample size
             variance = np.var(df_moodTracking[metric].dropna())
@@ -148,30 +187,16 @@ for metric in METRICS:
             variance_list.append(variance)
             sample_size_list.append(sample_size)
 
-            r2_values_prefix_1.append(r2_1)
+            r2_values_prefix_1.append(real_r2_1)
+            p_values_prefix_1.append(p_value_1)
 
-            r2_values_prefix_2.append(r2_2)
-
-            # Permutation test
-            perm_distribution_1 = permutation_test(y_true_1, preds_1)
-            patient_permutation_distributions_prefix_1.append(perm_distribution_1)
-
-
-            # Generate random chance performance distribution using the correct method
-            random_chance_distribution = generate_random_chance_distribution(predictions_prefix_1['y_true'], predictions_prefix_1['preds'][predictions_prefix_1['best_time_radius']])
-            random_distributions.append(random_chance_distribution)
+            r2_values_prefix_2.append(real_r2_2)
+            p_values_prefix_2.append(p_value_2)
 
 
         except Exception as e:
             print(f"Error processing {patient}: {e}")
             continue
-
-    # Permutation test summary
-    true_mean_r2_1 = np.mean(r2_values_prefix_1)
-    perm_means_1 = [np.mean(perm) for perm in patient_permutation_distributions_prefix_1]
-    t_stat_1, p_value_1 = ttest_1samp(perm_means_1, true_mean_r2_1)
-
-    print(f"Permutation Test Mean R^2: {true_mean_r2_1:.3f}, p-value: {p_value_1:.3g}")
 
     # Scatterplot: x = sample size, y = variance, color = R^2
     plt.figure(figsize=(10, 6))
@@ -183,17 +208,6 @@ for metric in METRICS:
     plt.savefig(os.path.join(RESULTS_PATH_BASE, f'{metric}_scatter_variance_sampleSize.png'), bbox_inches='tight')
     plt.close()
 
-    # Histogram of permutation test results
-    plt.figure(figsize=(10, 6))
-    for perm_dist in patient_permutation_distributions_prefix_1:
-        plt.hist(perm_dist, bins=30, alpha=0.3, label=f"Patient")
-    plt.axvline(true_mean_r2_1, color='red', linestyle='dotted', label='True Mean $R^2$')
-    plt.legend()
-    plt.title(f'Permutation Test Distribution for {metric.capitalize()}')
-    plt.xlabel('$R^2$')
-    plt.ylabel('Frequency')
-    plt.savefig(os.path.join(RESULTS_PATH_BASE, f'{metric}_permutation_histogram.png'), bbox_inches='tight')
-    plt.close()
 
 
     # Create and save the group R^2 boxplot
@@ -207,23 +221,53 @@ for metric in METRICS:
     plt.figure(figsize=(10, 6))
     plt.boxplot(data, vert=False, labels=labels, showmeans=True,
                 meanprops={'marker': 'o', 'markerfacecolor': 'red', 'markersize': 10})
+
+    # 1) Overlay points for prefix_1
+    group_1_y = 1
+    jitter_amount = 0.05
+    for r2_val, p_val in zip(r2_values_prefix_1, p_values_prefix_1):
+        color = 'red' if p_val < 0.05 else 'black'
+        # Slight random vertical jitter so points don’t overlap exactly
+        y_jittered = group_1_y + np.random.uniform(-jitter_amount, jitter_amount)
+        plt.scatter(r2_val, y_jittered, color=color, s=60, alpha=0.7)
+
+    # 2) Overlay points for prefix_2 (only if SHOW_PREFIX_2 is True)
+    if SHOW_PREFIX_2:
+        group_2_y = 2
+        for r2_val, p_val in zip(r2_values_prefix_2, p_values_prefix_2):
+            color = 'red' if p_val < 0.05 else 'black'
+            y_jittered = group_2_y + np.random.uniform(-jitter_amount, jitter_amount)
+            plt.scatter(r2_val, y_jittered, color=color, s=60, alpha=0.7)
+
     plt.title(f'Group $R^2$ for {metric.capitalize()}, N = {len(r2_values_prefix_1)}', fontsize=24)
     plt.xlabel("$R^2$", fontsize=18)
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
-
-    # Add random chance performance region
-    random_chance_25th, random_chance_75th = np.mean(random_distributions, axis=0)
-    plt.axvspan(random_chance_25th, random_chance_75th, color='gray', alpha=0.3)
-    plt.axvline(random_chance_25th, color='gray', linestyle='dotted')
-    plt.axvline(random_chance_75th, color='gray', linestyle='dotted')
-
     plt.savefig(os.path.join(RESULTS_PATH_BASE, f'{metric}_groupR2_ALL.png'), bbox_inches='tight')
     plt.close()
+
+
+
 
     # Create and save the violin plot
     plt.figure(figsize=(10, 6))
     plt.violinplot(data, vert=False, showmeans=True, showmedians=True)
+    
+    # Overlay points for prefix_1 at y=1
+    group_1_y = 1
+    for r2_val, p_val in zip(r2_values_prefix_1, p_values_prefix_1):
+        color = 'red' if p_val < 0.05 else 'black'
+        plt.scatter(r2_val, group_1_y + np.random.uniform(-0.05, 0.05),
+                    color=color, s=60, alpha=0.7)
+
+    # Overlay points for prefix_2 at y=2
+    if SHOW_PREFIX_2:
+        group_2_y = 2
+        for r2_val, p_val in zip(r2_values_prefix_2, p_values_prefix_2):
+            color = 'red' if p_val < 0.05 else 'black'
+            plt.scatter(r2_val, group_2_y + np.random.uniform(-0.05, 0.05),
+                        color=color, s=60, alpha=0.7)
+
     if SHOW_PREFIX_2:
         plt.yticks([1, 2], labels)
     else:
@@ -232,11 +276,6 @@ for metric in METRICS:
     plt.xlabel("$R^2$", fontsize=18)
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
-    plt.axvspan(random_chance_25th, random_chance_75th, color='gray', alpha=0.3)
-    plt.axvline(random_chance_25th, color='gray', linestyle='dotted')
-    plt.axvline(random_chance_75th, color='gray', linestyle='dotted')
-
-
     plt.savefig(os.path.join(RESULTS_PATH_BASE, f'{metric}_groupR2_violin_ALL.png'), bbox_inches='tight')
     plt.close()
 
@@ -253,16 +292,29 @@ for metric in METRICS:
     plt.figure(figsize=(10, 6))
     plt.boxplot(data, vert=False, labels=labels, showmeans=True,
                 meanprops={'marker': 'o', 'markerfacecolor': 'red', 'markersize': 10})
+    
+    # Overlay each included patient's R^2 with color by p < 0.05
+    group_1_y = 1
+    jitter_amount = 0.05
+
+    # 1) Group 1 points
+    for r2_val, p_val in zip(r2_values_prefix_1_included, p_values_prefix_1_included):
+        color = 'red' if p_val < 0.05 else 'black'
+        y_jittered = group_1_y + np.random.uniform(-jitter_amount, jitter_amount)
+        plt.scatter(r2_val, y_jittered, color=color, s=60, alpha=0.7)
+
+    # 2) Group 2 points (only if SHOW_PREFIX_2 is True)
+    if SHOW_PREFIX_2:
+        group_2_y = 2
+        for r2_val, p_val in zip(r2_values_prefix_2_included, p_values_prefix_2_included):
+            color = 'red' if p_val < 0.05 else 'black'
+            y_jittered = group_2_y + np.random.uniform(-jitter_amount, jitter_amount)
+            plt.scatter(r2_val, y_jittered, color=color, s=60, alpha=0.7)
+    
     plt.title(f'Group $R^2$ for {metric.capitalize()}, N = {len(r2_values_prefix_1_included)}', fontsize=24)
     plt.xlabel("$R^2$", fontsize=18)
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
-
-    # Add random chance performance region
-    random_chance_25th, random_chance_75th = np.mean(random_distributions, axis=0)
-    plt.axvspan(random_chance_25th, random_chance_75th, color='gray', alpha=0.3)
-    plt.axvline(random_chance_25th, color='gray', linestyle='dotted')
-    plt.axvline(random_chance_75th, color='gray', linestyle='dotted')
 
     plt.savefig(os.path.join(RESULTS_PATH_BASE, f'{metric}_groupR2.png'), bbox_inches='tight')
     plt.close()
@@ -270,6 +322,25 @@ for metric in METRICS:
     # Create and save the violin plot
     plt.figure(figsize=(10, 6))
     plt.violinplot(data, vert=False, showmeans=True, showmedians=True)
+    
+    # Overlay each included patient's R^2 with color by p < 0.05
+    group_1_y = 1
+    jitter_amount = 0.05
+
+    # 1) Group 1 points
+    for r2_val, p_val in zip(r2_values_prefix_1_included, p_values_prefix_1_included):
+        color = 'red' if p_val < 0.05 else 'black'
+        y_jittered = group_1_y + np.random.uniform(-jitter_amount, jitter_amount)
+        plt.scatter(r2_val, y_jittered, color=color, s=60, alpha=0.7)
+
+    # 2) Group 2 points (only if SHOW_PREFIX_2 is True)
+    if SHOW_PREFIX_2:
+        group_2_y = 2
+        for r2_val, p_val in zip(r2_values_prefix_2_included, p_values_prefix_2_included):
+            color = 'red' if p_val < 0.05 else 'black'
+            y_jittered = group_2_y + np.random.uniform(-jitter_amount, jitter_amount)
+            plt.scatter(r2_val, y_jittered, color=color, s=60, alpha=0.7)
+    
     if SHOW_PREFIX_2:
         plt.yticks([1, 2], labels)
     else:
@@ -278,13 +349,96 @@ for metric in METRICS:
     plt.xlabel("$R^2$", fontsize=18)
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
-    plt.axvspan(random_chance_25th, random_chance_75th, color='gray', alpha=0.3)
-    plt.axvline(random_chance_25th, color='gray', linestyle='dotted')
-    plt.axvline(random_chance_75th, color='gray', linestyle='dotted')
-
 
     plt.savefig(os.path.join(RESULTS_PATH_BASE, f'{metric}_groupR2_violin.png'), bbox_inches='tight')
     plt.close()
+
+
+    # -------------------------------------------------------
+    # SPEARMAN’S RHO: BOX PLOT (INCLUDED PATIENTS ONLY)
+    # -------------------------------------------------------
+    data_spearman = [spearman_values_prefix_1_included]
+    labels_spearman = [LABEL_1]
+
+    if SHOW_PREFIX_2:
+        data_spearman.append(spearman_values_prefix_2_included)
+        labels_spearman.append(LABEL_2)
+
+    plt.figure(figsize=(10, 6))
+    plt.boxplot(data_spearman, vert=False, labels=labels_spearman, showmeans=True,
+                meanprops={'marker': 'o', 'markerfacecolor': 'red', 'markersize': 10})
+
+    plt.title(f'Spearman Correlation for {metric} (Included), N = {len(spearman_values_prefix_1_included)}', fontsize=18)
+    plt.xlabel("Spearman's ρ", fontsize=14)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+
+    plt.savefig(os.path.join(RESULTS_PATH_BASE, f'{metric}_spearman_included_box.png'), bbox_inches='tight')
+    plt.close()
+
+    # -------------------------------------------------------
+    # SPEARMAN’S RHO: VIOLIN PLOT (INCLUDED PATIENTS ONLY)
+    # -------------------------------------------------------
+    plt.figure(figsize=(10, 6))
+    plt.violinplot(data_spearman, vert=False, showmeans=True, showmedians=True)
+
+    if SHOW_PREFIX_2:
+        plt.yticks([1, 2], labels_spearman)
+    else:
+        plt.yticks([1], labels_spearman)
+
+    plt.title(f'{metric}: Spearman (Included)', fontsize=18)
+    plt.xlabel("Spearman's ρ", fontsize=14)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+
+    plt.savefig(os.path.join(RESULTS_PATH_BASE, f'{metric}_spearman_included_violin.png'), bbox_inches='tight')
+    plt.close()
+
+    # -------------------------------------------------------
+    # CCC: BOX PLOT (INCLUDED PATIENTS ONLY)
+    # -------------------------------------------------------
+    data_ccc = [ccc_values_prefix_1_included]
+    labels_ccc = [LABEL_1]
+
+    if SHOW_PREFIX_2:
+        data_ccc.append(ccc_values_prefix_2_included)
+        labels_ccc.append(LABEL_2)
+
+    plt.figure(figsize=(10, 6))
+    plt.boxplot(data_ccc, vert=False, labels=labels_ccc, showmeans=True,
+                meanprops={'marker': 'o', 'markerfacecolor': 'red', 'markersize': 10})
+
+    plt.title(f'CCC for {metric} (Included), N = {len(ccc_values_prefix_1_included)}', fontsize=18)
+    plt.xlabel("Concordance Correlation Coefficient", fontsize=14)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+
+    plt.savefig(os.path.join(RESULTS_PATH_BASE, f'{metric}_ccc_included_box.png'), bbox_inches='tight')
+    plt.close()
+
+    # -------------------------------------------------------
+    # CCC: VIOLIN PLOT (INCLUDED PATIENTS ONLY)
+    # -------------------------------------------------------
+    plt.figure(figsize=(10, 6))
+    plt.violinplot(data_ccc, vert=False, showmeans=True, showmedians=True)
+
+    if SHOW_PREFIX_2:
+        plt.yticks([1, 2], labels_ccc)
+    else:
+        plt.yticks([1], labels_ccc)
+
+    plt.title(f'{metric}: CCC (Included)', fontsize=18)
+    plt.xlabel("Concordance Correlation Coefficient", fontsize=14)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+
+    plt.savefig(os.path.join(RESULTS_PATH_BASE, f'{metric}_ccc_included_violin.png'), bbox_inches='tight')
+    plt.close()
+
+
+
+
 
 
 
