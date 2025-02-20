@@ -52,8 +52,26 @@ def preprocess_mood_tracking(PAT_SHORT_NAME):
 def meets_inclusion_criteria(df, metric):
     if metric not in df.columns:
         return False
-    values = df[metric].dropna().unique()
-    return len(df[metric].dropna()) >= 5 and len(values) >= 4
+
+    series_clean = df[metric].dropna()
+
+    # 1) Number of self-reports >= 5
+    if len(series_clean) < 5:
+        return False
+
+    # 2) Median score > 0
+    if series_clean.median() <= 0:
+        return False
+
+    # 3) Score range >= 5 (for 0–10 scale)
+    if (series_clean.max() - series_clean.min()) < 5:
+        return False
+
+    # 4) Number of unique values >= 3
+    if len(series_clean.unique()) < 3:
+        return False
+
+    return True
 
 
 # Generate permutation test distribution
