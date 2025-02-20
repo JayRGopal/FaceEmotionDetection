@@ -1,8 +1,8 @@
 # This script does feature extraction AND linear regression for plotting.
 # See main_FeatureExtractionInpatient_JustLinReg.py if feature extraction is complete, and you just need linear regression! 
 
-PAT_NOW = "S23_199"
-PAT_SHORT_NAME = "S_199"
+PAT_NOW = "S24_224"
+PAT_SHORT_NAME = "S_224"
 
 print(f'[LOG] Patient Now: {PAT_NOW}')
 
