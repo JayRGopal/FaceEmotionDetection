@@ -1136,16 +1136,19 @@ TEMP_OUTPUT_FOLDER = './temp_outputs/'
 os.makedirs(TEMP_OUTPUT_FOLDER, exist_ok=True)
 
 # Export LASSO inputs and ground truth to CSV
-def export_lasso_inputs_and_outputs(vectors_dict, y, metric, output_folder):
+def export_lasso_inputs_and_outputs(vectors_dict, y, metric, output_folder, spreadsheet_path):
     # Combine feature vectors and self-reports
     for time_radius, features in vectors_dict.items():
-        feature_df = pd.DataFrame(features, columns=[f"Feature_{i+1}" for i in range(features.shape[1])])
+        # Generate column names using get_label_from_index for each feature index
+        feature_names = [get_label_from_index(i, spreadsheet_path=spreadsheet_path) for i in range(features.shape[1])]
+        feature_df = pd.DataFrame(features, columns=feature_names)
         feature_df['Self-Reported'] = y
         
         # Save to CSV
         output_path = os.path.join(output_folder, f"{metric}_features_time_{time_radius}_minutes.csv")
         feature_df.to_csv(output_path, index=False)
         print(f"[LOG] Saved LASSO inputs for {metric} at time {time_radius} minutes to {output_path}")
+
 
 # Calculate Pearson's R² and save to CSV
 def save_pearsons_r2(predictions_dict, output_folder):
@@ -1167,10 +1170,9 @@ def save_pearsons_r2(predictions_dict, output_folder):
     print(f"[LOG] Saved Pearson's R² results to {r2_output_path}")
 
 # Export data
+spreadsheet_path = FEATURE_LABEL_PATH + 'ogauhse_0.5_hours.xlsx'
+vectors_now = ogauhsemotion_vectors_dict
+method_now = 'OGAU+HSE'
 for metric in all_metrics:
     vectors_return, y = extractOneMetric(metric, vectors_now={15: vectors_now[15]}, remove_outliers=REMOVE_OUTLIERS)
-    export_lasso_inputs_and_outputs(vectors_return, y, metric, TEMP_OUTPUT_FOLDER)
-
-# Save R² results
-save_pearsons_r2(predictions_dict, TEMP_OUTPUT_FOLDER)
-
+    export_lasso_inputs_and_outputs(vectors_return, y, metric, TEMP_OUTPUT_FOLDER, spreadsheet_path=spreadsheet_path)
