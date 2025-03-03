@@ -1219,6 +1219,9 @@ def get_top_AU_features(models, threshold, spreadsheet_path=FEATURE_LABEL_PATH +
         if 'AU' in get_label_from_index(ind, spreadsheet_path=spreadsheet_path)
     ]
 
+    # Sort features by descending importance
+    top_features.sort(key=lambda x: x[1], reverse=True)
+
     return top_features
 
 
