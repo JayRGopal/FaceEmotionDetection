@@ -993,140 +993,140 @@ REMOVE_OUTLIERS = False
 
 
 
-for RESULTS_PREFIX in RESULTS_PREFIX_LIST:
-    print(f'[LOG] Generating Output Plots: {RESULTS_PREFIX}')
-    do_lasso = False
-    do_ridge = False
+# for RESULTS_PREFIX in RESULTS_PREFIX_LIST:
+#     print(f'[LOG] Generating Output Plots: {RESULTS_PREFIX}')
+#     do_lasso = False
+#     do_ridge = False
 
-    if '_L_' in RESULTS_PREFIX:
-        do_lasso = True
+#     if '_L_' in RESULTS_PREFIX:
+#         do_lasso = True
 
-    if '_R_' in RESULTS_PREFIX:
-        do_ridge = True
+#     if '_R_' in RESULTS_PREFIX:
+#         do_ridge = True
 
-    if 'OF_' in RESULTS_PREFIX:
-        spreadsheet_path = FEATURE_LABEL_PATH + f'experimental3_openface_0.5_hours.xlsx'
-        vectors_now = openface_vectors_dict
-        method_now = 'OpenFace'
+#     if 'OF_' in RESULTS_PREFIX:
+#         spreadsheet_path = FEATURE_LABEL_PATH + f'experimental3_openface_0.5_hours.xlsx'
+#         vectors_now = openface_vectors_dict
+#         method_now = 'OpenFace'
 
-    elif 'OGAU_' in RESULTS_PREFIX:
-        spreadsheet_path = FEATURE_LABEL_PATH + 'opengraphau_0.5_hours.xlsx'
-        vectors_now = opengraphau_vectors_dict
-        method_now = 'OpenGraphAU'
+#     elif 'OGAU_' in RESULTS_PREFIX:
+#         spreadsheet_path = FEATURE_LABEL_PATH + 'opengraphau_0.5_hours.xlsx'
+#         vectors_now = opengraphau_vectors_dict
+#         method_now = 'OpenGraphAU'
 
-    elif 'OFAUHSE_' in RESULTS_PREFIX:
-        spreadsheet_path = FEATURE_LABEL_PATH + 'ofauhse_0.5_hours.xlsx'
-        vectors_now = ofauhsemotion_vectors_dict
-        method_now = 'OFAU+HSE'
+#     elif 'OFAUHSE_' in RESULTS_PREFIX:
+#         spreadsheet_path = FEATURE_LABEL_PATH + 'ofauhse_0.5_hours.xlsx'
+#         vectors_now = ofauhsemotion_vectors_dict
+#         method_now = 'OFAU+HSE'
 
-    elif 'OGAUHSE_' in RESULTS_PREFIX:
-        spreadsheet_path = FEATURE_LABEL_PATH + 'ogauhse_0.5_hours.xlsx'
-        vectors_now = ogauhsemotion_vectors_dict
-        method_now = 'OGAU+HSE'
+#     elif 'OGAUHSE_' in RESULTS_PREFIX:
+#         spreadsheet_path = FEATURE_LABEL_PATH + 'ogauhse_0.5_hours.xlsx'
+#         vectors_now = ogauhsemotion_vectors_dict
+#         method_now = 'OGAU+HSE'
 
-    elif 'HSE_' in RESULTS_PREFIX:
-        spreadsheet_path = FEATURE_LABEL_PATH + 'hsemotion_0.5_hours.xlsx'
-        vectors_now = hsemotion_vectors_dict
-        method_now = 'HSEmotion'
+#     elif 'HSE_' in RESULTS_PREFIX:
+#         spreadsheet_path = FEATURE_LABEL_PATH + 'hsemotion_0.5_hours.xlsx'
+#         vectors_now = hsemotion_vectors_dict
+#         method_now = 'HSEmotion'
 
-    elif 'ALL_' in RESULTS_PREFIX:
-        spreadsheet_path = FEATURE_LABEL_PATH + 'all_0.5_hours.xlsx'
-        vectors_now = all_vectors_dict
-        method_now = 'ALL(OF+OG+HSE)'
+#     elif 'ALL_' in RESULTS_PREFIX:
+#         spreadsheet_path = FEATURE_LABEL_PATH + 'all_0.5_hours.xlsx'
+#         vectors_now = all_vectors_dict
+#         method_now = 'ALL(OF+OG+HSE)'
 
-    # Let's put each setting in its own folder!
-    os.makedirs(RESULTS_PATH_BASE + RESULTS_PREFIX, exist_ok=True)
-    results_prefix_unmodified = RESULTS_PREFIX
-    RESULTS_PREFIX = RESULTS_PREFIX + '/' + RESULTS_PREFIX
+#     # Let's put each setting in its own folder!
+#     os.makedirs(RESULTS_PATH_BASE + RESULTS_PREFIX, exist_ok=True)
+#     results_prefix_unmodified = RESULTS_PREFIX
+#     RESULTS_PREFIX = RESULTS_PREFIX + '/' + RESULTS_PREFIX
 
-    # Create a dictionary to store predictions and true values
-    predictions_dict = {}
+#     # Create a dictionary to store predictions and true values
+#     predictions_dict = {}
 
-    # Initialize a dictionary to store the top AUs for each metric
-    top_AUs_dict = {}
+#     # Initialize a dictionary to store the top AUs for each metric
+#     top_AUs_dict = {}
 
-    # Loop through metrics (Anxiety, Depression, Mood, etc.)
-    for metric in all_metrics:
-        print('METRIC NOW: ', metric)
-        if do_lasso:
-            # TODO: Add the alpha search back in!
-            alpha_now = 1.0
-            #alpha_now = best_alphas_lasso[results_prefix_unmodified].get(metric, 1.0)  # Use the specific alpha for the metric
-        elif do_ridge:
-            alpha_now = best_alphas_ridge[results_prefix_unmodified].get(metric, 1.0)  # Use the specific alpha for the metric
-        else:
-            # Neither lasso nor ridge, so alpha is irrelevant
-            alpha_now = 1.0
+#     # Loop through metrics (Anxiety, Depression, Mood, etc.)
+#     for metric in all_metrics:
+#         print('METRIC NOW: ', metric)
+#         if do_lasso:
+#             # TODO: Add the alpha search back in!
+#             alpha_now = 1.0
+#             #alpha_now = best_alphas_lasso[results_prefix_unmodified].get(metric, 1.0)  # Use the specific alpha for the metric
+#         elif do_ridge:
+#             alpha_now = best_alphas_ridge[results_prefix_unmodified].get(metric, 1.0)  # Use the specific alpha for the metric
+#         else:
+#             # Neither lasso nor ridge, so alpha is irrelevant
+#             alpha_now = 1.0
 
-        vectors_return, y = extractOneMetric(metric, vectors_now=vectors_now, remove_outliers=REMOVE_OUTLIERS)
-        # scores, preds, y, models = linRegOneMetric(vectors_return, y, do_lasso=do_lasso, do_ridge=do_ridge, alpha=alpha_now)
-        # scores_r, preds_r, _, models_r = linRegOneMetric(vectors_return, y, randShuffle=True, alpha=alpha_now)
+#         vectors_return, y = extractOneMetric(metric, vectors_now=vectors_now, remove_outliers=REMOVE_OUTLIERS)
+#         # scores, preds, y, models = linRegOneMetric(vectors_return, y, do_lasso=do_lasso, do_ridge=do_ridge, alpha=alpha_now)
+#         # scores_r, preds_r, _, models_r = linRegOneMetric(vectors_return, y, randShuffle=True, alpha=alpha_now)
 
-        # Run LASSO with nested alpha search and permutation testing
-        scores, preds, y, models = linRegOneMetric(
-            vectors_return, 
-            y, 
-            do_lasso=do_lasso, 
-            do_ridge=do_ridge, 
-            ALPHAS_FOR_SEARCH=np.arange(0.1, 5.0, 0.2),  # Provide the alpha search grid
-            num_permutations=0  # Set to 0 if no permutation testing is needed
-        )
+#         # Run LASSO with nested alpha search and permutation testing
+#         scores, preds, y, models = linRegOneMetric(
+#             vectors_return, 
+#             y, 
+#             do_lasso=do_lasso, 
+#             do_ridge=do_ridge, 
+#             ALPHAS_FOR_SEARCH=np.arange(0.1, 5.0, 0.2),  # Provide the alpha search grid
+#             num_permutations=0  # Set to 0 if no permutation testing is needed
+#         )
 
-        # Run permutation testing by enabling randShuffle and specifying num_permutations
-        scores_r, preds_r, _, models_r = linRegOneMetric(
-            vectors_return, 
-            y, 
-            randShuffle=True,  # Enable random shuffling for permutation testing
-            do_lasso=do_lasso, 
-            do_ridge=do_ridge, 
-            ALPHAS_FOR_SEARCH=np.arange(0.1, 5.0, 0.2),  # Use the same alpha search grid
-            num_permutations=100  # Number of permutations
-        )
+#         # Run permutation testing by enabling randShuffle and specifying num_permutations
+#         scores_r, preds_r, _, models_r = linRegOneMetric(
+#             vectors_return, 
+#             y, 
+#             randShuffle=True,  # Enable random shuffling for permutation testing
+#             do_lasso=do_lasso, 
+#             do_ridge=do_ridge, 
+#             ALPHAS_FOR_SEARCH=np.arange(0.1, 5.0, 0.2),  # Use the same alpha search grid
+#             num_permutations=100  # Number of permutations
+#         )
         
-        # make scatterplots
-        randShuffleR, _, _ = plot_scatterplots(preds_r, y, f'{metric} Random Shuffle', RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_scatterRand{FILE_ENDING}')
-        r_list, p_list, scatterFig = plot_scatterplots(preds, y, metric, RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_scatterplots{FILE_ENDING}', randShuffleR=randShuffleR)
+#         # make scatterplots
+#         randShuffleR, _, _ = plot_scatterplots(preds_r, y, f'{metric} Random Shuffle', RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_scatterRand{FILE_ENDING}')
+#         r_list, p_list, scatterFig = plot_scatterplots(preds, y, metric, RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_scatterplots{FILE_ENDING}', randShuffleR=randShuffleR)
 
-        # Determine our best time radius for this metric based on Pearson's R
-        best_time_radius = list(scores.keys())[np.argmax(r_list)]
-        best_mse_list = scores[best_time_radius]
-        best_avg_mse = np.mean(scores[best_time_radius])
-        best_pearson_r = r_list[np.argmax(r_list)]
+#         # Determine our best time radius for this metric based on Pearson's R
+#         best_time_radius = list(scores.keys())[np.argmax(r_list)]
+#         best_mse_list = scores[best_time_radius]
+#         best_avg_mse = np.mean(scores[best_time_radius])
+#         best_pearson_r = r_list[np.argmax(r_list)]
 
-        top_AUs = get_top_AU_features([models[best_time_radius]], threshold=0.01, spreadsheet_path=spreadsheet_path)
-        print(f"Top AUs for {metric}: {top_AUs}")
+#         top_AUs = get_top_AU_features([models[best_time_radius]], threshold=0.01, spreadsheet_path=spreadsheet_path)
+#         print(f"Top AUs for {metric}: {top_AUs}")
 
-        # Save the top AUs for the current metric into the dictionary
-        top_AUs_dict[metric] = top_AUs
+#         # Save the top AUs for the current metric into the dictionary
+#         top_AUs_dict[metric] = top_AUs
 
-        # bar plot for pearson r
-        rPlotFig = make_r_barplot(r_list, list(scores.keys()), metric, RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_R{FILE_ENDING}', method_now=method_now)
+#         # bar plot for pearson r
+#         rPlotFig = make_r_barplot(r_list, list(scores.keys()), metric, RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_R{FILE_ENDING}', method_now=method_now)
 
-        # make MSE plot
-        # MSEPlotFig = make_mse_boxplot(scores, metric, RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_MSE{FILE_ENDING}', method_now=method_now)
+#         # make MSE plot
+#         # MSEPlotFig = make_mse_boxplot(scores, metric, RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_MSE{FILE_ENDING}', method_now=method_now)
 
-        # extract just ONE scatterplot (the best pearson's R) and save it individually
-        plt.rcParams['lines.markersize'] = 9
-        _, _, bestScatterFig = plot_predictions(y, preds[best_time_radius], randShuffleR=randShuffleR[np.argmax(r_list)], ax=None, time_rad=best_time_radius, metric=metric)
-        bestScatterFig.savefig(RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_bestScatter{FILE_ENDING}', bbox_inches='tight')
+#         # extract just ONE scatterplot (the best pearson's R) and save it individually
+#         plt.rcParams['lines.markersize'] = 9
+#         _, _, bestScatterFig = plot_predictions(y, preds[best_time_radius], randShuffleR=randShuffleR[np.argmax(r_list)], ax=None, time_rad=best_time_radius, metric=metric)
+#         bestScatterFig.savefig(RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_bestScatter{FILE_ENDING}', bbox_inches='tight')
 
-        # Plot top n features vs. self-reported scores
-        PLOT_NOW = 3
-        # plot_feat_scatterplots(vectors_array=vectors_return[best_time_radius], y=y, feat_ind_list=top_indices[:PLOT_NOW], metric=metric, savepath=RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_topFeats{FILE_ENDING}', spreadsheet_path=spreadsheet_path)
+#         # Plot top n features vs. self-reported scores
+#         PLOT_NOW = 3
+#         # plot_feat_scatterplots(vectors_array=vectors_return[best_time_radius], y=y, feat_ind_list=top_indices[:PLOT_NOW], metric=metric, savepath=RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_topFeats{FILE_ENDING}', spreadsheet_path=spreadsheet_path)
 
-        # Store predictions and true values for each time radius
-        predictions_dict[metric] = {
-            'y_true': y,
-            'preds': preds,
-            'best_time_radius': best_time_radius,
-            'randShuffleR': randShuffleR[np.argmax(r_list)],
-        }
+#         # Store predictions and true values for each time radius
+#         predictions_dict[metric] = {
+#             'y_true': y,
+#             'preds': preds,
+#             'best_time_radius': best_time_radius,
+#             'randShuffleR': randShuffleR[np.argmax(r_list)],
+#         }
 
-    # Save the predictions and true values for re-plotting later
-    save_var(predictions_dict, forced_name=f'predictions_{PAT_SHORT_NAME}_{results_prefix_unmodified}')
+#     # Save the predictions and true values for re-plotting later
+#     save_var(predictions_dict, forced_name=f'predictions_{PAT_SHORT_NAME}_{results_prefix_unmodified}')
 
 
-print(f'[LOG] Feature Extraction & Plotting Complete: {PAT_SHORT_NAME}')
+# print(f'[LOG] Feature Extraction & Plotting Complete: {PAT_SHORT_NAME}')
 
 
 
