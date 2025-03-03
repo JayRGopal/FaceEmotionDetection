@@ -25,8 +25,8 @@ METRIC = 'Mood'
 top_aus_dir = RUNTIME_VAR_PATH
 
 # Standard AU order for the 20 AUs (ordered as in your example)
-# AUs: 1, 2, 4, 5, 6, 7, 9, 11, 12, 14, 15, 17, 20, 23, 24, 25, 26, 28, 43
-au_order = [1, 2, 4, 5, 6, 7, 9, 11, 12, 14, 15, 17, 20, 23, 24, 25, 26, 28, 43]
+# AUs: 1, 2, 4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 17, 20, 23, 24, 25, 26, 28, 43
+au_order = [1, 2, 4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 17, 20, 23, 24, 25, 26, 28, 43]
 
 # --- Load Top AUs ---
 # We'll collect only positive AU entries.
