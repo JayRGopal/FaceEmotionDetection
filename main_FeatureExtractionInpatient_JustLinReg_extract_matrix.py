@@ -1045,6 +1045,8 @@ for RESULTS_PREFIX in RESULTS_PREFIX_LIST:
     # Create a dictionary to store predictions and true values
     predictions_dict = {}
 
+    # Initialize a dictionary to store the top AUs for each metric
+    top_AUs_dict = {}
 
     # Loop through metrics (Anxiety, Depression, Mood, etc.)
     for metric in all_metrics:
@@ -1096,6 +1098,9 @@ for RESULTS_PREFIX in RESULTS_PREFIX_LIST:
 
         top_AUs = get_top_AU_features([models[best_time_radius]], threshold=0.1, spreadsheet_path=spreadsheet_path)
         print(f"Top AUs for {metric}: {top_AUs}")
+
+        # Save the top AUs for the current metric into the dictionary
+        top_AUs_dict[metric] = top_AUs
 
         # bar plot for pearson r
         rPlotFig = make_r_barplot(r_list, list(scores.keys()), metric, RESULTS_PATH_BASE + f'{RESULTS_PREFIX}{metric}_linReg_R{FILE_ENDING}', method_now=method_now)
