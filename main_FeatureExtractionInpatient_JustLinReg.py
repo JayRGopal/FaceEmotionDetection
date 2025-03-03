@@ -1204,26 +1204,22 @@ def get_top_AU_features(models, threshold, spreadsheet_path=FEATURE_LABEL_PATH +
     :param models: List of trained regression models.
     :param threshold: Threshold for feature significance.
     :param spreadsheet_path: Path to spreadsheet for feature labeling.
-    :return: List of top AU features above the threshold.
+    :return: List of tuples (feature label, coefficient) for top AU features above the threshold.
     """
     coef_array = [model.coef_ for model in models]
     coef_avg = np.mean(coef_array, axis=0)
 
-    # Filter features by significance threshold
-    significant_indices = np.where(np.abs(coef_avg) > threshold)[0]
-
-    # Convert indices to feature names, focusing on AUs
+    # Filter features by significance threshold and create tuple (label, coefficient)
     top_features = [
-        get_label_from_index(ind, spreadsheet_path=spreadsheet_path)
-        for ind in significant_indices
+        (get_label_from_index(ind, spreadsheet_path=spreadsheet_path), coef_avg[ind])
+        for ind in np.where(np.abs(coef_avg) > threshold)[0]
         if 'AU' in get_label_from_index(ind, spreadsheet_path=spreadsheet_path)
     ]
 
-    # Sort features by descending importance
-    top_features.sort(key=lambda x: x[1], reverse=True)
+    # Sort features by descending importance (i.e., coefficient)
+    top_features.sort(key=lambda x: abs(x[1]), reverse=True)
 
     return top_features
-
 
 
 
