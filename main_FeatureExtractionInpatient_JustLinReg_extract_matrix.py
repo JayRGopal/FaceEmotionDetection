@@ -1137,6 +1137,10 @@ os.makedirs(TEMP_OUTPUT_FOLDER, exist_ok=True)
 
 # Export LASSO inputs and ground truth to CSV
 def export_lasso_inputs_and_outputs(vectors_dict, y, metric, output_folder, spreadsheet_path):
+    # Create subfolder for PAT_NOW inside the output_folder
+    pat_folder = os.path.join(output_folder, PAT_NOW)
+    os.makedirs(pat_folder, exist_ok=True)
+    
     # Combine feature vectors and self-reports
     for time_radius, features in vectors_dict.items():
         # Generate column names using get_label_from_index for each feature index
@@ -1144,10 +1148,11 @@ def export_lasso_inputs_and_outputs(vectors_dict, y, metric, output_folder, spre
         feature_df = pd.DataFrame(features, columns=feature_names)
         feature_df['Self-Reported'] = y
         
-        # Save to CSV
-        output_path = os.path.join(output_folder, f"{metric}_features_time_{time_radius}_minutes.csv")
+        # Save to CSV in the PAT_NOW subfolder
+        output_path = os.path.join(pat_folder, f"{metric}_features_time_{time_radius}_minutes.csv")
         feature_df.to_csv(output_path, index=False)
         print(f"[LOG] Saved LASSO inputs for {metric} at time {time_radius} minutes to {output_path}")
+
 
 
 # Calculate Pearson's R² and save to CSV
