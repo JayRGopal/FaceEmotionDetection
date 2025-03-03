@@ -1171,7 +1171,7 @@ def save_pearsons_r2(predictions_dict, output_folder):
 
 # Export data
 for metric in all_metrics:
-    vectors_return, y = extractOneMetric(metric, vectors_now=vectors_now, remove_outliers=REMOVE_OUTLIERS)
+    vectors_return, y = extractOneMetric(metric, vectors_now={15: vectors_now[15]}, remove_outliers=REMOVE_OUTLIERS)
     export_lasso_inputs_and_outputs(vectors_return, y, metric, TEMP_OUTPUT_FOLDER)
 
 # Save R² results
