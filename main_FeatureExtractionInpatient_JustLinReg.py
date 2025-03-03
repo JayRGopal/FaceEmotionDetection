@@ -1348,7 +1348,7 @@ for RESULTS_PREFIX in RESULTS_PREFIX_LIST:
         best_avg_mse = np.mean(scores[best_time_radius])
         best_pearson_r = r_list[np.argmax(r_list)]
 
-        top_AUs = get_top_AU_features([models[best_time_radius]], threshold=0.1, spreadsheet_path=spreadsheet_path)
+        top_AUs = get_top_AU_features([models[best_time_radius]], threshold=0.01, spreadsheet_path=spreadsheet_path)
         print(f"Top AUs for {metric}: {top_AUs}")
 
         # Save the top AUs for the current metric into the dictionary
