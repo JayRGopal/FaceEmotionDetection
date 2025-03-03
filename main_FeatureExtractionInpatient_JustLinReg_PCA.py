@@ -788,7 +788,7 @@ def get_label_from_index(index, spreadsheet_path=FEATURE_LABEL_PATH+'openface_0.
     print('BUG IN THE CODE! INDEX TOO LARGE! CHECK get_label_from_index')
     print(f'Original index was {index_orig}')
     print('spreadsheet path is ', spreadsheet_path)
-    return None
+    return 'Null'
 
 
 def getTopFeaturesfromWeights(model_list, spreadsheet_path=FEATURE_LABEL_PATH+'openface_2.0_hours.xlsx'):

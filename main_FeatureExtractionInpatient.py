@@ -2511,7 +2511,7 @@ def get_label_from_index(index, spreadsheet_path=FEATURE_LABEL_PATH+'openface_0.
     # Return None if the index is out of range or no suitable sheets found
     print('BUG IN THE CODE! INDEX TOO LARGE! CHECK get_label_from_index')
     print('spreadsheet path is ', spreadsheet_path)
-    return None
+    return 'Null'
 
 
 def getTopFeaturesfromWeights(model_list, spreadsheet_path=FEATURE_LABEL_PATH+'openface_2.0_hours.xlsx'):
