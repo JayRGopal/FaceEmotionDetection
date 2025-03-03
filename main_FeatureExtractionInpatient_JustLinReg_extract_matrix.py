@@ -1174,5 +1174,5 @@ spreadsheet_path = FEATURE_LABEL_PATH + 'ogauhse_0.5_hours.xlsx'
 vectors_now = ogauhsemotion_vectors_dict
 method_now = 'OGAU+HSE'
 for metric in all_metrics:
-    vectors_return, y = extractOneMetric(metric, vectors_now={15: vectors_now[15]}, remove_outliers=REMOVE_OUTLIERS)
+    vectors_return, y = extractOneMetric(metric, vectors_now={'15': vectors_now['15']}, remove_outliers=REMOVE_OUTLIERS)
     export_lasso_inputs_and_outputs(vectors_return, y, metric, TEMP_OUTPUT_FOLDER, spreadsheet_path=spreadsheet_path)
