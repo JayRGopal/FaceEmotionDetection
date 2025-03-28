@@ -103,7 +103,11 @@ for file in tqdm(csv_files, desc="Processing all CSVs"):
     for fname, imp in feature_importance:
         print(f"{fname}: {imp:.4f}")
 
-    print("\nFeature Permutation Impact (mean R drop):")
-    for fname, perm_rs in sorted(permutation_r_per_feature.items(), key=lambda x: -np.mean(bootstrap_r_values) + np.mean(x[1])):
-        r_drop = np.mean(bootstrap_r_values) - np.mean(perm_rs)
+    print("\nTop 5 Features by Permutation Impact (ΔR):")
+    permutation_impacts = [
+        (fname, np.mean(bootstrap_r_values) - np.mean(perm_rs))
+        for fname, perm_rs in permutation_r_per_feature.items()
+    ]
+    top5_perm = sorted(permutation_impacts, key=lambda x: -x[1])[:5]
+    for fname, r_drop in top5_perm:
         print(f"{fname}: ΔR = {r_drop:.4f}")
