@@ -1137,7 +1137,7 @@ TEMP_OUTPUT_FOLDER = './temp_outputs/'
 os.makedirs(TEMP_OUTPUT_FOLDER, exist_ok=True)
 
 # Export LASSO inputs and ground truth to CSV
-def export_lasso_inputs_and_outputs(vectors_dict, y, metric, output_folder, spreadsheet_path):
+def export_lasso_inputs_and_outputs(vectors_dict, y, metric, output_folder, spreadsheet_path, RESULTS_PREFIX_NOW):
     # Create subfolder for PAT_NOW inside the output_folder
     pat_folder = os.path.join(output_folder, PAT_NOW)
     os.makedirs(pat_folder, exist_ok=True)
@@ -1150,9 +1150,9 @@ def export_lasso_inputs_and_outputs(vectors_dict, y, metric, output_folder, spre
         feature_df['Self-Reported'] = y
         
         # Save to CSV in the PAT_NOW subfolder
-        output_path = os.path.join(pat_folder, f"{metric}_features_time_{time_radius}_minutes.csv")
+        output_path = os.path.join(pat_folder, f"{metric}_features_time_{time_radius}_minutes_{RESULTS_PREFIX_NOW}.csv")
         feature_df.to_csv(output_path, index=False)
-        print(f"[LOG] Saved LASSO inputs for {metric} at time {time_radius} minutes to {output_path}")
+        print(f"[LOG] Saved LASSO inputs for {metric} for {RESULTS_PREFIX_NOW} at time {time_radius} minutes to {output_path}")
 
 
 
@@ -1215,4 +1215,4 @@ for RESULTS_PREFIX in RESULTS_PREFIX_LIST:
   
   for metric in all_metrics:
       vectors_return, y = extractOneMetric(metric, vectors_now=vectors_now, remove_outliers=REMOVE_OUTLIERS)
-      export_lasso_inputs_and_outputs(vectors_return, y, metric, TEMP_OUTPUT_FOLDER, spreadsheet_path=spreadsheet_path)
+      export_lasso_inputs_and_outputs(vectors_return, y, metric, TEMP_OUTPUT_FOLDER, spreadsheet_path=spreadsheet_path, RESULTS_PREFIX_NOW=RESULTS_PREFIX)
