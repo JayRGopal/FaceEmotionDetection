@@ -1,54 +1,63 @@
 function linkDataMotor2(patNow)
 
 % EXAMPLE: patNow = 'S23_10b';
-rawFolder = ['/home/klab/NAS/SEEG-RAW-DATA/Video/', patNow, '/'];
+videoFolder = ['/home/klab/NAS/SEEG-RAW-DATA/Video/', patNow, '/'];
+timingFolder = ['/home/klab/NAS/SEEG-RAW-DATA/Timing/', patNow, '/'];
+eegFolder = ['/home/klab/NAS/SEEG-RAW-DATA/iEEG/', patNow, '/'];
 outputSubjDir = '/home/klab/NAS/Analysis/AudioFacialEEG/Behavioral Labeling/videoDateTimes/Raw CSVs/';
 
 % Set processed folders
-videoFilenamesTrack = [];
-videoStartTimeTrack = [];
-videoEndTimeTrack = [];
-eegFiles  =  dir([rawFolder, '/*.EEG']);
+videoFilenamesTrack = {};
+videoStartTimeTrack = {};
+videoEndTimeTrack = {};
 cnt = 1;
 
+eegFiles = dir([eegFolder, '/*.EEG']);
+
 for s = 1:length(eegFiles)
-    timeFile = fullfile(rawFolder, [eegFiles(s).name(1:end-4), '.CN3']);
+    baseName = eegFiles(s).name(1:end-4);  % Remove .EEG
+    timeFile = fullfile(timingFolder, [baseName, '.CN3']);
+
+    if ~isfile(timeFile)
+        warning('Missing timing file: %s', timeFile);
+        continue;
+    end
+
     fileID = fopen(timeFile,'r'); 
     txtInfo = fscanf(fileID, '%s');
+    fclose(fileID);
     dateFound = num2str(str2num(txtInfo(60:80)));
     datetimeFound = datetime(dateFound,'InputFormat','yyyyMMddHHmmssS');
-    videoFiles = dir([rawFolder, '/', eegFiles(s).name(1:end-4), '.VOR', '/*.m2t']);
-    videoStarTime = []; videoEndTime = [];
+
+    videoFiles = dir(fullfile(videoFolder, '*.m2t'));
+    if isempty(videoFiles)
+        warning('No .m2t files found in %s', videoFolder);
+        continue;
+    end
+
+    videoStartTime = datetimeFound;
 
     for i = 1:length(videoFiles)
         videoFile = fullfile(videoFiles(i).folder, videoFiles(i).name);
         disp(videoFile);
-        vidObj=VideoReader(videoFile);
-        
-        if i == 1
-            videoStarTime = datetimeFound;
-            videoEndTime = datetimeFound + seconds(vidObj.Duration);
+        vidObj = VideoReader(videoFile);
 
-        elseif i == 2
-            videoStarTime = videoEndTime;
-            videoEndTime = videoStarTime + seconds(vidObj.Duration);
-        elseif i ==3
-            disp('this are 3 videos folders');
-        end
-        % EXTRACT VIDEO TIMING
         videoFilenamesTrack{cnt} = videoFiles(i).name;
-        videoStartTimeTrack{cnt} = videoStarTime;
+        videoStartTimeTrack{cnt} = videoStartTime;
+        videoEndTime = videoStartTime + seconds(vidObj.Duration);
         videoEndTimeTrack{cnt} = videoEndTime;
-        
+
+        videoStartTime = videoEndTime;  % Prepare for next file
         cnt = cnt + 1;
     end
 end
 
-videoFileTable = table(videoFilenamesTrack',videoStartTimeTrack',videoEndTimeTrack', ...
-    'VariableNames',["Filename","VideoStart","VideoEnd"]);
+videoFileTable = table(videoFilenamesTrack', videoStartTimeTrack', videoEndTimeTrack', ...
+    'VariableNames', ["Filename", "VideoStart", "VideoEnd"]);
 fileTableName = ['videoFileTable_', extractBetween(patNow, 1, 1), extractBetween(patNow, 5, length(patNow)), '.csv'];
 fileTableName = strjoin(fileTableName, '');
-fullFileName = fullfile(outputSubjDir,fileTableName);
+fullFileName = fullfile(outputSubjDir, fileTableName);
+
 disp(fullFileName);
 disp(videoFileTable);
-writetable(videoFileTable,fullFileName);
+writetable(videoFileTable, fullFileName);
