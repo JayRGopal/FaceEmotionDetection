@@ -1176,9 +1176,43 @@ def save_pearsons_r2(predictions_dict, output_folder):
     print(f"[LOG] Saved Pearson's R² results to {r2_output_path}")
 
 # Export data
-spreadsheet_path = FEATURE_LABEL_PATH + 'ogauhse_0.5_hours.xlsx'
-vectors_now = ogauhsemotion_vectors_dict
-method_now = 'OGAU+HSE'
-for metric in all_metrics:
-    vectors_return, y = extractOneMetric(metric, vectors_now={'15': vectors_now['15']}, remove_outliers=REMOVE_OUTLIERS)
-    export_lasso_inputs_and_outputs(vectors_return, y, metric, TEMP_OUTPUT_FOLDER, spreadsheet_path=spreadsheet_path)
+for RESULTS_PREFIX in RESULTS_PREFIX_LIST:
+  if '_L_' in RESULTS_PREFIX:
+      do_lasso = True
+
+  if '_R_' in RESULTS_PREFIX:
+      do_ridge = True
+
+  if 'OF_' in RESULTS_PREFIX:
+      spreadsheet_path = FEATURE_LABEL_PATH + f'experimental3_openface_0.5_hours.xlsx'
+      vectors_now = openface_vectors_dict
+      method_now = 'OpenFace'
+
+  elif 'OGAU_' in RESULTS_PREFIX:
+      spreadsheet_path = FEATURE_LABEL_PATH + 'opengraphau_0.5_hours.xlsx'
+      vectors_now = opengraphau_vectors_dict
+      method_now = 'OpenGraphAU'
+
+  elif 'OFAUHSE_' in RESULTS_PREFIX:
+      spreadsheet_path = FEATURE_LABEL_PATH + 'ofauhse_0.5_hours.xlsx'
+      vectors_now = ofauhsemotion_vectors_dict
+      method_now = 'OFAU+HSE'
+
+  elif 'OGAUHSE_' in RESULTS_PREFIX:
+      spreadsheet_path = FEATURE_LABEL_PATH + 'ogauhse_0.5_hours.xlsx'
+      vectors_now = ogauhsemotion_vectors_dict
+      method_now = 'OGAU+HSE'
+
+  elif 'HSE_' in RESULTS_PREFIX:
+      spreadsheet_path = FEATURE_LABEL_PATH + 'hsemotion_0.5_hours.xlsx'
+      vectors_now = hsemotion_vectors_dict
+      method_now = 'HSEmotion'
+
+  elif 'ALL_' in RESULTS_PREFIX:
+      spreadsheet_path = FEATURE_LABEL_PATH + 'all_0.5_hours.xlsx'
+      vectors_now = all_vectors_dict
+      method_now = 'ALL(OF+OG+HSE)'
+  
+  for metric in all_metrics:
+      vectors_return, y = extractOneMetric(metric, vectors_now=vectors_now, remove_outliers=REMOVE_OUTLIERS)
+      export_lasso_inputs_and_outputs(vectors_return, y, metric, TEMP_OUTPUT_FOLDER, spreadsheet_path=spreadsheet_path)
