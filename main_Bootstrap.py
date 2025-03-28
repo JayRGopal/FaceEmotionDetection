@@ -90,6 +90,10 @@ for file in tqdm(csv_files, desc="Processing all CSVs"):
 
     # ---- Results ---- #
     print(f"Bootstrap R values (20): {np.round(bootstrap_r_values, 4)}")
+    # 95% Confidence Interval for Bootstrap R values
+    ci_lower = np.percentile(bootstrap_r_values, 2.5)
+    ci_upper = np.percentile(bootstrap_r_values, 97.5)
+    print(f"95% CI for LASSO LOO Pearson R: [{ci_lower:.4f}, {ci_upper:.4f}]")
 
     coef_matrix = np.array(coef_matrix)  # shape: (N * 20, num_features)
     mean_importance = np.mean(np.abs(coef_matrix), axis=0)
