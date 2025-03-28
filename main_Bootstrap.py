@@ -99,8 +99,9 @@ for file in tqdm(csv_files, desc="Processing all CSVs"):
     mean_importance = np.mean(np.abs(coef_matrix), axis=0)
     feature_importance = sorted(zip(feature_names, mean_importance), key=lambda x: -x[1])
     
-    print("\nTop Features by Mean Absolute Coefficient (Bootstrap):")
-    for fname, imp in feature_importance:
+    print("\nTop 5 Features by Mean Absolute Coefficient (Bootstrap):")
+    top5_coef = feature_importance[:5]
+    for fname, imp in top5_coef:
         print(f"{fname}: {imp:.4f}")
 
     print("\nTop 5 Features by Permutation Impact (ΔR):")
