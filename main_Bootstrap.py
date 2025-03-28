@@ -12,6 +12,8 @@ from sklearn.model_selection import LeaveOneOut
 from sklearn.utils import resample
 from scipy.stats import pearsonr
 from collections import defaultdict
+import warnings
+warnings.filterwarnings("ignore")
 
 # Configuration
 PAT_NOW = 'S23_199'
