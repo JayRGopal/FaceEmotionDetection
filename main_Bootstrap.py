@@ -19,6 +19,7 @@ warnings.filterwarnings("ignore")
 PAT_NOW = 'S23_199'
 FEATURE_SAVE_FOLDER = '/home/jgopal/Desktop/FaceEmotionDetection/temp_outputs/'
 N_BOOTSTRAPS = 20
+ALPHAS = np.linspace(0.1, 2.0, 20)  # Custom alpha search range
 
 # Get patient folder
 patient_folder = os.path.join(FEATURE_SAVE_FOLDER, PAT_NOW)
@@ -44,71 +45,71 @@ for file in tqdm(csv_files, desc="Processing all CSVs"):
 
     # ---- Leave-One-Out Lasso ---- #
     loo = LeaveOneOut()
-    preds = np.zeros_like(y)
-    
+    preds = np.zeros_like(y, dtype=float)
+
     for train_idx, test_idx in loo.split(X):
-        model = LassoCV(cv=5).fit(X[train_idx], y[train_idx])
+        model = LassoCV(alphas=ALPHAS, cv=LeaveOneOut()).fit(X[train_idx], y[train_idx])
         preds[test_idx[0]] = model.predict(X[test_idx])[0]
-    
+
     loo_r, _ = pearsonr(y, preds)
     print(f"LOO Pearson R: {loo_r:.4f}")
 
-    # ---- Bootstrap Lasso + Permutation ---- #
-    coef_matrix = []
-    bootstrap_r_values = []
-    permutation_r_per_feature = defaultdict(list)
+    # # ---- Bootstrap Lasso + Permutation ---- #
+    # coef_matrix = []
+    # bootstrap_r_values = []
+    # permutation_r_per_feature = defaultdict(list)
 
-    for boot_iter in tqdm(range(N_BOOTSTRAPS), desc="Bootstrapping"):
-        # Bootstrap sample
-        X_boot, y_boot = resample(X, y, replace=True, n_samples=len(y), random_state=boot_iter)
-        loo = LeaveOneOut()
-        boot_preds = np.zeros_like(y_boot)
-        boot_coefs = []
-        test_indices = []
+    # for boot_iter in tqdm(range(N_BOOTSTRAPS), desc="Bootstrapping"):
+    #     # Bootstrap sample
+    #     X_boot, y_boot = resample(X, y, replace=True, n_samples=len(y), random_state=boot_iter)
+    #     loo = LeaveOneOut()
+    #     boot_preds = np.zeros_like(y_boot, dtype=float)
+    #     boot_coefs = []
+    #     test_indices = []
 
-        for train_idx, test_idx in loo.split(X_boot):
-            model = LassoCV(cv=5).fit(X_boot[train_idx], y_boot[train_idx])
-            y_pred = model.predict(X_boot[test_idx])[0]
-            boot_preds[test_idx[0]] = y_pred
-            boot_coefs.append(model.coef_)
-            test_indices.append(test_idx[0])
+    #     for train_idx, test_idx in loo.split(X_boot):
+    #         model = LassoCV(alphas=ALPHAS, cv=LeaveOneOut()).fit(X_boot[train_idx], y_boot[train_idx])
+    #         y_pred = model.predict(X_boot[test_idx])[0]
+    #         boot_preds[test_idx[0]] = y_pred
+    #         boot_coefs.append(model.coef_)
+    #         test_indices.append(test_idx[0])
 
-        r_boot, _ = pearsonr(y_boot, boot_preds)
-        bootstrap_r_values.append(r_boot)
-        coef_matrix.extend(boot_coefs)
+    #     r_boot, _ = pearsonr(y_boot, boot_preds)
+    #     bootstrap_r_values.append(r_boot)
+    #     coef_matrix.extend(boot_coefs)
 
-        # ---- Permutation Test ---- #
-        boot_coefs_arr = np.array(boot_coefs)
-        X_test_matrix = X_boot[test_indices]
-        for f_idx in range(X.shape[1]):
-            X_test_permuted = X_test_matrix.copy()
-            X_test_permuted[:, f_idx] = np.random.permutation(X_test_permuted[:, f_idx])
+    #     # ---- Permutation Test ---- #
+    #     boot_coefs_arr = np.array(boot_coefs)
+    #     X_test_matrix = X_boot[test_indices]
+    #     for f_idx in range(X.shape[1]):
+    #         X_test_permuted = X_test_matrix.copy()
+    #         X_test_permuted[:, f_idx] = np.random.permutation(X_test_permuted[:, f_idx])
+    #         perm_preds = np.sum(X_test_permuted * boot_coefs_arr, axis=1)
+    #         r_perm, _ = pearsonr(y_boot[test_indices], perm_preds)
+    #         permutation_r_per_feature[feature_names[f_idx]].append(r_perm)
 
-            perm_preds = np.sum(X_test_permuted * boot_coefs_arr, axis=1)
-            r_perm, _ = pearsonr(y_boot[test_indices], perm_preds)
-            permutation_r_per_feature[feature_names[f_idx]].append(r_perm)
+    # # ---- Results ---- #
+    # print(f"Bootstrap R values (20): {np.round(bootstrap_r_values, 4)}")
 
-    # ---- Results ---- #
-    print(f"Bootstrap R values (20): {np.round(bootstrap_r_values, 4)}")
-    # 95% Confidence Interval for Bootstrap R values
-    ci_lower = np.percentile(bootstrap_r_values, 2.5)
-    ci_upper = np.percentile(bootstrap_r_values, 97.5)
-    print(f"95% CI for LASSO LOO Pearson R: [{ci_lower:.4f}, {ci_upper:.4f}]")
+    # # 95% Confidence Interval for Bootstrap R values
+    # ci_lower = np.percentile(bootstrap_r_values, 2.5)
+    # ci_upper = np.percentile(bootstrap_r_values, 97.5)
+    # print(f"95% CI for LASSO LOO Pearson R: [{ci_lower:.4f}, {ci_upper:.4f}]")
 
-    coef_matrix = np.array(coef_matrix)  # shape: (N * 20, num_features)
-    mean_importance = np.mean(np.abs(coef_matrix), axis=0)
-    feature_importance = sorted(zip(feature_names, mean_importance), key=lambda x: -x[1])
-    
-    print("\nTop 5 Features by Mean Absolute Coefficient (Bootstrap):")
-    top5_coef = feature_importance[:5]
-    for fname, imp in top5_coef:
-        print(f"{fname}: {imp:.4f}")
+    # coef_matrix = np.array(coef_matrix)  # shape: (N * 20, num_features)
+    # mean_importance = np.mean(np.abs(coef_matrix), axis=0)
+    # feature_importance = sorted(zip(feature_names, mean_importance), key=lambda x: -x[1])
 
-    print("\nTop 5 Features by Permutation Impact (ΔR):")
-    permutation_impacts = [
-        (fname, np.mean(bootstrap_r_values) - np.mean(perm_rs))
-        for fname, perm_rs in permutation_r_per_feature.items()
-    ]
-    top5_perm = sorted(permutation_impacts, key=lambda x: -x[1])[:5]
-    for fname, r_drop in top5_perm:
-        print(f"{fname}: ΔR = {r_drop:.4f}")
+    # print("\nTop 5 Features by Mean Absolute Coefficient (Bootstrap):")
+    # top5_coef = feature_importance[:5]
+    # for fname, imp in top5_coef:
+    #     print(f"{fname}: {imp:.4f}")
+
+    # print("\nTop 5 Features by Permutation Impact (ΔR):")
+    # permutation_impacts = [
+    #     (fname, np.mean(bootstrap_r_values) - np.mean(perm_rs))
+    #     for fname, perm_rs in permutation_r_per_feature.items()
+    # ]
+    # top5_perm = sorted(permutation_impacts, key=lambda x: -x[1])[:5]
+    # for fname, r_drop in top5_perm:
+    #     print(f"{fname}: ΔR = {r_drop:.4f}")
