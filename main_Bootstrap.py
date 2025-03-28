@@ -15,13 +15,19 @@ from collections import defaultdict
 import warnings
 warnings.filterwarnings("ignore")
 
-# Configuration
+# ---------------- CONFIGURATION ---------------- #
 PAT_NOW = 'S23_199'
 FEATURE_SAVE_FOLDER = '/home/jgopal/Desktop/FaceEmotionDetection/temp_outputs/'
 N_BOOTSTRAPS = 20
 ALPHAS = np.linspace(0.1, 2.0, 20)  # Custom alpha search range
 
-# Get patient folder
+# User-defined filters
+TIME_WINDOWS = list(range(15, 241, 15))
+# INTERNAL_STATES = ['Mood', 'Depression', 'Anxiety', 'Hunger', 'Pain']
+INTERNAL_STATES = ['Mood']
+RESULTS_PREFIX_LIST = ['OF_L_', 'OGAU_L_', 'OGAUHSE_L_', 'HSE_L_']
+
+# ---------------- FILE HANDLING ---------------- #
 patient_folder = os.path.join(FEATURE_SAVE_FOLDER, PAT_NOW)
 csv_files = [f for f in os.listdir(patient_folder) if f.endswith('.csv')]
 
@@ -33,10 +39,20 @@ def parse_filename(filename):
     prefix = prefix_match.group(1) if prefix_match else None
     return internal_state, time_window, prefix
 
+# ---------------- MAIN LOOP ---------------- #
 for file in tqdm(csv_files, desc="Processing all CSVs"):
     internal_state, time_window, prefix = parse_filename(file)
+
+    # Apply user-defined filters
+    if internal_state not in INTERNAL_STATES:
+        continue
+    if time_window not in TIME_WINDOWS:
+        continue
+    if prefix not in RESULTS_PREFIX_LIST:
+        continue
+
+    # Load data
     df = pd.read_csv(os.path.join(patient_folder, file))
-    
     X = df.iloc[:, :-1].values
     y = df.iloc[:, -1].values
     feature_names = df.columns[:-1]
