@@ -1146,14 +1146,17 @@ def export_lasso_inputs_and_outputs(vectors_dict, y, metric, output_folder, spre
     for time_radius, features in vectors_dict.items():
         # Generate column names using get_label_from_index for each feature index
         feature_names = [get_label_from_index(i, spreadsheet_path=spreadsheet_path) for i in range(features.shape[1])]
+        # Create DataFrame
         feature_df = pd.DataFrame(features, columns=feature_names)
+        # Remove columns with names like "Null", "NULL", "null", etc.
+        feature_df = feature_df.loc[:, ~feature_df.columns.str.strip().str.lower().isin(['null'])]
+        # Add self-reported column
         feature_df['Self-Reported'] = y
         
         # Save to CSV in the PAT_NOW subfolder
         output_path = os.path.join(pat_folder, f"{metric}_features_time_{time_radius}_minutes_{RESULTS_PREFIX_NOW}.csv")
         feature_df.to_csv(output_path, index=False)
         print(f"[LOG] Saved LASSO inputs for {metric} for {RESULTS_PREFIX_NOW} at time {time_radius} minutes to {output_path}")
-
 
 
 # Calculate Pearson's R² and save to CSV
