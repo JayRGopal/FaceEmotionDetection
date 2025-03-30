@@ -18,7 +18,8 @@ warnings.filterwarnings("ignore")
 # ---------------- CONFIGURATION ---------------- #
 PAT_NOW = 'S23_199'
 FEATURE_SAVE_FOLDER = '/home/jgopal/Desktop/FaceEmotionDetection/temp_outputs/'
-RESULTS_OUTPUT_PATH = f'/home/jgopal/NAS/Analysis/AudioFacialEEG/Results_Apr_2025/{PAT_NOW}/'
+BASE_RESULTS_PATH = '/home/jgopal/NAS/Analysis/AudioFacialEEG/Results_Apr_2025/'
+RESULTS_OUTPUT_PATH = os.path.join(BASE_RESULTS_PATH, PAT_NOW)
 N_BOOTSTRAPS = 2
 ALPHAS = np.linspace(0.1, 2.0, 20)
 TIME_WINDOWS = list(range(15, 241, 15))
@@ -39,19 +40,25 @@ def parse_filename(filename):
     return internal_state, time_window, prefix
 
 summary_results = defaultdict(lambda: defaultdict(dict))
-all_feature_stats = []
+feature_heatmap_data = defaultdict(lambda: defaultdict(dict))
+all_feature_names = set()
 
 for file in tqdm(csv_files, desc="Processing all CSVs"):
     internal_state, time_window, prefix = parse_filename(file)
     if internal_state not in INTERNAL_STATES or time_window not in TIME_WINDOWS or prefix not in RESULTS_PREFIX_LIST:
         continue
 
+    state_folder = os.path.join(RESULTS_OUTPUT_PATH, internal_state)
+    prefix_folder = os.path.join(state_folder, prefix)
+    overview_folder = os.path.join(state_folder, 'Overview')
+    os.makedirs(prefix_folder, exist_ok=True)
+    os.makedirs(overview_folder, exist_ok=True)
+
     df = pd.read_csv(os.path.join(patient_folder, file))
     X = df.iloc[:, :-1].values
     y = df.iloc[:, -1].values
     feature_names = df.columns[:-1]
-
-    print(f"\nLoaded: internal_state={internal_state} | time={time_window}min | prefix={prefix} | shape={df.shape}")
+    all_feature_names.update(feature_names)
 
     loo = LeaveOneOut()
     preds = np.zeros_like(y, dtype=float)
@@ -63,7 +70,6 @@ for file in tqdm(csv_files, desc="Processing all CSVs"):
 
     coef_matrix = []
     bootstrap_r_values = []
-    permutation_r_per_feature = defaultdict(list)
     feature_selection_count = np.zeros(X.shape[1])
 
     for boot_iter in range(N_BOOTSTRAPS):
@@ -71,96 +77,71 @@ for file in tqdm(csv_files, desc="Processing all CSVs"):
         loo = LeaveOneOut()
         boot_preds = np.zeros_like(y_boot, dtype=float)
         boot_coefs = []
-        test_indices = []
-
         for train_idx, test_idx in loo.split(X_boot):
             model = LassoCV(alphas=ALPHAS, cv=LeaveOneOut()).fit(X_boot[train_idx], y_boot[train_idx])
             y_pred = model.predict(X_boot[test_idx])[0]
             boot_preds[test_idx[0]] = y_pred
             boot_coefs.append(model.coef_)
             feature_selection_count += (model.coef_ != 0).astype(int)
-            test_indices.append(test_idx[0])
 
         r_boot, _ = pearsonr(y_boot, boot_preds)
         bootstrap_r_values.append(r_boot)
         coef_matrix.extend(boot_coefs)
 
-        boot_coefs_arr = np.array(boot_coefs)
-        X_test_matrix = X_boot[test_indices]
-        for f_idx in range(X.shape[1]):
-            X_test_permuted = X_test_matrix.copy()
-            X_test_permuted[:, f_idx] = np.random.permutation(X_test_permuted[:, f_idx])
-            perm_preds = np.sum(X_test_permuted * boot_coefs_arr, axis=1)
-            r_perm, _ = pearsonr(y_boot[test_indices], perm_preds)
-            permutation_r_per_feature[feature_names[f_idx]].append(r_perm)
-
-    bootstrap_r_values = np.array(bootstrap_r_values)
+    coef_matrix = np.array(coef_matrix)
     mean_r = np.mean(bootstrap_r_values)
     ci_lower = np.percentile(bootstrap_r_values, 2.5)
     ci_upper = np.percentile(bootstrap_r_values, 97.5)
-
-    summary_results[internal_state][prefix][time_window] = mean_r
-
-    coef_matrix = np.array(coef_matrix)
     mean_importance = np.mean(np.abs(coef_matrix), axis=0)
-    feature_importance = sorted(zip(feature_names, mean_importance), key=lambda x: -x[1])
 
-    top10 = feature_importance[:10]
-    bottom10 = feature_importance[-10:]
+    summary_results[internal_state][prefix][time_window] = {
+        'r': mean_r,
+        'ci_lower': ci_lower,
+        'ci_upper': ci_upper
+    }
 
-    correlation_stats = []
-    for fname, _ in top10 + bottom10:
-        r, p = pearsonr(df[fname], y)
-        correlation_stats.append({'feature': fname, 'pearson_r': r, 'p_value': p})
+    for fname, imp in zip(feature_names, mean_importance):
+        feature_heatmap_data[internal_state][fname][time_window] = imp
 
-    feature_df = pd.DataFrame({
-        'feature': feature_names,
-        'mean_abs_coef': mean_importance,
-        'selection_freq': feature_selection_count / (N_BOOTSTRAPS * len(y)),
-        'correlation_with_y': [pearsonr(df[f], y)[0] for f in feature_names]
-    })
-
-    base_fn = f"{internal_state}_time_{time_window}_prefix_{prefix}"
-    feature_df.to_csv(os.path.join(RESULTS_OUTPUT_PATH, f"features_{base_fn}.csv"), index=False)
-    pd.DataFrame(correlation_stats).to_csv(os.path.join(RESULTS_OUTPUT_PATH, f"correlations_{base_fn}.csv"), index=False)
-
-    # --------- PLOTS ---------
-    plt.figure(figsize=(10, 6))
-    feature_bar_df = pd.DataFrame(top10 + bottom10, columns=['feature', 'mean_abs_coef'])
-    sns.barplot(x='feature', y='mean_abs_coef', data=feature_bar_df, palette='coolwarm')
-    plt.title(f'Top & Bottom 10 Features by Coefficient: {base_fn}', fontsize=14)
-    plt.xticks(rotation=90)
-    plt.tight_layout()
-    plt.savefig(os.path.join(RESULTS_OUTPUT_PATH, f"barplot_features_{base_fn}.png"))
-    plt.close()
-
-    plt.figure(figsize=(12, 6))
-    sorted_feat_idx = np.argsort(mean_importance)[::-1]
-    sorted_feats = np.array(feature_names)[sorted_feat_idx]
-    sorted_freq = feature_selection_count[sorted_feat_idx] / (N_BOOTSTRAPS * len(y))
-    sns.heatmap([sorted_freq], cmap='viridis', cbar_kws={'label': '% Bootstraps Selected'}, xticklabels=sorted_feats)
-    plt.title(f"Feature Selection Heatmap: {base_fn}", fontsize=14)
-    plt.xticks(rotation=90)
-    plt.yticks([])
-    plt.tight_layout()
-    plt.savefig(os.path.join(RESULTS_OUTPUT_PATH, f"heatmap_selection_{base_fn}.png"))
-    plt.close()
-
-# --------- SUMMARY PLOT OF TIME WINDOWS ---------
+# --------- OVERVIEW AGGREGATE PLOTS ---------
 for internal_state in summary_results:
+    overview_folder = os.path.join(RESULTS_OUTPUT_PATH, internal_state, 'Overview')
+    os.makedirs(overview_folder, exist_ok=True)
+
     for prefix in summary_results[internal_state]:
         time_r_dict = summary_results[internal_state][prefix]
         time_list = sorted(time_r_dict.keys())
-        r_list = [summary_results[internal_state][prefix][t] for t in time_list]
+        r_list = [time_r_dict[t]['r'] for t in time_list]
+        lower_list = [time_r_dict[t]['ci_lower'] for t in time_list]
+        upper_list = [time_r_dict[t]['ci_upper'] for t in time_list]
 
         plt.figure(figsize=(10, 6))
-        plt.plot(time_list, r_list, marker='o')
-        plt.fill_between(time_list, [ci_lower]*len(time_list), [ci_upper]*len(time_list), alpha=0.3)
+        plt.plot(time_list, r_list, marker='o', label='Pearson R')
+        plt.fill_between(time_list, lower_list, upper_list, alpha=0.3, label='95% CI')
         plt.title(f"{internal_state} | {prefix} - Pearson R Across Time Windows", fontsize=14)
         plt.xlabel("Time Window (minutes)", fontsize=12)
         plt.ylabel("Mean Bootstrap Pearson R", fontsize=12)
+        plt.legend()
         plt.grid(True)
         plt.tight_layout()
-        plt.savefig(os.path.join(RESULTS_OUTPUT_PATH, f"summary_{internal_state}_{prefix}_R_vs_time.png"))
+        plt.savefig(os.path.join(overview_folder, f"summary_{prefix}_R_vs_time.png"))
         plt.close()
-        
+
+    # Feature Importance Heatmap
+    feature_list = sorted(list(all_feature_names))
+    time_list = sorted(TIME_WINDOWS)
+    heatmap_matrix = np.zeros((len(feature_list), len(time_list)))
+
+    for i, fname in enumerate(feature_list):
+        for j, t in enumerate(time_list):
+            heatmap_matrix[i, j] = feature_heatmap_data[internal_state].get(fname, {}).get(t, 0)
+
+    plt.figure(figsize=(14, len(feature_list) * 0.4))
+    sns.heatmap(heatmap_matrix, cmap='viridis', xticklabels=time_list, yticklabels=feature_list,
+                cbar_kws={'label': 'Mean |Coefficient|'}, linewidths=0.5)
+    plt.title(f"{internal_state} - Feature Importance Across Time Windows", fontsize=16)
+    plt.xlabel("Time Window (minutes)")
+    plt.ylabel("Feature")
+    plt.tight_layout()
+    plt.savefig(os.path.join(overview_folder, f"{internal_state}_FeatureImportance_Heatmap.png"))
+    plt.close()
