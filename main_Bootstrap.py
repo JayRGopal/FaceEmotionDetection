@@ -60,8 +60,6 @@ all_feature_names = set()
 
 # Setup plot style for professional presentation
 plt.style.use('seaborn-v0_8-whitegrid')
-plt.rcParams['font.family'] = 'sans-serif'
-plt.rcParams['font.sans-serif'] = ['Arial']
 plt.rcParams['axes.labelsize'] = 14
 plt.rcParams['axes.titlesize'] = 16
 plt.rcParams['xtick.labelsize'] = 12
