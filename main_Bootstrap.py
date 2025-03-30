@@ -20,13 +20,13 @@ PAT_NOW = 'S23_199'
 FEATURE_SAVE_FOLDER = '/home/jgopal/Desktop/FaceEmotionDetection/temp_outputs/'
 BASE_RESULTS_PATH = '/home/jgopal/NAS/Analysis/AudioFacialEEG/Results_Apr_2025/'
 RESULTS_OUTPUT_PATH = os.path.join(BASE_RESULTS_PATH, PAT_NOW)
-N_BOOTSTRAPS = 5
+N_BOOTSTRAPS = 100
 ALPHAS = np.linspace(0.3, 6.0, 20)
 TIME_WINDOWS = list(range(15, 241, 15))
 # INTERNAL_STATES = ['Mood', 'Depression', 'Anxiety', 'Hunger', 'Pain']
 INTERNAL_STATES = ['Mood']
-# RESULTS_PREFIX_LIST = ['OF_L_', 'OGAU_L_', 'OGAUHSE_L_', 'HSE_L_']
-RESULTS_PREFIX_LIST = ['OGAU_L_']
+RESULTS_PREFIX_LIST = ['OF_L_', 'OGAU_L_', 'OGAUHSE_L_', 'HSE_L_']
+# RESULTS_PREFIX_LIST = ['OGAU_L_']
 NUM_TOP_FEATURES = 5  # Number of top features to analyze
 NUM_BOTTOM_FEATURES = 5  # Number of bottom features to analyze
 
