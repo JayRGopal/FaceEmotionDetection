@@ -209,10 +209,19 @@ for file in tqdm(csv_files, desc="Processing all CSVs"):
     for fname, imp in zip(feature_names, mean_importance):
         feature_heatmap_data[internal_state][fname][time_window] = imp
 
-    # Calculate feature selection frequency
+    # Calculate feature selection frequency (used only in this loop)
     total_models = N_BOOTSTRAPS * len(list(loo.split(X)))
     feature_selection_percentage = (feature_selection_count / total_models) * 100
     
+    # Store feature selection frequency for this time window (saved and used OUTSIDE of this loop)
+    feature_selection_percentages = {}
+    for f_idx, f_name in enumerate(feature_names):
+        percentage = (feature_selection_count[f_idx] / total_models) * 100
+        feature_selection_percentages[f_name] = percentage
+    
+    # Add to summary results
+    summary_results[internal_state][prefix][time_window]['feature_selection'] = feature_selection_percentages
+
     # Get top and bottom features by importance
     feature_importance_data = list(zip(feature_names, mean_importance, mean_perm_impact))
     feature_importance_data.sort(key=lambda x: x[2], reverse=True)  # Sort by permutation impact
@@ -403,22 +412,8 @@ for internal_state in summary_results:
         # Add a horizontal red dotted line at R = 0.1
         plt.axhline(y=0.1, color='red', linestyle='--', linewidth=2, label='Threshold (R=0.1)')
 
-        # Split data points based on CI lower bound
-        significant_indices = [i for i, lower in enumerate(r_lower) if lower > 0.1]
-        nonsignificant_indices = [i for i, lower in enumerate(r_lower) if lower <= 0.1]
-
-        # Plot non-significant points
-        if nonsignificant_indices:
-            plt.plot([time_list[i] for i in nonsignificant_indices], 
-                    [r_means[i] for i in nonsignificant_indices], 
-                    marker='o', markersize=8, linewidth=2, color=COLORS[0], linestyle='-')
-
-        # Plot significant points with different color
-        if significant_indices:
-            plt.plot([time_list[i] for i in significant_indices], 
-                    [r_means[i] for i in significant_indices], 
-                    marker='o', markersize=10, linewidth=2, color='green', linestyle='-', 
-                    label='CI lower bound > 0.1')
+        # Plot all points with the same color
+        plt.plot(time_list, r_means, marker='o', markersize=8, linewidth=2, label=f'Pearson R', color=COLORS[0])
 
         # Add confidence interval shading
         plt.fill_between(time_list, r_lower, r_upper, alpha=0.3, color=COLORS[0], label='95% CI')
@@ -649,6 +644,9 @@ for internal_state in summary_results:
                 label=f"{PREFIX_DISPLAY_MAP.get(prefix, prefix)}", color=COLORS[i % len(COLORS)])
         ax1.fill_between(time_list, r_lower, r_upper, alpha=0.2, color=COLORS[i % len(COLORS)])
     
+    # Horizontal red dotted line at R = 0.1
+    ax1.axhline(y=0.1, color='red', linestyle='--', linewidth=2, label='Threshold (R=0.1)')
+
     ax1.set_title("Pearson R Performance Across Time Windows", fontsize=16)
     ax1.set_xlabel("Time Window (minutes)", fontsize=14)
     ax1.set_ylabel("Pearson Correlation (r)", fontsize=14)
@@ -700,24 +698,27 @@ for internal_state in summary_results:
         # Get features with highest selection frequency
         feature_freq = []
         for feat in feature_list:
-            total_freq = sum(feature_selection_frequency[internal_state][best_prefix].get(feat, 0) for t in time_list)
+            total_freq = sum(
+                summary_results[internal_state][best_prefix][t]['feature_selection'].get(feat, 0)
+                for t in time_list
+            )
             if total_freq > 0:
                 feature_freq.append((feat, total_freq))
-        
+
         # Sort and get top 15
         feature_freq.sort(key=lambda x: x[1], reverse=True)
         top_15_freq_features = [f[0] for f in feature_freq[:15]]
-        
+
         # Create mini heatmap
         mini_matrix = np.zeros((len(top_15_freq_features), len(time_list)))
         for i, feat in enumerate(top_15_freq_features):
             for j, t in enumerate(time_list):
-                freq = feature_selection_frequency[internal_state][best_prefix].get(feat, 0)
-                mini_matrix[i, j] = (freq / total_models) * 100
-        
+                freq = summary_results[internal_state][best_prefix][t]['feature_selection'].get(feat, 0)
+                mini_matrix[i, j] = freq
+
         # Plot
         sns.heatmap(mini_matrix, cmap='viridis', xticklabels=time_list, yticklabels=top_15_freq_features,
-                   cbar_kws={'label': '% of Bootstrap Models'}, ax=ax3, linewidths=0.5)
+                    cbar_kws={'label': '% of Bootstrap Models'}, ax=ax3, linewidths=0.5)
         ax3.set_title(f"Feature Selection Frequency ({PREFIX_DISPLAY_MAP.get(best_prefix, best_prefix)})", fontsize=16)
         ax3.set_xlabel("Time Window (minutes)", fontsize=14)
         ax3.set_ylabel("Feature", fontsize=14)
