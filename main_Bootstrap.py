@@ -44,6 +44,7 @@ def parse_filename(filename):
 
 summary_results = defaultdict(lambda: defaultdict(dict))
 feature_heatmap_data = defaultdict(lambda: defaultdict(dict))
+permutation_impact_data = defaultdict(lambda: defaultdict(dict))
 all_feature_names = set()
 
 for file in tqdm(csv_files, desc="Processing all CSVs"):
@@ -65,13 +66,16 @@ for file in tqdm(csv_files, desc="Processing all CSVs"):
 
     loo = LeaveOneOut()
     preds = np.zeros_like(y, dtype=float)
+    alpha_store = []
     for train_idx, test_idx in loo.split(X):
         model = LassoCV(alphas=ALPHAS, cv=LeaveOneOut()).fit(X[train_idx], y[train_idx])
         preds[test_idx[0]] = model.predict(X[test_idx])[0]
+        alpha_store.append(model.alpha_)
 
     loo_r, _ = pearsonr(y, preds)
 
     coef_matrix = []
+    permutation_r_per_feature = defaultdict(list)
     bootstrap_r_values = []
     feature_selection_count = np.zeros(X.shape[1])
 
@@ -80,22 +84,35 @@ for file in tqdm(csv_files, desc="Processing all CSVs"):
         loo = LeaveOneOut()
         boot_preds = np.zeros_like(y_boot, dtype=float)
         boot_coefs = []
+        test_indices = []
+
         for train_idx, test_idx in loo.split(X_boot):
             model = LassoCV(alphas=ALPHAS, cv=LeaveOneOut()).fit(X_boot[train_idx], y_boot[train_idx])
             y_pred = model.predict(X_boot[test_idx])[0]
             boot_preds[test_idx[0]] = y_pred
             boot_coefs.append(model.coef_)
             feature_selection_count += (model.coef_ != 0).astype(int)
+            test_indices.append(test_idx[0])
 
         r_boot, _ = pearsonr(y_boot, boot_preds)
         bootstrap_r_values.append(r_boot)
         coef_matrix.extend(boot_coefs)
+
+        boot_coefs_arr = np.array(boot_coefs)
+        X_test_matrix = X_boot[test_indices]
+        for f_idx in range(X.shape[1]):
+            X_test_permuted = X_test_matrix.copy()
+            X_test_permuted[:, f_idx] = np.random.permutation(X_test_permuted[:, f_idx])
+            perm_preds = np.sum(X_test_permuted * boot_coefs_arr, axis=1)
+            r_perm, _ = pearsonr(y_boot[test_indices], perm_preds)
+            permutation_r_per_feature[feature_names[f_idx]].append(r_perm)
 
     coef_matrix = np.array(coef_matrix)
     mean_r = np.mean(bootstrap_r_values)
     ci_lower = np.percentile(bootstrap_r_values, 2.5)
     ci_upper = np.percentile(bootstrap_r_values, 97.5)
     mean_importance = np.mean(np.abs(coef_matrix), axis=0)
+    mean_perm_impact = [mean_r - np.mean(permutation_r_per_feature[f]) for f in feature_names]
 
     summary_results[internal_state][prefix][time_window] = {
         'r': mean_r,
@@ -103,8 +120,19 @@ for file in tqdm(csv_files, desc="Processing all CSVs"):
         'ci_upper': ci_upper
     }
 
-    for fname, imp in zip(feature_names, mean_importance):
+    for fname, imp, perm in zip(feature_names, mean_importance, mean_perm_impact):
         feature_heatmap_data[internal_state][fname][time_window] = imp
+        permutation_impact_data[internal_state][fname][time_window] = perm
+
+    # Save alpha search distribution
+    plt.figure(figsize=(8, 4))
+    sns.histplot(alpha_store, bins=20)
+    plt.title(f"Alpha Distribution | {internal_state} | {prefix} | {time_window}min")
+    plt.xlabel("Alpha")
+    plt.ylabel("Count")
+    plt.tight_layout()
+    plt.savefig(os.path.join(prefix_folder, f"alpha_distribution_time_{time_window}.png"))
+    plt.close()
 
 # --------- OVERVIEW AGGREGATE PLOTS ---------
 for internal_state in summary_results:
@@ -130,21 +158,28 @@ for internal_state in summary_results:
         plt.savefig(os.path.join(overview_folder, f"summary_{prefix}_R_vs_time.png"))
         plt.close()
 
-    # Feature Importance Heatmap
+    # Coefficient Importance Heatmap
     feature_list = sorted(list(all_feature_names))
     time_list = sorted(TIME_WINDOWS)
-    heatmap_matrix = np.zeros((len(feature_list), len(time_list)))
+    heatmap_matrix_coef = np.zeros((len(feature_list), len(time_list)))
+    heatmap_matrix_perm = np.zeros((len(feature_list), len(time_list)))
 
     for i, fname in enumerate(feature_list):
         for j, t in enumerate(time_list):
-            heatmap_matrix[i, j] = feature_heatmap_data[internal_state].get(fname, {}).get(t, 0)
+            heatmap_matrix_coef[i, j] = feature_heatmap_data[internal_state].get(fname, {}).get(t, 0)
+            heatmap_matrix_perm[i, j] = permutation_impact_data[internal_state].get(fname, {}).get(t, 0)
 
-    plt.figure(figsize=(14, len(feature_list) * 0.4))
-    sns.heatmap(heatmap_matrix, cmap='viridis', xticklabels=time_list, yticklabels=feature_list,
-                cbar_kws={'label': 'Mean |Coefficient|'}, linewidths=0.5)
-    plt.title(f"{internal_state} - Feature Importance Across Time Windows", fontsize=16)
-    plt.xlabel("Time Window (minutes)")
-    plt.ylabel("Feature")
-    plt.tight_layout()
-    plt.savefig(os.path.join(overview_folder, f"{internal_state}_FeatureImportance_Heatmap.png"))
-    plt.close()
+    for matrix, label, fname_suffix in zip(
+        [heatmap_matrix_coef, heatmap_matrix_perm],
+        ['Mean |Coefficient|', 'Permutation Impact (ΔR)'],
+        ['Coef', 'Perm']
+    ):
+        plt.figure(figsize=(14, len(feature_list) * 0.4))
+        sns.heatmap(matrix, cmap='viridis', xticklabels=time_list, yticklabels=feature_list,
+                    cbar_kws={'label': label}, linewidths=0.5)
+        plt.title(f"{internal_state} - Feature Importance Across Time Windows ({label})", fontsize=16)
+        plt.xlabel("Time Window (minutes)")
+        plt.ylabel("Feature")
+        plt.tight_layout()
+        plt.savefig(os.path.join(overview_folder, f"{internal_state}_FeatureImportance_{fname_suffix}_Heatmap.png"))
+        plt.close()
