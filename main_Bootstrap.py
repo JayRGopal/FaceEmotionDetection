@@ -730,7 +730,7 @@ for internal_state in summary_results:
         metrics_to_plot = [
             ('pearson_r', 'Pearson R', COLORS[0]),
             ('spearman_r', 'Spearman R', COLORS[1]),
-            ('r2', 'R²', COLORS[2])
+            ('RMSE', 'Root Mean Squared Error', COLORS[2])
         ]
         
         for metric, label, color in metrics_to_plot:
