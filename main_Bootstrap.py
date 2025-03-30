@@ -23,8 +23,11 @@ RESULTS_OUTPUT_PATH = os.path.join(BASE_RESULTS_PATH, PAT_NOW)
 N_BOOTSTRAPS = 2
 ALPHAS = np.linspace(0.1, 2.0, 20)
 TIME_WINDOWS = list(range(15, 241, 15))
+# INTERNAL_STATES = ['Mood', 'Depression', 'Anxiety', 'Hunger', 'Pain']
 INTERNAL_STATES = ['Mood']
-RESULTS_PREFIX_LIST = ['OGAUHSE_L_', 'HSE_L_']
+# RESULTS_PREFIX_LIST = ['OF_L_', 'OGAU_L_', 'OGAUHSE_L_', 'HSE_L_']
+RESULTS_PREFIX_LIST = ['OGAU_L_']
+
 
 os.makedirs(RESULTS_OUTPUT_PATH, exist_ok=True)
 
