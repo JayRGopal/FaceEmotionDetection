@@ -21,7 +21,7 @@ FEATURE_SAVE_FOLDER = '/home/jgopal/Desktop/FaceEmotionDetection/temp_outputs/'
 BASE_RESULTS_PATH = '/home/jgopal/NAS/Analysis/AudioFacialEEG/Results_Apr_2025/'
 RESULTS_OUTPUT_PATH = os.path.join(BASE_RESULTS_PATH, PAT_NOW)
 N_BOOTSTRAPS = 2
-ALPHAS = np.linspace(0.1, 2.0, 20)
+ALPHAS = np.linspace(0.3, 6.0, 20)
 TIME_WINDOWS = list(range(15, 241, 15))
 # INTERNAL_STATES = ['Mood', 'Depression', 'Anxiety', 'Hunger', 'Pain']
 INTERNAL_STATES = ['Mood']
@@ -35,10 +35,10 @@ os.makedirs(RESULTS_OUTPUT_PATH, exist_ok=True)
 
 # Create a mapping to decode feature prefixes to more readable names for plots
 PREFIX_DISPLAY_MAP = {
-    'OF_L_': 'Optical Flow',
-    'OGAU_L_': 'OpenFace AU',
-    'OGAUHSE_L_': 'OpenFace AU + HSE',
-    'HSE_L_': 'Head-Shoulder-Eye'
+    'OF_L_': 'OpenFace',
+    'OGAU_L_': 'FaceDx AU',
+    'OGAUHSE_L_': 'FaceDx Complete',
+    'HSE_L_': 'FaceDx Emo'
 }
 
 # Function to parse filename to extract metadata
@@ -121,7 +121,7 @@ for file in tqdm(csv_files, desc="Processing all CSVs"):
     loo_rmse = np.sqrt(mean_squared_error(y, preds))
     loo_mae = mean_absolute_error(y, preds)
 
-    # Store feature correlations with target
+    # Store feature correlations with self-reports
     feature_correlations = {}
     for i, feat_name in enumerate(feature_names):
         r_val, p_val = pearsonr(X[:, i], y)
@@ -400,10 +400,30 @@ for internal_state in summary_results:
         r_upper = [summary_results[internal_state][prefix][t]['pearson_r']['ci_upper'] for t in time_list]
         
         plt.figure(figsize=(12, 8))
-        plt.plot(time_list, r_means, marker='o', markersize=8, linewidth=2, label=f'Pearson R', color=COLORS[0])
+        # Add a horizontal red dotted line at R = 0.1
+        plt.axhline(y=0.1, color='red', linestyle='--', linewidth=2, label='Threshold (R=0.1)')
+
+        # Split data points based on CI lower bound
+        significant_indices = [i for i, lower in enumerate(r_lower) if lower > 0.1]
+        nonsignificant_indices = [i for i, lower in enumerate(r_lower) if lower <= 0.1]
+
+        # Plot non-significant points
+        if nonsignificant_indices:
+            plt.plot([time_list[i] for i in nonsignificant_indices], 
+                    [r_means[i] for i in nonsignificant_indices], 
+                    marker='o', markersize=8, linewidth=2, color=COLORS[0], linestyle='-')
+
+        # Plot significant points with different color
+        if significant_indices:
+            plt.plot([time_list[i] for i in significant_indices], 
+                    [r_means[i] for i in significant_indices], 
+                    marker='o', markersize=10, linewidth=2, color='green', linestyle='-', 
+                    label='CI lower bound > 0.1')
+
+        # Add confidence interval shading
         plt.fill_between(time_list, r_lower, r_upper, alpha=0.3, color=COLORS[0], label='95% CI')
-        
-        plt.title(f"{internal_state} Detection Performance Over Time\n{PREFIX_DISPLAY_MAP.get(prefix, prefix)}", fontsize=18)
+
+        plt.title(f"{internal_state} Detection Performance Across Time Windows\n{PREFIX_DISPLAY_MAP.get(prefix, prefix)}", fontsize=18)
         plt.xlabel("Time Window (minutes)", fontsize=16)
         plt.ylabel("Pearson Correlation Coefficient (r)", fontsize=16)
         plt.grid(True, alpha=0.3)
@@ -431,7 +451,7 @@ for internal_state in summary_results:
             axes[i].plot(time_list, means, marker='o', markersize=8, linewidth=2, color=color)
             axes[i].fill_between(time_list, lower, upper, alpha=0.3, color=color)
             
-            axes[i].set_title(f"{label} Over Time", fontsize=16)
+            axes[i].set_title(f"{label} Across Time Windows", fontsize=16)
             axes[i].set_xlabel("Time Window (minutes)", fontsize=14)
             axes[i].set_ylabel(label, fontsize=14)
             axes[i].grid(True, alpha=0.3)
@@ -526,7 +546,7 @@ for internal_state in summary_results:
         sorted_features = sorted(avg_correlations.items(), key=lambda x: abs(x[1]), reverse=True)[:NUM_TOP_FEATURES]
         top_corr_features = [f[0] for f in sorted_features]
         
-        # Plot correlation over time for top features
+        # Plot correlation across time windows for top features
         plt.figure(figsize=(12, 8))
         
         for i, feat in enumerate(top_corr_features):
@@ -538,7 +558,7 @@ for internal_state in summary_results:
                 
                 plt.plot(times, correlations, marker='o', linewidth=2, label=feat, color=COLORS[i % len(COLORS)])
         
-        plt.title(f"{internal_state} - Top Features Correlation with Target\n{PREFIX_DISPLAY_MAP.get(prefix, prefix)}", fontsize=18)
+        plt.title(f"{internal_state} - Top Features Correlation with Self-Reports\n{PREFIX_DISPLAY_MAP.get(prefix, prefix)}", fontsize=18)
         plt.xlabel("Time Window (minutes)", fontsize=16)
         plt.ylabel("Pearson Correlation (r)", fontsize=16)
         plt.grid(True, alpha=0.3)
