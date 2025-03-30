@@ -126,7 +126,8 @@ for file in tqdm(csv_files, desc="Processing all CSVs"):
 
     # --------- PLOTS ---------
     plt.figure(figsize=(10, 6))
-    sns.barplot(x='feature', y='mean_abs_coef', data=pd.DataFrame(top10 + bottom10), palette='coolwarm')
+    feature_bar_df = pd.DataFrame(top10 + bottom10, columns=['feature', 'mean_abs_coef'])
+    sns.barplot(x='feature', y='mean_abs_coef', data=feature_bar_df, palette='coolwarm')
     plt.title(f'Top & Bottom 10 Features by Coefficient: {base_fn}', fontsize=14)
     plt.xticks(rotation=90)
     plt.tight_layout()
@@ -162,3 +163,4 @@ for internal_state in summary_results:
         plt.tight_layout()
         plt.savefig(os.path.join(RESULTS_OUTPUT_PATH, f"summary_{internal_state}_{prefix}_R_vs_time.png"))
         plt.close()
+        
