@@ -174,15 +174,24 @@ for file in tqdm(csv_files, desc="Processing all CSVs"):
     # Calculate p-values based on null distribution
     p_values = {}
     for metric in null_metrics:
+        if metric == 'pearson_r':
+            actual_value = loo_r
+        elif metric == 'spearman_r':
+            actual_value = loo_spearman
+        elif metric == 'r2':
+            actual_value = loo_r2
+        elif metric == 'rmse':
+            actual_value = loo_rmse
+        elif metric == 'mae':
+            actual_value = loo_mae
+        
         if metric in ['pearson_r', 'spearman_r', 'r2']:
             # For metrics where higher is better
-            actual_value = locals()[f'loo_{metric.replace("_r", "")}']
             p_values[metric] = (np.sum(np.array(null_metrics[metric]) >= actual_value) + 1) / (NUM_NULL_PERMUTATIONS + 1)
         else:
             # For metrics where lower is better
-            actual_value = locals()[f'loo_{metric}']
             p_values[metric] = (np.sum(np.array(null_metrics[metric]) <= actual_value) + 1) / (NUM_NULL_PERMUTATIONS + 1)
-
+    
     # Store null distribution data
     null_distribution_data[internal_state][prefix][time_window] = null_metrics
     # Store feature correlations with self-reports
@@ -234,7 +243,17 @@ for file in tqdm(csv_files, desc="Processing all CSVs"):
     # Calculate confidence intervals from null distribution
     ci_results = {}
     for metric in null_metrics:
-        actual_value = locals()[f'loo_{metric.replace("_r", "")}'] if metric in ['pearson_r', 'spearman_r', 'r2'] else locals()[f'loo_{metric}']
+        if metric == 'pearson_r':
+            actual_value = loo_r
+        elif metric == 'spearman_r':
+            actual_value = loo_spearman
+        elif metric == 'r2':
+            actual_value = loo_r2
+        elif metric == 'rmse':
+            actual_value = loo_rmse
+        elif metric == 'mae':
+            actual_value = loo_mae
+        
         ci_results[metric] = {
             'value': actual_value,
             'p_value': p_values[metric],
