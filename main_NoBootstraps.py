@@ -750,7 +750,7 @@ for internal_state in tqdm(INTERNAL_STATES, desc="Processing internal states"):
                 if os.path.exists(os.path.join(prefix_folder, f"alpha_distribution_time_{time_window}.png")):
                     alpha_over_time['time_windows'].append(time_window)
         
-        if alpha_over_time['time_windows']:
+        if alpha_over_time['time_windows'] and alpha_over_time['alphas']:
             plt.figure(figsize=(12, 6))
             plt.plot(alpha_over_time['time_windows'], alpha_over_time['alphas'], 'o-', color=COLORS[0])
             plt.grid(True, alpha=0.3)
