@@ -735,16 +735,32 @@ for internal_state in tqdm(INTERNAL_STATES, desc="Processing internal states"):
                 feature_idx = list(feature_names).index(feature)
                 x_vals = X[:, feature_idx]
                 
+                # New code: Filter out NaN and infinite values
+                valid_indices = ~(np.isnan(x_vals) | np.isinf(x_vals) | np.isnan(y) | np.isinf(y))
+                x_clean = x_vals[valid_indices]
+                y_clean = y[valid_indices]
+                
+                # Plot scatter with original data
                 axes[i].scatter(x_vals, y, alpha=0.7, s=60, color=COLORS[i % len(COLORS)])
                 
-                # Add regression line
-                z = np.polyfit(x_vals, y, 1)
-                p = np.poly1d(z)
-                axes[i].plot(sorted(x_vals), p(sorted(x_vals)), linestyle='--', color='red', linewidth=1.5)
+                # Check if we have enough data points for regression
+                if len(x_clean) > 1:
+                    try:
+                        # Add regression line with clean data
+                        z = np.polyfit(x_clean, y_clean, 1)
+                        p = np.poly1d(z)
+                        axes[i].plot(sorted(x_clean), p(sorted(x_clean)), linestyle='--', color='red', linewidth=1.5)
+                        
+                        # Calculate correlation with clean data
+                        r_val, p_val = pearsonr(x_clean, y_clean)
+                        axes[i].set_title(f"{feature}\nr={r_val:.2f}, p={p_val:.3f}", fontsize=10)
+                    except np.linalg.LinAlgError:
+                        # Handle LinAlgError gracefully
+                        axes[i].set_title(f"{feature}\nCould not calculate correlation", fontsize=10)
+                else:
+                    # Not enough valid data points
+                    axes[i].set_title(f"{feature}\nInsufficient data", fontsize=10)
                 
-                # Calculate correlation
-                r_val, p_val = pearsonr(x_vals, y)
-                axes[i].set_title(f"{feature}\nr={r_val:.2f}, p={p_val:.3f}", fontsize=10)
                 axes[i].set_xlabel(feature, fontsize=9)
                 if i % 5 == 0:
                     axes[i].set_ylabel(internal_state, fontsize=10)
