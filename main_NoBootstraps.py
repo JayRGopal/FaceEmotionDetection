@@ -457,15 +457,32 @@ for internal_state in tqdm(INTERNAL_STATES, desc="Processing internal states"):
     performance_over_time = defaultdict(lambda: defaultdict(list))
     
     for prefix in RESULTS_PREFIX_LIST:
-        for time_window in TIME_WINDOWS:
-            if time_window in summary_results[internal_state][prefix]:
-                for metric in ['pearson_r', 'spearman_r', 'r2', 'rmse', 'mae']:
-                    if metric in summary_results[internal_state][prefix][time_window]:
-                        value = summary_results[internal_state][prefix][time_window][metric]['value']
-                        p_value = summary_results[internal_state][prefix][time_window][metric]['p_value']
-                        performance_over_time[prefix][f"{metric}_value"].append(value)
-                        performance_over_time[prefix][f"{metric}_p"].append(p_value)
-                        performance_over_time[prefix]["time_windows"].append(time_window)
+        # Create a list of time windows for which we have data
+        available_time_windows = sorted([tw for tw in TIME_WINDOWS if tw in summary_results[internal_state][prefix]])
+        
+        # Store time windows only once
+        performance_over_time[prefix]["time_windows"] = available_time_windows
+        
+        # Now fill in the metric values for each time window
+        for metric in ['pearson_r', 'spearman_r', 'r2', 'rmse', 'mae']:
+            metric_values = []
+            metric_p_values = []
+            
+            for time_window in available_time_windows:
+                if metric in summary_results[internal_state][prefix][time_window]:
+                    value = summary_results[internal_state][prefix][time_window][metric]['value']
+                    p_value = summary_results[internal_state][prefix][time_window][metric]['p_value']
+                    metric_values.append(value)
+                    metric_p_values.append(p_value)
+                else:
+                    # Add NaN values if this metric is missing for this time window
+                    metric_values.append(np.nan)
+                    metric_p_values.append(np.nan)
+            
+            # Store the collected values
+            performance_over_time[prefix][f"{metric}_value"] = metric_values
+            performance_over_time[prefix][f"{metric}_p"] = metric_p_values
+
     
     # Save performance data to CSV
     for prefix in RESULTS_PREFIX_LIST:
