@@ -101,6 +101,10 @@ for patient in patient_folders:
                             correlation = float(correlation)
                         
                         # Store feature correlation data - method specific
+                        # Fix: defaultdict doesn't have append method, we need to initialize with list
+                        if feature_type not in feature_correlation_data[method_name]:
+                            feature_correlation_data[method_name][feature_type] = []
+                        
                         feature_correlation_data[method_name][feature_type].append({
                             'Patient': patient,
                             'Feature': feature,
