@@ -71,7 +71,7 @@ for patient in patient_folders:
         
         # Store results per time window
         for _, row in df.iterrows():
-            time_window_results[method][row['Time Window']].append(row['Pearson_R'])
+            time_window_results[method][row['Time_Window']].append(row['Pearson_R'])
             
         # Store best result
         best_results[method].append(df['Pearson_R'].max())
