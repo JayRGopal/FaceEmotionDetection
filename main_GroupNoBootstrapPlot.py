@@ -101,6 +101,9 @@ for patient in patient_folders:
                             correlation = float(correlation)
                         
                         # Store feature correlation data
+                        if feature_type not in feature_correlation_data[method_name]:
+                            feature_correlation_data[method_name][feature_type] = []
+                        
                         feature_correlation_data[method_name][feature_type].append({
                             'Patient': patient,
                             'Feature': feature,
