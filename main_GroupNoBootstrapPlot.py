@@ -91,6 +91,10 @@ for patient in patient_folders:
                     corr_df = pd.read_csv(corr_path)
                     for _, row in corr_df.iterrows():
                         feature = row.get('Feature', '')
+                        # Remove ".1" from feature names if present
+                        if feature.endswith(".1"):
+                            feature = feature[:-2]
+                        
                         feature_type = row.get('Type', '')
                         correlation = row.get('Correlation', 0)
                         
