@@ -136,7 +136,7 @@ for internal_state in INTERNAL_STATES:
                 # Train a model using LassoCV
                 model = LassoCV(alphas=ALPHAS, cv=LeaveOneOut())
                 if np.isnan(X_train).any(): 
-                print(f"WARNING: NaNs found in X_train for patient {test_patient}, time window {time_window}, method {prefix}. NaN columns: {feature_cols[np.isnan(X_train).any(axis=0)]}")
+                    print(f"WARNING: NaNs found in X_train for patient {test_patient}, time window {time_window}, method {prefix}. NaN columns: {feature_cols[np.isnan(X_train).any(axis=0)]}")
                 model.fit(X_train, y_train)
                 
                 # Predict on test patient
