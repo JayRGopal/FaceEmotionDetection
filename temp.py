@@ -1,7 +1,6 @@
 import os
 import re
 import pandas as pd
-import numpy as np
 from collections import defaultdict
 
 # Define paths and configurations
@@ -30,103 +29,106 @@ def parse_filename(filename):
 # Get all patient folders
 patient_folders = [folder for folder in os.listdir(FEATURE_SAVE_FOLDER) 
                   if os.path.isdir(os.path.join(FEATURE_SAVE_FOLDER, folder)) and folder.startswith('S')]
+patient_folders.sort()  # Sort patient folders for consistent output
 print(f"Found {len(patient_folders)} patient folders")
 
-# Dictionary to store NaN counts for each method, internal state, time window, and column
-nan_counts = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(int))))
+# Dictionary to store NaN percentages for each patient, method, internal state, and time window
+patient_nan_stats = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(dict))))
 
-# Track the number of rows processed for each combination
-row_counts = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
-
-print("\nAppending rows across all patients for each time window...")
-for internal_state in INTERNAL_STATES:
-    print(f"\nProcessing internal state: {internal_state}")
+print("\nAnalyzing NaN percentages for each patient individually...")
+for patient_id in patient_folders:
+    print(f"\nExamining patient: {patient_id}")
+    patient_folder = os.path.join(FEATURE_SAVE_FOLDER, patient_id)
+    csv_files = [f for f in os.listdir(patient_folder) if f.endswith('.csv')]
     
-    for time_window in TIME_WINDOWS:
-        print(f"  Processing time window: {time_window} minutes")
+    # Track if this patient has any files with NaNs
+    has_nans = False
+    
+    for file in csv_files:
+        file_state, file_time, file_prefix = parse_filename(file)
         
-        for prefix in RESULTS_PREFIX_LIST:
-            display_name = PREFIX_DISPLAY_MAP.get(prefix, prefix)
-            print(f"    Processing method: {display_name}")
+        # Skip if not in our list of interest
+        if (file_state not in INTERNAL_STATES or 
+            file_prefix not in RESULTS_PREFIX_LIST or 
+            file_time not in TIME_WINDOWS):
+            continue
+        
+        # Load data as-is without any type conversion
+        df = pd.read_csv(os.path.join(patient_folder, file), dtype=str)
+        
+        # Convert back to appropriate types for NaN checking
+        # This avoids type conversion issues
+        for col in df.columns:
+            try:
+                df[col] = pd.to_numeric(df[col])
+            except:
+                pass  # Keep as string if not numeric
+        
+        # Calculate NaN statistics
+        total_cells = df.size
+        nan_cells = df.isna().sum().sum()
+        nan_percent = (nan_cells / total_cells) * 100 if total_cells > 0 else 0
+        
+        # Store statistics
+        display_name = PREFIX_DISPLAY_MAP.get(file_prefix, file_prefix)
+        patient_nan_stats[patient_id][file_prefix][file_state][file_time] = {
+            'total_cells': total_cells,
+            'nan_cells': nan_cells,
+            'nan_percent': nan_percent
+        }
+        
+        # Print NaN percentage for this file
+        if nan_cells > 0:
+            has_nans = True
+            print(f"  {display_name}, {file_state}, Time Window {file_time} min:")
+            print(f"    {nan_cells} NaNs out of {total_cells} cells ({nan_percent:.4f}%)")
             
-            # Collect data from all patients for this combination
-            all_dfs = []
-            
-            for patient_id in patient_folders:
-                patient_folder = os.path.join(FEATURE_SAVE_FOLDER, patient_id)
-                csv_files = [f for f in os.listdir(patient_folder) if f.endswith('.csv')]
-                
-                # Find the matching CSV file for this patient
-                matching_file = None
-                for file in csv_files:
-                    file_state, file_time, file_prefix = parse_filename(file)
-                    if file_state == internal_state and file_time == time_window and file_prefix == prefix:
-                        matching_file = file
-                        break
-                
-                if matching_file:
-                    # Load data for this patient
-                    df = pd.read_csv(os.path.join(patient_folder, matching_file))
-                    all_dfs.append(df)
-            
-            if not all_dfs:
-                print(f"      No data found for this combination")
-                continue
-                
-            # Combine all dataframes
-            combined_df = pd.concat(all_dfs, axis=0, ignore_index=True)
-            
-            # Count total rows
-            total_rows = combined_df.shape[0]
-            row_counts[prefix][internal_state][time_window] = total_rows
-            
-            # Check for NaN values in each column
-            nan_column_counts = combined_df.isna().sum()
-            
-            # Store NaN counts for columns with at least one NaN
-            for column, count in nan_column_counts.items():
-                if count > 0:
-                    nan_counts[prefix][internal_state][time_window][column] = count
+            # Count NaNs by column 
+            nan_by_col = df.isna().sum()
+            nan_cols = nan_by_col[nan_by_col > 0]
+            if not nan_cols.empty:
+                print("    NaNs by column:")
+                for col, count in nan_cols.items():
+                    col_percent = (count / len(df)) * 100
+                    print(f"      {col}: {count} NaNs ({col_percent:.2f}%)")
+    
+    if not has_nans:
+        print("  No NaN values found in any files")
 
-# Print summary of NaN values for each method
-print("\n\n======= NaN VALUES SUMMARY =======")
+# Print summary of NaN percentages across all patients
+print("\n\n======= SUMMARY OF NaN PERCENTAGES BY PATIENT =======")
 
-for prefix in RESULTS_PREFIX_LIST:
-    display_name = PREFIX_DISPLAY_MAP.get(prefix, prefix)
-    print(f"\n{display_name}:")
+# Calculate overall NaN percentage for each patient
+patient_overall_stats = {}
+for patient_id in patient_folders:
+    total_cells_all = 0
+    nan_cells_all = 0
     
-    # Track columns with NaNs in any time window
-    all_nan_columns = set()
+    for prefix in RESULTS_PREFIX_LIST:
+        for state in INTERNAL_STATES:
+            for time_window in TIME_WINDOWS:
+                if time_window in patient_nan_stats[patient_id][prefix][state]:
+                    stats = patient_nan_stats[patient_id][prefix][state][time_window]
+                    total_cells_all += stats['total_cells']
+                    nan_cells_all += stats['nan_cells']
     
-    # For each internal state and time window
-    for internal_state in INTERNAL_STATES:
-        for time_window in TIME_WINDOWS:
-            # Check if we have data for this combination
-            if row_counts[prefix][internal_state][time_window] > 0:
-                # Get columns with NaNs
-                nan_columns = nan_counts[prefix][internal_state][time_window]
-                
-                if nan_columns:
-                    total_rows = row_counts[prefix][internal_state][time_window]
-                    print(f"  {internal_state}, Time Window {time_window} min ({total_rows} rows):")
-                    
-                    # Sort columns by NaN count (descending)
-                    sorted_columns = sorted(nan_columns.items(), key=lambda x: x[1], reverse=True)
-                    
-                    for column, count in sorted_columns:
-                        percent = (count / total_rows) * 100
-                        print(f"    {column}: {count} NaNs ({percent:.2f}%)")
-                        all_nan_columns.add(column)
-                else:
-                    print(f"  {internal_state}, Time Window {time_window} min: No NaN values")
-    
-    # Print summary of all columns with NaNs for this method
-    print(f"\n  Summary for {display_name}:")
-    if all_nan_columns:
-        print(f"  Columns with NaNs across all time windows:")
-        for column in sorted(all_nan_columns):
-            print(f"    {column}")
+    overall_percent = (nan_cells_all / total_cells_all) * 100 if total_cells_all > 0 else 0
+    patient_overall_stats[patient_id] = {
+        'total_cells': total_cells_all,
+        'nan_cells': nan_cells_all,
+        'nan_percent': overall_percent
+    }
+
+# Print patients in order of NaN percentage (highest first)
+sorted_patients = sorted(patient_overall_stats.items(), 
+                        key=lambda x: x[1]['nan_percent'], 
+                        reverse=True)
+
+print("\nPatients ranked by overall NaN percentage:")
+for patient_id, stats in sorted_patients:
+    if stats['nan_cells'] > 0:
+        print(f"{patient_id}: {stats['nan_cells']} NaNs out of {stats['total_cells']} cells ({stats['nan_percent']:.4f}%)")
     else:
-        print("  No columns with NaN values found")
+        print(f"{patient_id}: No NaNs")
 
 print("\n======= ANALYSIS COMPLETE =======")
