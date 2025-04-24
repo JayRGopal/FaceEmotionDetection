@@ -1,6 +1,7 @@
 import os
 import re
 import pandas as pd
+import numpy as np
 from collections import defaultdict
 
 # Define paths and configurations
@@ -31,88 +32,101 @@ patient_folders = [folder for folder in os.listdir(FEATURE_SAVE_FOLDER)
                   if os.path.isdir(os.path.join(FEATURE_SAVE_FOLDER, folder)) and folder.startswith('S')]
 print(f"Found {len(patient_folders)} patient folders")
 
-# Dictionary to store all columns for each method, internal state, and time window
-all_columns = defaultdict(lambda: defaultdict(lambda: defaultdict(set)))
+# Dictionary to store NaN counts for each method, internal state, time window, and column
+nan_counts = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(int))))
 
-# Dictionary to store all columns found for each method
-method_all_columns = defaultdict(set)
+# Track the number of rows processed for each combination
+row_counts = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
 
-# Dictionary to store file counts for each combination
-file_counts = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
-
-# First pass: Collect all column names and check for NaN values
-print("\nChecking for NaN values and collecting column names...")
-for patient_id in patient_folders:
-    patient_folder = os.path.join(FEATURE_SAVE_FOLDER, patient_id)
-    csv_files = [f for f in os.listdir(patient_folder) if f.endswith('.csv')]
+print("\nAppending rows across all patients for each time window...")
+for internal_state in INTERNAL_STATES:
+    print(f"\nProcessing internal state: {internal_state}")
     
-    for file in csv_files:
-        file_state, file_time, file_prefix = parse_filename(file)
+    for time_window in TIME_WINDOWS:
+        print(f"  Processing time window: {time_window} minutes")
         
-        # Skip if not in our list of interest
-        if file_state not in INTERNAL_STATES or file_prefix not in RESULTS_PREFIX_LIST or file_time not in TIME_WINDOWS:
-            continue
-        
-        # Load data
-        df = pd.read_csv(os.path.join(patient_folder, file))
-        
-        # Check for NaN values
-        nan_count = df.isna().sum().sum()
-        if nan_count > 0:
-            print(f"WARNING: Found {nan_count} NaN values in {patient_id}/{file}")
+        for prefix in RESULTS_PREFIX_LIST:
+            display_name = PREFIX_DISPLAY_MAP.get(prefix, prefix)
+            print(f"    Processing method: {display_name}")
             
-            # Show columns with NaN values
-            nan_cols = df.columns[df.isna().any()].tolist()
-            print(f"  Columns with NaNs: {nan_cols}")
-        
-        # Store column names (excluding the last column, which is the target)
-        feature_cols = df.columns[:-1].tolist()
-        all_columns[file_prefix][file_state][file_time].update(feature_cols)
-        method_all_columns[file_prefix].update(feature_cols)
-        
-        # Count this file
-        file_counts[file_prefix][file_state][file_time] += 1
+            # Collect data from all patients for this combination
+            all_dfs = []
+            
+            for patient_id in patient_folders:
+                patient_folder = os.path.join(FEATURE_SAVE_FOLDER, patient_id)
+                csv_files = [f for f in os.listdir(patient_folder) if f.endswith('.csv')]
+                
+                # Find the matching CSV file for this patient
+                matching_file = None
+                for file in csv_files:
+                    file_state, file_time, file_prefix = parse_filename(file)
+                    if file_state == internal_state and file_time == time_window and file_prefix == prefix:
+                        matching_file = file
+                        break
+                
+                if matching_file:
+                    # Load data for this patient
+                    df = pd.read_csv(os.path.join(patient_folder, matching_file))
+                    all_dfs.append(df)
+            
+            if not all_dfs:
+                print(f"      No data found for this combination")
+                continue
+                
+            # Combine all dataframes
+            combined_df = pd.concat(all_dfs, axis=0, ignore_index=True)
+            
+            # Count total rows
+            total_rows = combined_df.shape[0]
+            row_counts[prefix][internal_state][time_window] = total_rows
+            
+            # Check for NaN values in each column
+            nan_column_counts = combined_df.isna().sum()
+            
+            # Store NaN counts for columns with at least one NaN
+            for column, count in nan_column_counts.items():
+                if count > 0:
+                    nan_counts[prefix][internal_state][time_window][column] = count
 
-# Second pass: Compare column consistency across patients for each method
-print("\nChecking column consistency across patients and time windows...")
+# Print summary of NaN values for each method
+print("\n\n======= NaN VALUES SUMMARY =======")
 
 for prefix in RESULTS_PREFIX_LIST:
     display_name = PREFIX_DISPLAY_MAP.get(prefix, prefix)
     print(f"\n{display_name}:")
     
-    # Find union of all columns for this method
-    all_method_columns = method_all_columns[prefix]
+    # Track columns with NaNs in any time window
+    all_nan_columns = set()
     
-    # For each internal state and time window, find missing columns
-    inconsistent_columns = set()
-    
-    for state in INTERNAL_STATES:
+    # For each internal state and time window
+    for internal_state in INTERNAL_STATES:
         for time_window in TIME_WINDOWS:
-            # Skip if no files for this combination
-            if file_counts[prefix][state][time_window] == 0:
-                continue
+            # Check if we have data for this combination
+            if row_counts[prefix][internal_state][time_window] > 0:
+                # Get columns with NaNs
+                nan_columns = nan_counts[prefix][internal_state][time_window]
                 
-            # Get columns for this combination
-            combination_columns = all_columns[prefix][state][time_window]
-            
-            # Find columns that are in the method but not in this combination
-            missing_columns = all_method_columns - combination_columns
-            
-            if missing_columns:
-                print(f"  Missing columns in {state}, time window {time_window}:")
-                print(f"    {sorted(missing_columns)}")
-                inconsistent_columns.update(missing_columns)
+                if nan_columns:
+                    total_rows = row_counts[prefix][internal_state][time_window]
+                    print(f"  {internal_state}, Time Window {time_window} min ({total_rows} rows):")
+                    
+                    # Sort columns by NaN count (descending)
+                    sorted_columns = sorted(nan_columns.items(), key=lambda x: x[1], reverse=True)
+                    
+                    for column, count in sorted_columns:
+                        percent = (count / total_rows) * 100
+                        print(f"    {column}: {count} NaNs ({percent:.2f}%)")
+                        all_nan_columns.add(column)
+                else:
+                    print(f"  {internal_state}, Time Window {time_window} min: No NaN values")
     
-    # Print summary of inconsistent columns for this method
-    print(f"\n{display_name} - Inconsistent columns summary:")
-    if inconsistent_columns:
-        print(f"{sorted(inconsistent_columns)}")
+    # Print summary of all columns with NaNs for this method
+    print(f"\n  Summary for {display_name}:")
+    if all_nan_columns:
+        print(f"  Columns with NaNs across all time windows:")
+        for column in sorted(all_nan_columns):
+            print(f"    {column}")
     else:
-        print("  No inconsistent columns found")
+        print("  No columns with NaN values found")
 
-# Final summary
-print("\nSummary of column consistency checks:")
-for prefix in RESULTS_PREFIX_LIST:
-    display_name = PREFIX_DISPLAY_MAP.get(prefix, prefix)
-    all_method_columns = method_all_columns[prefix]
-    print(f"{display_name}: {len(all_method_columns)} total unique columns")
+print("\n======= ANALYSIS COMPLETE =======")
