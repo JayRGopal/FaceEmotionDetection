@@ -139,11 +139,7 @@ def analyze_and_plot(data_type, title_suffix=""):
         pvalues[au] = p_val
         
         # Determine significance level
-        if p_val < 0.001:
-            significant_levels[au] = '***'
-        elif p_val < 0.01:
-            significant_levels[au] = '**'
-        elif p_val < 0.05:
+        if p_val < 0.05:
             significant_levels[au] = '*'
         else:
             significant_levels[au] = ''
@@ -204,13 +200,13 @@ def analyze_and_plot(data_type, title_suffix=""):
     legend_elements = [
         Line2D([0], [0], color='#FFA500', lw=4, label='Smile'),
         Line2D([0], [0], color='#4682B4', lw=4, label='Neutral'),
-        Line2D([0], [0], marker='*', color='w', markerfacecolor='k', markersize=8, label='p < 0.05', linestyle='None'),
-        Line2D([0], [0], marker='*', color='w', markerfacecolor='k', markersize=8, label='p < 0.01', linestyle='None', 
-               markevery=2),  # Visual trick to show two stars
-        Line2D([0], [0], marker='*', color='w', markerfacecolor='k', markersize=8, label='p < 0.001', linestyle='None',
-               markevery=3)   # Visual trick to show three stars
+        Line2D([0], [0], marker='*', color='w', markerfacecolor='k', markersize=10, label='p < 0.05', linestyle='None')
     ]
-    ax.legend(handles=legend_elements, loc='upper right', fontsize=12)
+    # Add custom text strings to legend to properly show multiple asterisks
+    first_legend = ax.legend(handles=legend_elements, loc='upper right', fontsize=12)
+    
+    # Add the second legend for multiple asterisks
+    ax.add_artist(first_legend)
     
     # Add grid lines for readability
     ax.yaxis.grid(True, linestyle='--', alpha=0.7)
