@@ -9,9 +9,13 @@ import os
 plt.style.use('seaborn-v0_8-whitegrid')
 sns.set_context("talk")
 
-# Define file paths
-timing_file = "/home/jgopal/NAS/SEEG-Smile-Events/S23_199_timing.csv"
-au_file = "/home/jgopal/NAS/Analysis/outputs_EventAnalysis/combined_events_S23_199.csv"
+# Patient code - EASY TO CHANGE
+PATIENT_CODE = "S23_199"
+
+# Define file paths based on patient code
+timing_file = f"/home/jgopal/NAS/SEEG-Smile-Events/{PATIENT_CODE}_timing.csv"
+au_file = f"/home/jgopal/NAS/Analysis/outputs_EventAnalysis/combined_events_{PATIENT_CODE}.csv"
+output_dir = f'/home/jgopal/NAS/Analysis/AudioFacialEEG/Results_May_2025/'
 
 # Read the data files
 try:
@@ -34,8 +38,8 @@ print(au_df.head())
 timing_filtered = timing_df[timing_df['EventType'].isin(['Happiness', 'Neutral'])]
 print(f"\nFiltered timing data shape: {timing_filtered.shape}")
 
-# Get list of AU columns
-au_columns = [col for col in au_df.columns if col.startswith('AU')]
+# Get list of AU columns (only include those that start with 'AU' but not 'AUL' or 'AUR')
+au_columns = [col for col in au_df.columns if col.startswith('AU') and not col.startswith(('AUL', 'AUR'))]
 print(f"\nDetected {len(au_columns)} AU columns: {au_columns}")
 
 # Connect clip names between datasets
@@ -126,12 +130,23 @@ def analyze_and_plot(data_type, title_suffix=""):
     
     # Perform t-tests
     pvalues = {}
+    significant_levels = {}
     significant_smile = []
     significant_neutral = []
     
     for au in au_columns:
         t_stat, p_val = stats.ttest_ind(smile_data[au], neutral_data[au], equal_var=False)
         pvalues[au] = p_val
+        
+        # Determine significance level
+        if p_val < 0.001:
+            significant_levels[au] = '***'
+        elif p_val < 0.01:
+            significant_levels[au] = '**'
+        elif p_val < 0.05:
+            significant_levels[au] = '*'
+        else:
+            significant_levels[au] = ''
         
         if p_val < 0.05:
             if mean_smile[au] > mean_neutral[au]:
@@ -161,36 +176,47 @@ def analyze_and_plot(data_type, title_suffix=""):
     
     # Add significance markers
     for i, au in enumerate(sorted_aus):
-        if pvalues[au] < 0.05:
-            ax.text(i, max(mean_smile[au], mean_neutral[au]) + 
-                   max(sem_smile[au], sem_neutral[au]) + 0.02, 
-                   '*', ha='center', va='bottom', fontsize=16)
+        if significant_levels[au]:
+            height = max(mean_smile[au], mean_neutral[au]) + max(sem_smile[au], sem_neutral[au]) + 0.02
+            ax.text(i, height, significant_levels[au], ha='center', va='bottom', fontsize=14)
     
     # Customize plot
     ax.set_xlabel('Facial Action Units', fontsize=14, fontweight='bold')
     
     if data_type == "binarized_avg":
-        ax.set_ylabel('Proportion of Clips Above Threshold (0.4)', fontsize=14, fontweight='bold')
-        ax.set_title(f'Binarized AU Presence: Smile vs. Neutral{title_suffix}', fontsize=16, fontweight='bold')
+        ax.set_ylabel('Proportion of Clips', fontsize=14, fontweight='bold')
+        ax.set_title(f'Facial Action Unit Presence: Smile vs. Neutral\nPatient: {PATIENT_CODE}', 
+                     fontsize=16, fontweight='bold')
     elif data_type == "threshold_count":
-        ax.set_ylabel('Average Count of Frames Above Threshold (0.4)', fontsize=14, fontweight='bold')
-        ax.set_title(f'Frame Count Above Threshold: Smile vs. Neutral{title_suffix}', fontsize=16, fontweight='bold')
+        ax.set_ylabel('Average Frame Count', fontsize=14, fontweight='bold')
+        ax.set_title(f'Frame Count Analysis: Smile vs. Neutral\nPatient: {PATIENT_CODE}', 
+                    fontsize=16, fontweight='bold')
     else:  # raw_avg
-        ax.set_ylabel('Average AU Intensity (0-1)', fontsize=14, fontweight='bold')
-        ax.set_title(f'Raw AU Intensity: Smile vs. Neutral{title_suffix}', fontsize=16, fontweight='bold')
+        ax.set_ylabel('Average Intensity', fontsize=14, fontweight='bold')
+        ax.set_title(f'Raw AU Intensity: Smile vs. Neutral\nPatient: {PATIENT_CODE}', 
+                    fontsize=16, fontweight='bold')
     
     ax.set_xticks(x)
     ax.set_xticklabels(sorted_aus, rotation=45, ha='right')
-    ax.legend()
+    
+    # Create custom legend with significance levels
+    from matplotlib.lines import Line2D
+    legend_elements = [
+        Line2D([0], [0], color='#FFA500', lw=4, label='Smile'),
+        Line2D([0], [0], color='#4682B4', lw=4, label='Neutral'),
+        Line2D([0], [0], marker='*', color='w', markerfacecolor='k', markersize=8, label='p < 0.05', linestyle='None'),
+        Line2D([0], [0], marker='*', color='w', markerfacecolor='k', markersize=8, label='p < 0.01', linestyle='None', 
+               markevery=2),  # Visual trick to show two stars
+        Line2D([0], [0], marker='*', color='w', markerfacecolor='k', markersize=8, label='p < 0.001', linestyle='None',
+               markevery=3)   # Visual trick to show three stars
+    ]
+    ax.legend(handles=legend_elements, loc='upper right', fontsize=12)
     
     # Add grid lines for readability
     ax.yaxis.grid(True, linestyle='--', alpha=0.7)
     
-    # Add a note about significance
-    fig.text(0.5, 0.01, '* indicates p < 0.05 (significant difference)', ha='center', fontsize=12)
-    
-    # Tight layout
-    plt.tight_layout()
+    # Add padding to avoid text overlap
+    plt.tight_layout(pad=2.0)
     
     # Show the plot
     plt.show()
@@ -202,12 +228,30 @@ def analyze_and_plot(data_type, title_suffix=""):
     
     return significant_smile, significant_neutral
 
-# Perform all three analyses
-print("\n=== ANALYSIS 1: BINARIZED AVERAGES ===")
+# Perform only the binarized averages analysis as requested
+print(f"\n=== ANALYSIS: BINARIZED AVERAGES FOR PATIENT {PATIENT_CODE} ===")
 sig_smile_bin, sig_neutral_bin = analyze_and_plot("binarized_avg")
 
-print("\n=== ANALYSIS 2: THRESHOLD COUNT ===")
-sig_smile_count, sig_neutral_count = analyze_and_plot("threshold_count")
+# Function to save the plot if needed
+def save_plot(data_type, output_dir="./"):
+    """
+    Save the current plot to a file
+    """
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+        
+    if data_type == "binarized_avg":
+        filename = f"{output_dir}/AU_binarized_presence_{PATIENT_CODE}.png"
+        title = f"Facial Action Unit Presence: Smile vs. Neutral - Patient: {PATIENT_CODE}"
+    elif data_type == "threshold_count":
+        filename = f"{output_dir}/AU_frame_count_{PATIENT_CODE}.png"
+        title = f"Frame Count Analysis: Smile vs. Neutral - Patient: {PATIENT_CODE}"
+    else:  # raw_avg
+        filename = f"{output_dir}/AU_raw_intensity_{PATIENT_CODE}.png"
+        title = f"Raw AU Intensity: Smile vs. Neutral - Patient: {PATIENT_CODE}"
+    
+    plt.savefig(filename, dpi=300, bbox_inches='tight')
+    print(f"Plot saved as: {filename}")
 
-print("\n=== ANALYSIS 3: RAW AVERAGES ===")
-sig_smile_raw, sig_neutral_raw = analyze_and_plot("raw_avg")
+# Uncomment the line below to save the plot
+#save_plot("binarized_avg", output_dir=output_dir)
