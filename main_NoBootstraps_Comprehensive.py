@@ -884,26 +884,34 @@ def main():
     print("Loading data files...")
     all_patient_data = {}
     
-    for filename in os.listdir(FEATURE_SAVE_FOLDER):
-        if filename.endswith('.csv') and INTERNAL_STATE in filename:
-            for method in METHODS:
-                if method in filename:
-                    internal_state, time_window, prefix = parse_filename(filename)
-                    
-                    # Load data
-                    file_path = os.path.join(FEATURE_SAVE_FOLDER, filename)
-                    df = pd.read_csv(file_path)
-                    
-                    # Remove duplicates if any
-                    df = remove_duplicate_features(df)
-                    
-                    # Extract patient ID from filename
-                    patient_match = re.search(r'patient_(\w+)_', filename)
-                    if patient_match:
-                        patient_id = patient_match.group(1)
+    # Iterate through patient subfolders
+    for patient_folder in os.listdir(FEATURE_SAVE_FOLDER):
+        patient_folder_path = os.path.join(FEATURE_SAVE_FOLDER, patient_folder)
+        
+        # Skip if not a directory
+        if not os.path.isdir(patient_folder_path):
+            continue
+        
+        # Extract patient ID from folder name
+        patient_id = patient_folder
+        
+        # Initialize patient data structure
+        if patient_id not in all_patient_data:
+            all_patient_data[patient_id] = {}
+        
+        # Process files within patient folder
+        for filename in os.listdir(patient_folder_path):
+            if filename.endswith('.csv') and INTERNAL_STATE in filename:
+                for method in METHODS:
+                    if method in filename:
+                        internal_state, time_window, prefix = parse_filename(filename)
                         
-                        if patient_id not in all_patient_data:
-                            all_patient_data[patient_id] = {}
+                        # Load data
+                        file_path = os.path.join(patient_folder_path, filename)
+                        df = pd.read_csv(file_path)
+                        
+                        # Remove duplicates if any
+                        df = remove_duplicate_features(df)
                         
                         if time_window not in all_patient_data[patient_id]:
                             all_patient_data[patient_id][time_window] = {}
