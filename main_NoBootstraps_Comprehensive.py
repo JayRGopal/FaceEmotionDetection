@@ -223,7 +223,7 @@ def analyze_single_patient(patient_id, patient_data, time_windows, method, outpu
         if is_binary:
             model_func = lambda: LogisticRegressionCV(
                 Cs=1/np.array(ALPHAS), 
-                cv=5, 
+                cv=loo,  # Use leave-one-out instead of fixed 5-fold CV
                 penalty='l1', 
                 solver='liblinear',
                 random_state=42
@@ -232,7 +232,7 @@ def analyze_single_patient(patient_id, patient_data, time_windows, method, outpu
         else:
             model_func = lambda: LassoCV(
                 alphas=ALPHAS, 
-                cv=5,
+                cv=loo,  # Use leave-one-out instead of fixed 5-fold CV
                 random_state=42
             )
             model = model_func()
@@ -483,33 +483,10 @@ def analyze_leave_one_patient_out(all_patient_data, time_windows, method, output
             
             # Run null distribution test (shuffle test patient's targets)
             if not np.isnan(score) and len(y_test) > 1:
-                null_values = []
-                
-                for _ in range(NUM_NULL_PERMUTATIONS):
-                    y_shuffled = np.random.permutation(y_test)
-                    
-                    if is_binary:
-                        if len(np.unique(y_shuffled)) > 1:
-                            null_score = metric_func(y_shuffled, y_pred)
-                        else:
-                            null_score = np.nan
-                    else:
-                        null_score = metric_func(y_shuffled, y_pred)
-                    
-                    null_values.append(null_score)
-                
-                null_values = np.array(null_values)
-                null_values = null_values[~np.isnan(null_values)]
-                
-                if len(null_values) > 0:
-                    if is_binary or metric_name == "Pearson r":
-                        # For metrics where higher is better
-                        perm_p_value = (np.sum(null_values >= score) + 1) / (len(null_values) + 1)
-                    else:
-                        # For metrics where lower is better
-                        perm_p_value = (np.sum(null_values <= score) + 1) / (len(null_values) + 1)
-                else:
-                    perm_p_value = np.nan
+                # Use the existing calculate_null_distribution function
+                null_values, actual_value, perm_p_value = calculate_null_distribution(
+                    X_test, y_test, y_pred, metric_func, model_func, is_classification=is_binary
+                )
                 
                 # Plot null distribution
                 plot_title = (f"Statistical Significance - Leave One Patient Out\n"
@@ -696,14 +673,14 @@ def analyze_concatenated_times(all_patient_data, time_windows, method, output_fo
         if is_binary:
             model = LogisticRegressionCV(
                 Cs=1/np.array(ALPHAS), 
-                cv=5, 
+                cv=loo,  # Use leave-one-out instead of fixed 5-fold CV
                 penalty='l1', 
                 solver='liblinear',
                 random_state=42
             )
             model_func = lambda: LogisticRegressionCV(
                 Cs=1/np.array(ALPHAS), 
-                cv=5, 
+                cv=loo,  # Use leave-one-out instead of fixed 5-fold CV
                 penalty='l1', 
                 solver='liblinear',
                 random_state=42
@@ -711,12 +688,12 @@ def analyze_concatenated_times(all_patient_data, time_windows, method, output_fo
         else:
             model = LassoCV(
                 alphas=ALPHAS, 
-                cv=5,
+                cv=loo,  # Use leave-one-out instead of fixed 5-fold CV
                 random_state=42
             )
             model_func = lambda: LassoCV(
                 alphas=ALPHAS, 
-                cv=5,
+                cv=loo,  # Use leave-one-out instead of fixed 5-fold CV
                 random_state=42
             )
         
@@ -755,9 +732,9 @@ def analyze_concatenated_times(all_patient_data, time_windows, method, output_fo
         
         # Run null distribution test
         if not np.isnan(score) and len(actuals) > 1:
-            null_values, actual_value, perm_p_value = permutation_test(
-                actuals, predictions, metric_func, NUM_NULL_PERMUTATIONS, 
-                is_classification=is_binary, model_func=model_func
+            # Use the existing calculate_null_distribution function
+            null_values, actual_value, perm_p_value = calculate_null_distribution(
+                X, y, predictions, metric_func, model_func, is_classification=is_binary
             )
             
             # Plot null distribution
@@ -876,7 +853,233 @@ def analyze_concatenated_times(all_patient_data, time_windows, method, output_fo
     summary_df = pd.DataFrame([summary])
     summary_df.to_csv(os.path.join(concat_folder, "summary_results.csv"), index=False)
     
-    return results_df
+    # ADDITION: Leave-one-patient-out analysis with concatenated features
+    print(f"\nRunning leave-one-patient-out analysis with concatenated features")
+    
+    # Create subfolder for leave-one-patient-out with concatenated features
+    lopo_concat_folder = os.path.join(concat_folder, "LeaveOneOut")
+    os.makedirs(lopo_concat_folder, exist_ok=True)
+    
+    # Only proceed if we have enough patients
+    if len(concatenated_data) < 2:
+        print("  Not enough patients for leave-one-patient-out analysis")
+        return results_df
+    
+    # Initialize results for leave-one-patient-out
+    lopo_results = []
+    
+    # For each patient as test set
+    for test_patient_id in concatenated_data.keys():
+        print(f"  Using patient {test_patient_id} as test set")
+        
+        test_df = concatenated_data[test_patient_id]
+        
+        # Combine all other patients' data for training
+        train_dfs = [concatenated_data[pid] for pid in concatenated_data.keys() if pid != test_patient_id]
+        
+        # Skip if no training data
+        if not train_dfs:
+            print(f"  No training data available for test patient {test_patient_id}")
+            continue
+            
+        train_df = pd.concat(train_dfs, axis=0, ignore_index=True)
+        
+        # Extract features and targets
+        X_train = train_df.iloc[:, :-1].values
+        y_train = train_df.iloc[:, -1].values
+        X_test = test_df.iloc[:, :-1].values
+        y_test = test_df.iloc[:, -1].values
+        
+        # Handle NaN values
+        if np.isnan(X_train).any():
+            print(f"  WARNING: NaNs found in training features. Filling with 0s.")
+            X_train = np.nan_to_num(X_train, nan=0.0)
+        if np.isnan(X_test).any():
+            print(f"  WARNING: NaNs found in test features. Filling with 0s.")
+            X_test = np.nan_to_num(X_test, nan=0.0)
+            
+        # Standardize features
+        scaler = StandardScaler()
+        X_train = scaler.fit_transform(X_train)
+        X_test = scaler.transform(X_test)
+        
+        # Define model based on classification or regression
+        if is_binary:
+            model = LogisticRegressionCV(
+                Cs=1/np.array(ALPHAS), 
+                cv=5, 
+                penalty='l1', 
+                solver='liblinear',
+                random_state=42
+            )
+            model_func = lambda: LogisticRegressionCV(
+                Cs=1/np.array(ALPHAS), 
+                cv=5, 
+                penalty='l1', 
+                solver='liblinear',
+                random_state=42
+            )
+        else:
+            model = LassoCV(
+                alphas=ALPHAS, 
+                cv=5,
+                random_state=42
+            )
+            model_func = lambda: LassoCV(
+                alphas=ALPHAS, 
+                cv=5,
+                random_state=42
+            )
+        
+        # Train model
+        model.fit(X_train, y_train)
+        
+        # Predict on test patient
+        if is_binary:
+            y_pred = model.predict_proba(X_test)[:, 1] if hasattr(model, 'predict_proba') else model.predict(X_test)
+        else:
+            y_pred = model.predict(X_test)
+        
+        # Calculate metrics
+        if is_binary:
+            metric_func = roc_auc_score
+            metric_name = "AUC"
+            if len(np.unique(y_test)) > 1:
+                score = metric_func(y_test, y_pred)
+            else:
+                score = np.nan
+        else:
+            metric_func = pearsonr
+            metric_name = "Pearson r"
+            if len(y_test) > 1:
+                score, p_value = metric_func(y_test, y_pred)
+            else:
+                score, p_value = np.nan, np.nan
+            # Convert pearsonr function to a simple metric function for null distribution
+            metric_func = lambda y_true, y_pred: pearsonr(y_true, y_pred)[0]
+        
+        # Run null distribution test (shuffle test patient's targets)
+        if not np.isnan(score) and len(y_test) > 1:
+            # Use the existing calculate_null_distribution function
+            null_values, actual_value, perm_p_value = calculate_null_distribution(
+                X_test, y_test, y_pred, metric_func, model_func, is_classification=is_binary
+            )
+            
+            # Plot null distribution
+            plot_title = (f"Statistical Significance - Leave One Patient Out (Concatenated Features)\n"
+                         f"Test Patient: {test_patient_id} | {INTERNAL_STATE} | "
+                         f"{METHOD_DISPLAY_MAP.get(method, method)}")
+            
+            plot_null_distribution(
+                null_values, score, perm_p_value, metric_name,
+                plot_title, os.path.join(lopo_concat_folder, f"null_dist_patient_{test_patient_id}.png")
+            )
+        else:
+            perm_p_value = np.nan
+        # Create scatter plot of predictions vs actuals
+        plt.figure(figsize=(10, 6))
+        
+        if is_binary:
+            # For binary classification, create a confusion matrix
+            if len(np.unique(y_test)) > 1:
+                binary_preds = np.array(y_pred) > 0.5
+                conf_matrix = confusion_matrix(y_test, binary_preds)
+                
+                sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', cbar=False)
+                plt.xlabel('Predicted')
+                plt.ylabel('Actual')
+                plt.title(f"Leave-One-Patient-Out - Test Patient {test_patient_id}\n"
+                         f"AUC: {score:.3f}" + 
+                         (f"\np: {perm_p_value:.3f}*" if perm_p_value < 0.05 else f"\np: {perm_p_value:.3f}"))
+            else:
+                plt.text(0.5, 0.5, "Insufficient data", ha='center', va='center')
+                plt.title(f"Leave-One-Patient-Out - Test Patient {test_patient_id}\nNo data")
+        else:
+            # For regression, create a scatter plot
+            plt.scatter(y_test, y_pred)
+            
+            # Add regression line
+            if len(y_test) > 1:
+                z = np.polyfit(y_test, y_pred, 1)
+                p = np.poly1d(z)
+                plt.plot(sorted(y_test), p(sorted(y_test)), 'r--')
+                
+                # Add identity line (perfect prediction)
+                min_val = min(min(y_test), min(y_pred))
+                max_val = max(max(y_test), max(y_pred))
+                plt.plot([min_val, max_val], [min_val, max_val], 'k--', alpha=0.4)
+                
+                plt.title(f"Leave-One-Patient-Out - Test Patient {test_patient_id}\n"
+                         f"r: {score:.3f}" + 
+                         (f"\np: {perm_p_value:.3f}*" if perm_p_value < 0.05 else f"\np: {perm_p_value:.3f}"))
+            else:
+                plt.text(0.5, 0.5, "Insufficient data", ha='center', va='center')
+                plt.title(f"Leave-One-Patient-Out - Test Patient {test_patient_id}\nNo data")
+        
+        plt.tight_layout()
+        plt.savefig(os.path.join(lopo_concat_folder, f"predictions_patient_{test_patient_id}.png"), dpi=300)
+        plt.close()
+        
+        # Store results
+        lopo_results.append({
+            'test_patient_id': test_patient_id,
+            'metric_value': score,
+            'metric_name': metric_name,
+            'p_value': perm_p_value,
+            'significant': perm_p_value < 0.05 if not np.isnan(perm_p_value) else False,
+            'num_train_patients': len(train_dfs),
+            'num_train_samples': len(y_train),
+            'num_test_samples': len(y_test)
+        })
+    
+    # Save LOPO results to CSV
+    lopo_results_df = pd.DataFrame(lopo_results)
+    lopo_results_df.to_csv(os.path.join(lopo_concat_folder, "lopo_results.csv"), index=False)
+    
+    # Create bar chart of per-patient LOPO performance
+    plt.figure(figsize=(12, 8))
+    
+    # Sort patients by performance
+    sorted_lopo_results = lopo_results_df.sort_values(by='metric_value')
+    patients = sorted_lopo_results['test_patient_id'].values
+    metric_values = sorted_lopo_results['metric_value'].values
+    significant = sorted_lopo_results['significant'].values
+    
+    # Create color coding based on significance
+    bar_colors = [COLORS[0] if sig else COLORS[1] for sig in significant]
+    
+    # Create bar chart
+    bars = plt.bar(patients, metric_values, color=bar_colors)
+    plt.axhline(y=0, color='gray', linestyle='--', alpha=0.5)
+    
+    plt.title(f"Leave-One-Patient-Out Performance - {INTERNAL_STATE}\n"
+             f"{METHOD_DISPLAY_MAP.get(method, method)}", fontsize=16)
+    plt.xlabel("Test Patient", fontsize=14)
+    plt.ylabel(metric_name, fontsize=14)
+    plt.xticks(rotation=45)
+    
+    # Add legend
+    plt.legend([
+        plt.Rectangle((0, 0), 1, 1, fc=COLORS[0]),
+        plt.Rectangle((0, 0), 1, 1, fc=COLORS[1])
+    ], ['Significant (p<0.05)', 'Not significant'], fontsize=12)
+    
+    plt.tight_layout()
+    plt.savefig(os.path.join(lopo_concat_folder, "per_patient_lopo_performance.png"), dpi=300)
+    plt.close()
+    
+    # Create summary statistics for LOPO
+    lopo_summary = {
+        'mean_metric': lopo_results_df['metric_value'].mean(),
+        'std_metric': lopo_results_df['metric_value'].std(),
+        'significant_patients': lopo_results_df['significant'].sum(),
+        'total_patients': len(lopo_results_df),
+        'percent_significant': (lopo_results_df['significant'].sum() / len(lopo_results_df)) * 100 if len(lopo_results_df) > 0 else 0
+    }
+    
+    # Save LOPO summary to CSV
+    lopo_summary_df = pd.DataFrame([lopo_summary])
+    lopo_summary_df.to_csv(os.path.join(lopo_concat_folder, "lopo_summary_results.csv"), index=False)
 
 # Main execution code
 def main():
