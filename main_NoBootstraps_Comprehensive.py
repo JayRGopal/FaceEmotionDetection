@@ -669,76 +669,284 @@ def analyze_concatenated_times(all_patient_data, time_windows, method, output_fo
     
     # Run analysis on concatenated data
     # Similar to previous individual patient analysis but using concatenated features
+    results = []
     
-    # Main execution code
-    def main():
-        # Load all data files
-        print("Loading data files...")
-        all_patient_data = {}
+    for patient_id, df in concatenated_data.items():
+        print(f"  Processing patient {patient_id} with concatenated features")
         
-        for filename in os.listdir(FEATURE_SAVE_FOLDER):
-            if filename.endswith('.csv') and INTERNAL_STATE in filename:
-                for method in METHODS:
-                    if method in filename:
-                        internal_state, time_window, prefix = parse_filename(filename)
-                        
-                        # Load data
-                        file_path = os.path.join(FEATURE_SAVE_FOLDER, filename)
-                        df = pd.read_csv(file_path)
-                        
-                        # Remove duplicates if any
-                        df = remove_duplicate_features(df)
-                        
-                        # Extract patient ID from filename
-                        patient_match = re.search(r'patient_(\w+)_', filename)
-                        if patient_match:
-                            patient_id = patient_match.group(1)
-                            
-                            if patient_id not in all_patient_data:
-                                all_patient_data[patient_id] = {}
-                            
-                            if time_window not in all_patient_data[patient_id]:
-                                all_patient_data[patient_id][time_window] = {}
-                            
-                            all_patient_data[patient_id][time_window] = df
+        # Extract features and target
+        X = df.iloc[:, :-1].values
+        y = df.iloc[:, -1].values
         
-        print(f"Loaded data for {len(all_patient_data)} patients")
-        
-        # Run all analyses
-        for method in METHODS:
-            # Individual patient analysis (standard features)
-            for patient_id, patient_data in all_patient_data.items():
-                analyze_single_patient(patient_id, patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH)
-                
-            # Individual patient analysis (limited features)
-            for patient_id, patient_data in all_patient_data.items():
-                analyze_single_patient(patient_id, patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_limited=True)
-                
-            # Individual patient analysis (binary classification)
-            for patient_id, patient_data in all_patient_data.items():
-                analyze_single_patient(patient_id, patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_binary=True)
-                
-            # Individual patient analysis (limited features, binary classification)
-            for patient_id, patient_data in all_patient_data.items():
-                analyze_single_patient(patient_id, patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, 
-                                      is_limited=True, is_binary=True)
-                
-            # Leave-one-patient-out analysis
-            analyze_leave_one_patient_out(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH)
-            analyze_leave_one_patient_out(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_limited=True)
-            analyze_leave_one_patient_out(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_binary=True)
-            analyze_leave_one_patient_out(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, 
-                                         is_limited=True, is_binary=True)
+        # Handle NaN values
+        if np.isnan(X).any():
+            print(f"  WARNING: NaNs found in features for patient {patient_id}. Filling with 0s.")
+            X = np.nan_to_num(X, nan=0.0)
             
-            # Concatenated time window analysis
-            analyze_concatenated_times(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH)
-            analyze_concatenated_times(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_limited=True)
-            analyze_concatenated_times(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_binary=True)
-            analyze_concatenated_times(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, 
-                                      is_limited=True, is_binary=True)
+        # Standardize features
+        scaler = StandardScaler()
+        X = scaler.fit_transform(X)
         
-        print("Analysis complete!")
+        # Run leave-one-out cross-validation
+        loo = LeaveOneOut()
+        predictions = []
+        actuals = []
+        
+        # Define model based on classification or regression
+        if is_binary:
+            model = LogisticRegressionCV(
+                Cs=1/np.array(ALPHAS), 
+                cv=5, 
+                penalty='l1', 
+                solver='liblinear',
+                random_state=42
+            )
+            model_func = lambda: LogisticRegressionCV(
+                Cs=1/np.array(ALPHAS), 
+                cv=5, 
+                penalty='l1', 
+                solver='liblinear',
+                random_state=42
+            )
+        else:
+            model = LassoCV(
+                alphas=ALPHAS, 
+                cv=5,
+                random_state=42
+            )
+            model_func = lambda: LassoCV(
+                alphas=ALPHAS, 
+                cv=5,
+                random_state=42
+            )
+        
+        # Perform leave-one-out cross-validation
+        for train_idx, test_idx in loo.split(X):
+            X_train, X_test = X[train_idx], X[test_idx]
+            y_train, y_test = y[train_idx], y[test_idx]
+            
+            model.fit(X_train, y_train)
+            
+            if is_binary:
+                y_pred = model.predict_proba(X_test)[:, 1] if hasattr(model, 'predict_proba') else model.predict(X_test)
+            else:
+                y_pred = model.predict(X_test)
+                
+            predictions.append(y_pred[0])
+            actuals.append(y_test[0])
+        
+        # Calculate metrics
+        if is_binary:
+            metric_func = roc_auc_score
+            metric_name = "AUC"
+            if len(np.unique(actuals)) > 1:
+                score = metric_func(actuals, predictions)
+            else:
+                score = np.nan
+        else:
+            metric_func = pearsonr
+            metric_name = "Pearson r"
+            if len(actuals) > 1:
+                score, p_value = metric_func(actuals, predictions)
+            else:
+                score, p_value = np.nan, np.nan
+            # Convert pearsonr function to a simple metric function for null distribution
+            metric_func = lambda y_true, y_pred: pearsonr(y_true, y_pred)[0]
+        
+        # Run null distribution test
+        if not np.isnan(score) and len(actuals) > 1:
+            null_values, actual_value, perm_p_value = permutation_test(
+                actuals, predictions, metric_func, NUM_NULL_PERMUTATIONS, 
+                is_classification=is_binary, model_func=model_func
+            )
+            
+            # Plot null distribution
+            plot_title = (f"Statistical Significance - Concatenated Time Windows\n"
+                         f"Patient: {patient_id} | {INTERNAL_STATE} | "
+                         f"{METHOD_DISPLAY_MAP.get(method, method)}")
+            
+            plot_null_distribution(
+                null_values, actual_value, perm_p_value, metric_name,
+                plot_title, os.path.join(concat_folder, f"null_dist_patient_{patient_id}.png")
+            )
+        else:
+            perm_p_value = np.nan
+        
+        # Create scatter plot of predictions vs actuals
+        plt.figure(figsize=(10, 6))
+        
+        if is_binary:
+            # For binary classification, create a confusion matrix
+            if len(np.unique(actuals)) > 1:
+                binary_preds = np.array(predictions) > 0.5
+                conf_matrix = confusion_matrix(actuals, binary_preds)
+                
+                sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', cbar=False)
+                plt.xlabel('Predicted')
+                plt.ylabel('Actual')
+                plt.title(f"Concatenated Time Windows - Patient {patient_id}\n"
+                         f"AUC: {score:.3f}" + 
+                         (f"\np: {perm_p_value:.3f}*" if perm_p_value < 0.05 else f"\np: {perm_p_value:.3f}"))
+            else:
+                plt.text(0.5, 0.5, "Insufficient data", ha='center', va='center')
+                plt.title(f"Concatenated Time Windows - Patient {patient_id}\nNo data")
+        else:
+            # For regression, create a scatter plot
+            plt.scatter(actuals, predictions)
+            
+            # Add regression line
+            if len(actuals) > 1:
+                z = np.polyfit(actuals, predictions, 1)
+                p = np.poly1d(z)
+                plt.plot(sorted(actuals), p(sorted(actuals)), 'r--')
+                
+                # Add identity line (perfect prediction)
+                min_val = min(min(actuals), min(predictions))
+                max_val = max(max(actuals), max(predictions))
+                plt.plot([min_val, max_val], [min_val, max_val], 'k--', alpha=0.4)
+                
+                plt.title(f"Concatenated Time Windows - Patient {patient_id}\n"
+                         f"r: {score:.3f}" + 
+                         (f"\np: {perm_p_value:.3f}*" if perm_p_value < 0.05 else f"\np: {perm_p_value:.3f}"))
+            else:
+                plt.text(0.5, 0.5, "Insufficient data", ha='center', va='center')
+                plt.title(f"Concatenated Time Windows - Patient {patient_id}\nNo data")
+        
+        plt.tight_layout()
+        plt.savefig(os.path.join(concat_folder, f"predictions_patient_{patient_id}.png"), dpi=300)
+        plt.close()
+        
+        # Store results
+        results.append({
+            'patient_id': patient_id,
+            'metric_value': score,
+            'metric_name': metric_name,
+            'p_value': perm_p_value,
+            'significant': perm_p_value < 0.05 if not np.isnan(perm_p_value) else False,
+            'num_features': X.shape[1],
+            'num_samples': len(actuals)
+        })
+    
+    # Save results to CSV
+    results_df = pd.DataFrame(results)
+    results_df.to_csv(os.path.join(concat_folder, "concatenated_results.csv"), index=False)
+    
+    # Create bar chart of per-patient performance
+    plt.figure(figsize=(12, 8))
+    
+    # Sort patients by performance
+    sorted_results = results_df.sort_values(by='metric_value')
+    patients = sorted_results['patient_id'].values
+    metric_values = sorted_results['metric_value'].values
+    significant = sorted_results['significant'].values
+    
+    # Create color coding based on significance
+    bar_colors = [COLORS[0] if sig else COLORS[1] for sig in significant]
+    
+    # Create bar chart
+    bars = plt.bar(patients, metric_values, color=bar_colors)
+    plt.axhline(y=0, color='gray', linestyle='--', alpha=0.5)
+    
+    plt.title(f"Concatenated Time Windows Performance - {INTERNAL_STATE}\n"
+             f"{METHOD_DISPLAY_MAP.get(method, method)}", fontsize=16)
+    plt.xlabel("Patient", fontsize=14)
+    plt.ylabel(metric_name, fontsize=14)
+    plt.xticks(rotation=45)
+    
+    # Add legend
+    plt.legend([
+        plt.Rectangle((0, 0), 1, 1, fc=COLORS[0]),
+        plt.Rectangle((0, 0), 1, 1, fc=COLORS[1])
+    ], ['Significant (p<0.05)', 'Not significant'], fontsize=12)
+    
+    plt.tight_layout()
+    plt.savefig(os.path.join(concat_folder, "per_patient_performance.png"), dpi=300)
+    plt.close()
+    
+    # Create summary statistics
+    summary = {
+        'mean_metric': results_df['metric_value'].mean(),
+        'std_metric': results_df['metric_value'].std(),
+        'significant_patients': results_df['significant'].sum(),
+        'total_patients': len(results_df),
+        'percent_significant': (results_df['significant'].sum() / len(results_df)) * 100 if len(results_df) > 0 else 0
+    }
+    
+    # Save summary to CSV
+    summary_df = pd.DataFrame([summary])
+    summary_df.to_csv(os.path.join(concat_folder, "summary_results.csv"), index=False)
+    
+    return results_df
 
-    # Run the main function if executed as a script
-    if __name__ == "__main__":
-        main()
+# Main execution code
+def main():
+    # Load all data files
+    print("Loading data files...")
+    all_patient_data = {}
+    
+    for filename in os.listdir(FEATURE_SAVE_FOLDER):
+        if filename.endswith('.csv') and INTERNAL_STATE in filename:
+            for method in METHODS:
+                if method in filename:
+                    internal_state, time_window, prefix = parse_filename(filename)
+                    
+                    # Load data
+                    file_path = os.path.join(FEATURE_SAVE_FOLDER, filename)
+                    df = pd.read_csv(file_path)
+                    
+                    # Remove duplicates if any
+                    df = remove_duplicate_features(df)
+                    
+                    # Extract patient ID from filename
+                    patient_match = re.search(r'patient_(\w+)_', filename)
+                    if patient_match:
+                        patient_id = patient_match.group(1)
+                        
+                        if patient_id not in all_patient_data:
+                            all_patient_data[patient_id] = {}
+                        
+                        if time_window not in all_patient_data[patient_id]:
+                            all_patient_data[patient_id][time_window] = {}
+                        
+                        all_patient_data[patient_id][time_window] = df
+    
+    print(f"Loaded data for {len(all_patient_data)} patients")
+    
+    # Run all analyses
+    for method in METHODS:
+        # Individual patient analysis (standard features)
+        for patient_id, patient_data in all_patient_data.items():
+            analyze_single_patient(patient_id, patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH)
+            
+        # Individual patient analysis (limited features)
+        for patient_id, patient_data in all_patient_data.items():
+            analyze_single_patient(patient_id, patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_limited=True)
+            
+        # Individual patient analysis (binary classification)
+        for patient_id, patient_data in all_patient_data.items():
+            analyze_single_patient(patient_id, patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_binary=True)
+            
+        # Individual patient analysis (limited features, binary classification)
+        for patient_id, patient_data in all_patient_data.items():
+            analyze_single_patient(patient_id, patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, 
+                                    is_limited=True, is_binary=True)
+            
+        # Leave-one-patient-out analysis
+        analyze_leave_one_patient_out(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH)
+        analyze_leave_one_patient_out(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_limited=True)
+        analyze_leave_one_patient_out(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_binary=True)
+        analyze_leave_one_patient_out(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, 
+                                        is_limited=True, is_binary=True)
+        
+        # Concatenated time window analysis
+        analyze_concatenated_times(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH)
+        analyze_concatenated_times(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_limited=True)
+        analyze_concatenated_times(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_binary=True)
+        analyze_concatenated_times(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, 
+                                    is_limited=True, is_binary=True)
+    
+    print("Analysis complete!")
+
+# Run the main function if executed as a script
+if __name__ == "__main__":
+    main()
