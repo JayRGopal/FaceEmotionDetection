@@ -1,0 +1,10 @@
+patient_id,time_window,metric_value,metric_name,p_value,significant
+S23_203,240,,Pearson r,,False
+S23_174,240,,Pearson r,,False
+S24_227,240,-0.05840189240270548,Pearson r,0.37623762376237624,False
+S24_218,240,,Pearson r,,False
+S24_217,240,,Pearson r,,False
+S24_219,240,,Pearson r,,False
+S24_226,240,-0.09738008941451001,Pearson r,0.31683168316831684,False
+S23_207,240,0.14207255357784593,Pearson r,0.7326732673267327,False
+S23_199,240,,Pearson r,,False
