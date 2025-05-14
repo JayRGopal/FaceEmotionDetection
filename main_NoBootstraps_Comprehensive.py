@@ -249,10 +249,6 @@ def analyze_single_patient(patient_id, patient_data, time_windows, method, outpu
             df = filter_limited_features(df)
         
         if is_binary:
-            print(f"\nDebug before binarization:")
-            print(f"  Original values: {df.iloc[:, -1].unique()}")
-            print(f"  Original value counts:\n{df.iloc[:, -1].value_counts()}")
-            
             binarized_df = binarize_mood(df)
             if binarized_df is None:
                 print(f"  Skipping binary analysis for patient {patient_id} at time window {time_window} - invalid binarization")
@@ -260,15 +256,11 @@ def analyze_single_patient(patient_id, patient_data, time_windows, method, outpu
             
             # Additional verification
             unique_classes = binarized_df.iloc[:, -1].unique()
-            print(f"\nDebug after binarization:")
-            print(f"  Binarized values: {unique_classes}")
-            print(f"  Binarized value counts:\n{binarized_df.iloc[:, -1].value_counts()}")
             
-            if len(unique_classes) < 2:
-                print(f"  Skipping binary analysis - only found classes: {unique_classes}")
-                continue
-            if not set(unique_classes).issubset({0, 1}):
-                print(f"  Skipping binary analysis - unexpected class values: {unique_classes}")
+            # Check for minimum samples per class (at least 2 to ensure training set will have both classes)
+            value_counts = binarized_df.iloc[:, -1].value_counts()
+            if (value_counts < 2).any():
+                print(f"  Skipping binary analysis - insufficient samples per class (need at least 2)")
                 continue
             
             df = binarized_df
@@ -276,10 +268,6 @@ def analyze_single_patient(patient_id, patient_data, time_windows, method, outpu
         # Extract features and target
         X = df.iloc[:, :-1].values
         y = df.iloc[:, -1].values
-        
-        print("\nDebug before LOO CV:")
-        print(f"  Target values: {np.unique(y)}")
-        print(f"  Target value counts:\n{pd.Series(y).value_counts()}")
         
         # Handle NaN values
         if np.isnan(X).any():
@@ -317,14 +305,6 @@ def analyze_single_patient(patient_id, patient_data, time_windows, method, outpu
         for train_idx, test_idx in loo.split(X):
             X_train, X_test = X[train_idx], X[test_idx]
             y_train, y_test = y[train_idx], y[test_idx]
-            
-            print(f"\nDebug LOO split:")
-            print(f"  Train set unique values: {np.unique(y_train)}")
-            print(f"  Test set value: {y_test[0]}")
-            
-            if len(np.unique(y_train)) < 2:
-                print(f"  WARNING: Training set has only one class: {np.unique(y_train)}")
-                continue
             
             model.fit(X_train, y_train)
             
