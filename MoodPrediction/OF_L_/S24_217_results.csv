@@ -1,9 +1,0 @@
-time_window,metric_value,metric_name,p_value,significant
-30,-0.47721999183523617,Pearson r,0.9900990099009901,False
-60,-0.11414360096230056,Pearson r,1.0,False
-90,0.09231449314610898,Pearson r,1.0,False
-120,-0.16345693385366708,Pearson r,1.0,False
-150,0.09419165842066202,Pearson r,1.0,False
-180,-0.2774212607191969,Pearson r,1.0,False
-210,0.2282043034914077,Pearson r,1.0,False
-240,-0.29852119273286937,Pearson r,1.0,False
