@@ -111,15 +111,27 @@ def binarize_mood(df):
     """
     mood_col = df.columns[-1]
     
+    # Debug print original data
+    print(f"  DEBUG - Pre-binarization check:")
+    print(f"    Column name: {mood_col}")
+    print(f"    Data type: {df[mood_col].dtype}")
+    print(f"    Values: {df[mood_col].values}")
+    
     # First check if we already have binary values
     unique_vals = df[mood_col].unique()
-    if set(unique_vals).issubset({0, 1}):
-        print(f"  WARNING: Mood scores already appear to be binary: {unique_vals}")
+    if set(unique_vals).issubset({0, 1, -1}):
+        print(f"  WARNING: Mood scores already appear to be binary/categorical: {unique_vals}")
+        return None
+    
+    # Ensure we're working with numeric data
+    try:
+        df[mood_col] = pd.to_numeric(df[mood_col], errors='raise')
+    except Exception as e:
+        print(f"  ERROR: Could not convert mood scores to numeric: {e}")
         return None
     
     median_mood = df[mood_col].median()
     binary_values = (df[mood_col] > median_mood)
-    
     
     # Check if all values would map to same binary value
     if binary_values.nunique() == 1:
@@ -135,7 +147,16 @@ def binarize_mood(df):
     if not set(final_unique).issubset({0, 1}):
         print(f"  ERROR: Unexpected values after binarization: {final_unique}")
         return None
+    
+    # Check minimum samples per class
+    value_counts = new_df[mood_col].value_counts()
+    if (value_counts < 2).any():
+        print(f"  Insufficient samples per class (need at least 2): {value_counts}")
+        return None
         
+    print(f"  Successful binarization:")
+    print(f"    Value counts: {value_counts}")
+    
     return new_df
 
 def inclusion_criteria(mood_scores):
@@ -252,15 +273,6 @@ def analyze_single_patient(patient_id, patient_data, time_windows, method, outpu
             binarized_df = binarize_mood(df)
             if binarized_df is None:
                 print(f"  Skipping binary analysis for patient {patient_id} at time window {time_window} - invalid binarization")
-                continue
-            
-            # Additional verification
-            unique_classes = binarized_df.iloc[:, -1].unique()
-            
-            # Check for minimum samples per class (at least 2 to ensure training set will have both classes)
-            value_counts = binarized_df.iloc[:, -1].value_counts()
-            if (value_counts < 2).any():
-                print(f"  Skipping binary analysis - insufficient samples per class (need at least 2)")
                 continue
             
             df = binarized_df
@@ -452,14 +464,6 @@ def analyze_leave_one_patient_out(all_patient_data, time_windows, method, output
                     binarized_df = binarize_mood(df)
                     if binarized_df is None:
                         print(f"  Skipping binary analysis for patient {patient_id} at time window {time_window} - invalid binarization")
-                        continue
-                    # Additional verification
-                    unique_classes = binarized_df.iloc[:, -1].unique()
-                    if len(unique_classes) < 2:
-                        print(f"  Skipping binary analysis - only found classes: {unique_classes}")
-                        continue
-                    if not set(unique_classes).issubset({0, 1}):
-                        print(f"  Skipping binary analysis - unexpected class values: {unique_classes}")
                         continue
                     
                     df = binarized_df
@@ -705,15 +709,6 @@ def analyze_concatenated_times(all_patient_data, time_windows, method, output_fo
                 binarized_df = binarize_mood(df)
                 if binarized_df is None:
                     print(f"  Skipping binary analysis for patient {patient_id} at time window {time_window} - invalid binarization")
-                    continue
-
-                # Additional verification
-                unique_classes = binarized_df.iloc[:, -1].unique()
-                if len(unique_classes) < 2:
-                    print(f"  Skipping binary analysis - only found classes: {unique_classes}")
-                    continue
-                if not set(unique_classes).issubset({0, 1}):
-                    print(f"  Skipping binary analysis - unexpected class values: {unique_classes}")
                     continue
                 
                 df = binarized_df
