@@ -108,6 +108,27 @@ def binarize_mood(df):
     df[mood_col] = (df[mood_col] > median_mood).astype(int)
     return df
 
+def inclusion_criteria(mood_scores):
+    """Check if mood scores meet inclusion criteria.
+    Args:
+        mood_scores: Series/array of mood scores (0-10 scale)
+    Returns:
+        bool: True if criteria met, False otherwise
+    """
+    if len(mood_scores) < 5:  # Criterion 1: ≥5 reports
+        return False
+    
+    score_range = mood_scores.max() - mood_scores.min()
+    if score_range < 5:  # Criterion 2: range ≥5 (50% of 0-10 scale)
+        return False
+        
+    unique_perms = len(mood_scores.unique())
+    if unique_perms < 3:  # Criterion 3: ≥3 unique scores
+        return False
+        
+    return True
+
+
 # Function to calculate null distribution and p-value
 def calculate_null_distribution(X, y_true, y_pred, metric_func, model_func, is_classification=False):
     null_values = []
@@ -1097,11 +1118,10 @@ def main():
         # Extract patient ID from folder name
         patient_id = patient_folder
         
-        # Initialize patient data structure
-        if patient_id not in all_patient_data:
-            all_patient_data[patient_id] = {}
-        
         # Process files within patient folder
+        patient_data_loaded = False
+        patient_meets_criteria = False
+        
         for filename in os.listdir(patient_folder_path):
             if filename.endswith('.csv') and INTERNAL_STATE in filename:
                 for method in METHODS:
@@ -1112,15 +1132,38 @@ def main():
                         file_path = os.path.join(patient_folder_path, filename)
                         df = pd.read_csv(file_path)
                         
+                        # Check inclusion criteria only once per patient
+                        if not patient_data_loaded:
+                            # Get mood scores (last column)
+                            mood_scores = df.iloc[:, -1]
+                            patient_meets_criteria = inclusion_criteria(mood_scores)
+                            patient_data_loaded = True
+                            
+                            if not patient_meets_criteria:
+                                print(f"Patient {patient_id} does not meet inclusion criteria. Skipping.")
+                                break
+                        
+                        # Skip this patient entirely if they don't meet criteria
+                        if not patient_meets_criteria:
+                            break
+                        
                         # Remove duplicates if any
                         df = remove_duplicate_features(df)
+                        
+                        # Initialize patient data structure if needed
+                        if patient_id not in all_patient_data:
+                            all_patient_data[patient_id] = {}
                         
                         if time_window not in all_patient_data[patient_id]:
                             all_patient_data[patient_id][time_window] = {}
                         
                         all_patient_data[patient_id][time_window] = df
+                
+                # If patient doesn't meet criteria, skip processing more files
+                if patient_data_loaded and not patient_meets_criteria:
+                    break
     
-    print(f"Loaded data for {len(all_patient_data)} patients")
+    print(f"Loaded data for {len(all_patient_data)} patients who meet inclusion criteria")
     
     # Run all analyses
     for method in METHODS:
