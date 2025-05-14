@@ -296,6 +296,11 @@ def analyze_single_patient(patient_id, patient_data, time_windows, method, outpu
         print("\nDEBUG - After standardization:")
         print(f"  y values: {np.unique(y)}")
         
+        # Run leave-one-out cross-validation
+        loo = LeaveOneOut()
+        predictions = []
+        actuals = []
+        
         # Define model based on classification or regression
         if is_binary:
             model_func = lambda: LogisticRegressionCV(
@@ -314,11 +319,6 @@ def analyze_single_patient(patient_id, patient_data, time_windows, method, outpu
             )
             model = model_func()
         
-
-        # Run leave-one-out cross-validation
-        loo = LeaveOneOut()
-        predictions = []
-        actuals = []
         
         # Debug each LOO split
         for train_idx, test_idx in loo.split(X):
