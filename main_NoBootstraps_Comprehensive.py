@@ -28,7 +28,7 @@ RESULTS_OUTPUT_PATH = '/home/jgopal/NAS/Analysis/AudioFacialEEG/Results_May_2025
 ALPHAS = np.linspace(0.1, 10.0, 30)
 TIME_WINDOWS = list(range(30, 241, 30))  # Starting at 30 and going up in intervals of 30
 METHODS = ['OF_L_', 'OGAUHSE_L_']  # OpenFace and FaceDx Complete
-NUM_NULL_PERMUTATIONS = 50  # Number of permutations for null distribution
+NUM_NULL_PERMUTATIONS = 100  # Number of permutations for null distribution
 INTERNAL_STATE = 'Mood'
 LIMITED_FEATURES_SUBSTRINGS = ["AU10", "AU12", "AU25", "AU27", "AU6", "AU7"]
 
@@ -69,7 +69,6 @@ def parse_filename(filename):
 
 # Function to remove duplicate columns
 def remove_duplicate_features(df):
-    print("Checking for duplicate features...")
     feature_cols = df.columns[:-1]  # All but the last column (target)
     unique_cols = []
     seen = set()
