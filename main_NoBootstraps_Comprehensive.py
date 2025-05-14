@@ -113,18 +113,13 @@ def binarize_mood(df):
     
     # First check if we already have binary values
     unique_vals = df[mood_col].unique()
-    if set(unique_vals).issubset({0, 1, -1}):
+    if set(unique_vals).issubset({0, 1}):
         print(f"  WARNING: Mood scores already appear to be binary: {unique_vals}")
         return None
     
     median_mood = df[mood_col].median()
     binary_values = (df[mood_col] > median_mood)
     
-    # Debug prints
-    print(f"  Debug - Mood value stats:")
-    print(f"    Original values: {df[mood_col].unique()}")
-    print(f"    Median: {median_mood}")
-    print(f"    Unique binary values after comparison: {binary_values.unique()}")
     
     # Check if all values would map to same binary value
     if binary_values.nunique() == 1:
@@ -1243,13 +1238,13 @@ def main():
     
     # Run all analyses
     for method in METHODS:
-        # Individual patient analysis (standard features)
-        for patient_id, patient_data in all_patient_data.items():
-            analyze_single_patient(patient_id, patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH)
+        # # Individual patient analysis (standard features)
+        # for patient_id, patient_data in all_patient_data.items():
+        #     analyze_single_patient(patient_id, patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH)
             
-        # Individual patient analysis (limited features)
-        for patient_id, patient_data in all_patient_data.items():
-            analyze_single_patient(patient_id, patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_limited=True)
+        # # Individual patient analysis (limited features)
+        # for patient_id, patient_data in all_patient_data.items():
+        #     analyze_single_patient(patient_id, patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_limited=True)
             
         # Individual patient analysis (binary classification)
         for patient_id, patient_data in all_patient_data.items():
