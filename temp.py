@@ -1,10 +1,12 @@
+Loaded data for 9 patients who meet inclusion criteria
+
 Analyzing patient S23_203 with method OpenFace
 Traceback (most recent call last):
-  File "/home/jgopal/Desktop/FaceEmotionDetection/main_NoBootstraps_Comprehensive.py", line 1229, in <module>
+  File "/home/jgopal/Desktop/FaceEmotionDetection/main_NoBootstraps_Comprehensive.py", line 1276, in <module>
     main()
-  File "/home/jgopal/Desktop/FaceEmotionDetection/main_NoBootstraps_Comprehensive.py", line 1204, in main
+  File "/home/jgopal/Desktop/FaceEmotionDetection/main_NoBootstraps_Comprehensive.py", line 1251, in main
     analyze_single_patient(patient_id, patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_binary=True)
-  File "/home/jgopal/Desktop/FaceEmotionDetection/main_NoBootstraps_Comprehensive.py", line 281, in analyze_single_patient
+  File "/home/jgopal/Desktop/FaceEmotionDetection/main_NoBootstraps_Comprehensive.py", line 309, in analyze_single_patient
     model.fit(X_train, y_train)
   File "/home/jgopal/miniconda3/envs/cvquant/lib/python3.10/site-packages/sklearn/base.py", line 1473, in wrapper
     return fit_method(estimator, *args, **kwargs)
