@@ -275,26 +275,27 @@ def analyze_single_patient(patient_id, patient_data, time_windows, method, outpu
                 print(f"  Skipping binary analysis for patient {patient_id} at time window {time_window} - invalid binarization")
                 continue
             
+            print("\nDEBUG - After binarization:")
+            print(f"  Values in binarized_df: {binarized_df.iloc[:, -1].unique()}")
             df = binarized_df
         
         # Extract features and target
         X = df.iloc[:, :-1].values
         y = df.iloc[:, -1].values
+        print("\nDEBUG - After X,y split:")
+        print(f"  y values: {np.unique(y)}")
         
         # Handle NaN values
         if np.isnan(X).any():
-            print(f"  WARNING: NaNs found in features for time window {time_window}. Filling with 0s.")
+            print(f"  WARNING: NaNs found in features. Filling with 0s.")
             X = np.nan_to_num(X, nan=0.0)
-            
+        
         # Standardize features
         scaler = StandardScaler()
         X = scaler.fit_transform(X)
+        print("\nDEBUG - After standardization:")
+        print(f"  y values: {np.unique(y)}")
         
-        # Run leave-one-out cross-validation
-        loo = LeaveOneOut()
-        predictions = []
-        actuals = []
-
         # Define model based on classification or regression
         if is_binary:
             model_func = lambda: LogisticRegressionCV(
@@ -313,10 +314,28 @@ def analyze_single_patient(patient_id, patient_data, time_windows, method, outpu
             )
             model = model_func()
         
-        # Leave-one-out prediction
+
+        # Run leave-one-out cross-validation
+        loo = LeaveOneOut()
+        predictions = []
+        actuals = []
+        
+        # Debug each LOO split
         for train_idx, test_idx in loo.split(X):
             X_train, X_test = X[train_idx], X[test_idx]
             y_train, y_test = y[train_idx], y[test_idx]
+            
+            print(f"\nDEBUG - LOO split:")
+            print(f"  Train set values: {np.unique(y_train)}")
+            print(f"  Test set value: {y_test[0]}")
+            
+            if len(np.unique(y_train)) < 2:
+                print(f"  DEBUG WARNING: Training set has only one class: {np.unique(y_train)}")
+                continue
+            
+            print(f"  DEBUG - Before model fit:")
+            print(f"    Train set shape: {X_train.shape}")
+            print(f"    Train set classes: {np.unique(y_train)}")
             
             model.fit(X_train, y_train)
             
