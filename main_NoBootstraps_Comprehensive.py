@@ -710,7 +710,7 @@ def analyze_concatenated_times(all_patient_data, time_windows, method, output_fo
                 if binarized_df is None:
                     print(f"  Skipping binary analysis for patient {patient_id} at time window {time_window} - invalid binarization")
                     continue
-                
+
                 df = binarized_df
             
             # Rename columns to include time window
@@ -1243,6 +1243,9 @@ def main():
             
         # Individual patient analysis (binary classification)
         for patient_id, patient_data in all_patient_data.items():
+            # Debug: Skip to problematic patient
+            if patient_id != "S23_207":
+                continue
             analyze_single_patient(patient_id, patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_binary=True)
             
         # Individual patient analysis (limited features, binary classification)
