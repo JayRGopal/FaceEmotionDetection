@@ -103,8 +103,20 @@ def filter_limited_features(df):
 
 # Function to binarize mood scores
 def binarize_mood(df):
+    """Binarize mood scores around median. Returns None if all scores would be same value.
+    Args:
+        df: DataFrame with mood scores in last column
+    Returns:
+        DataFrame with binarized scores, or None if all scores would be identical
+    """
     mood_col = df.columns[-1]
     median_mood = df[mood_col].median()
+    
+    # Check if all values would map to same binary value
+    if (df[mood_col] > median_mood).nunique() == 1:
+        print(f"  All mood scores would map to same binary value (all {'above' if df[mood_col].iloc[0] > median_mood else 'below'} median). Skipping binarization.")
+        return None
+        
     df[mood_col] = (df[mood_col] > median_mood).astype(int)
     return df
 
@@ -217,9 +229,13 @@ def analyze_single_patient(patient_id, patient_data, time_windows, method, outpu
         
         if is_limited:
             df = filter_limited_features(df)
-            
+        
         if is_binary:
-            df = binarize_mood(df)
+            binarized_df = binarize_mood(df)
+            if binarized_df is None:
+                print(f"  Skipping binary analysis for patient {patient_id} at time window {time_window} - all scores would be identical")
+                continue
+            df = binarized_df
         
         # Extract features and target
         X = df.iloc[:, :-1].values
@@ -405,7 +421,11 @@ def analyze_leave_one_patient_out(all_patient_data, time_windows, method, output
                     df = filter_limited_features(df)
                     
                 if is_binary:
-                    df = binarize_mood(df)
+                    binarized_df = binarize_mood(df)
+                    if binarized_df is None:
+                        print(f"  Skipping binary analysis for patient {patient_id} at time window {time_window} - all scores would be identical")
+                        continue
+                    df = binarized_df
                 
                 patient_data_for_window[patient_id] = df
                 patient_ids.append(patient_id)
@@ -645,7 +665,11 @@ def analyze_concatenated_times(all_patient_data, time_windows, method, output_fo
                 df = filter_limited_features(df)
                 
             if is_binary:
-                df = binarize_mood(df)
+                binarized_df = binarize_mood(df)
+                if binarized_df is None:
+                    print(f"  Skipping binary analysis for patient {patient_id} at time window {time_window} - all scores would be identical")
+                    continue
+                df = binarized_df
             
             # Rename columns to include time window
             feature_cols = df.columns[:-1]
