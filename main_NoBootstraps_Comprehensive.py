@@ -27,7 +27,7 @@ FEATURE_SAVE_FOLDER = '/home/jgopal/Desktop/FaceEmotionDetection/temp_outputs/'
 RESULTS_OUTPUT_PATH = '/home/jgopal/NAS/Analysis/AudioFacialEEG/Results_May_2025/MoodPrediction'
 ALPHAS = np.linspace(0.1, 10.0, 30)
 TIME_WINDOWS = list(range(30, 241, 30))  # Starting at 30 and going up in intervals of 30
-METHODS = ['OF_L_', 'OGAUHSE_L_']  # OpenFace and FaceDx Complete
+METHODS = ['OGAUHSE_L_', 'OF_L_']
 NUM_NULL_PERMUTATIONS = 100  # Number of permutations for null distribution
 INTERNAL_STATE = 'Mood'
 LIMITED_FEATURES_SUBSTRINGS = ["AU10", "AU12", "AU25", "AU27", "AU6", "AU7"]
@@ -111,11 +111,6 @@ def binarize_mood(df):
     """
     mood_col = df.columns[-1]
     
-    # Debug print original data
-    print(f"  DEBUG - Pre-binarization check:")
-    print(f"    Column name: {mood_col}")
-    print(f"    Data type: {df[mood_col].dtype}")
-    print(f"    Values: {df[mood_col].values}")
     
     # First check if we already have binary values
     unique_vals = df[mood_col].unique()
@@ -153,10 +148,7 @@ def binarize_mood(df):
     if (value_counts < 2).any():
         print(f"  Insufficient samples per class (need at least 2): {value_counts}")
         return None
-        
-    print(f"  Successful binarization:")
-    print(f"    Value counts: {value_counts}")
-    
+
     return new_df
 
 def inclusion_criteria(mood_scores):
@@ -275,15 +267,11 @@ def analyze_single_patient(patient_id, patient_data, time_windows, method, outpu
                 print(f"  Skipping binary analysis for patient {patient_id} at time window {time_window} - invalid binarization")
                 continue
             
-            print("\nDEBUG - After binarization:")
-            print(f"  Values in binarized_df: {binarized_df.iloc[:, -1].unique()}")
             df = binarized_df
         
         # Extract features and target
         X = df.iloc[:, :-1].values
         y = df.iloc[:, -1].values
-        print("\nDEBUG - After X,y split:")
-        print(f"  y values: {np.unique(y)}")
         
         # Handle NaN values
         if np.isnan(X).any():
@@ -293,14 +281,12 @@ def analyze_single_patient(patient_id, patient_data, time_windows, method, outpu
         # Standardize features
         scaler = StandardScaler()
         X = scaler.fit_transform(X)
-        print("\nDEBUG - After standardization:")
-        print(f"  y values: {np.unique(y)}")
-        
+
         # Run leave-one-out cross-validation
         loo = LeaveOneOut()
         predictions = []
         actuals = []
-        
+
         # Define model based on classification or regression
         if is_binary:
             model_func = lambda: LogisticRegressionCV(
@@ -320,22 +306,10 @@ def analyze_single_patient(patient_id, patient_data, time_windows, method, outpu
             model = model_func()
         
         
-        # Debug each LOO split
+        # LOO splits
         for train_idx, test_idx in loo.split(X):
             X_train, X_test = X[train_idx], X[test_idx]
             y_train, y_test = y[train_idx], y[test_idx]
-            
-            print(f"\nDEBUG - LOO split:")
-            print(f"  Train set values: {np.unique(y_train)}")
-            print(f"  Test set value: {y_test[0]}")
-            
-            if len(np.unique(y_train)) < 2:
-                print(f"  DEBUG WARNING: Training set has only one class: {np.unique(y_train)}")
-                continue
-            
-            print(f"  DEBUG - Before model fit:")
-            print(f"    Train set shape: {X_train.shape}")
-            print(f"    Train set classes: {np.unique(y_train)}")
             
             model.fit(X_train, y_train)
             
@@ -1252,39 +1226,78 @@ def main():
     
     # Run all analyses
     for method in METHODS:
-        # # Individual patient analysis (standard features)
-        # for patient_id, patient_data in all_patient_data.items():
-        #     analyze_single_patient(patient_id, patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH)
+        # Individual patient analysis (standard features)
+        for patient_id, patient_data in all_patient_data.items():
+            try:
+                analyze_single_patient(patient_id, patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH)
+            except Exception as e:
+                print(f"Error analyzing patient {patient_id} with method {method}: {e}")
             
-        # # Individual patient analysis (limited features)
-        # for patient_id, patient_data in all_patient_data.items():
-        #     analyze_single_patient(patient_id, patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_limited=True)
+        # Individual patient analysis (limited features)
+        for patient_id, patient_data in all_patient_data.items():
+            try:
+                analyze_single_patient(patient_id, patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_limited=True)
+            except Exception as e:
+                print(f"Error analyzing patient {patient_id} with method {method} (limited features): {e}")
             
         # Individual patient analysis (binary classification)
         for patient_id, patient_data in all_patient_data.items():
-            # Debug: Skip to problematic patient
-            if patient_id != "S23_207":
-                continue
-            analyze_single_patient(patient_id, patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_binary=True)
+            try:
+                analyze_single_patient(patient_id, patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_binary=True)
+            except Exception as e:
+                print(f"Error analyzing patient {patient_id} with method {method} (binary): {e}")
             
         # Individual patient analysis (limited features, binary classification)
         for patient_id, patient_data in all_patient_data.items():
-            analyze_single_patient(patient_id, patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, 
+            try:
+                analyze_single_patient(patient_id, patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, 
                                     is_limited=True, is_binary=True)
+            except Exception as e:
+                print(f"Error analyzing patient {patient_id} with method {method} (limited features, binary): {e}")
             
         # Leave-one-patient-out analysis
-        analyze_leave_one_patient_out(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH)
-        analyze_leave_one_patient_out(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_limited=True)
-        analyze_leave_one_patient_out(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_binary=True)
-        analyze_leave_one_patient_out(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, 
+        try:
+            analyze_leave_one_patient_out(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH)
+        except Exception as e:
+            print(f"Error in leave-one-patient-out analysis with method {method}: {e}")
+            
+        try:
+            analyze_leave_one_patient_out(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_limited=True)
+        except Exception as e:
+            print(f"Error in leave-one-patient-out analysis with method {method} (limited features): {e}")
+            
+        try:
+            analyze_leave_one_patient_out(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_binary=True)
+        except Exception as e:
+            print(f"Error in leave-one-patient-out analysis with method {method} (binary): {e}")
+            
+        try:
+            analyze_leave_one_patient_out(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, 
                                         is_limited=True, is_binary=True)
+        except Exception as e:
+            print(f"Error in leave-one-patient-out analysis with method {method} (limited features, binary): {e}")
         
         # Concatenated time window analysis
-        analyze_concatenated_times(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH)
-        analyze_concatenated_times(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_limited=True)
-        analyze_concatenated_times(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_binary=True)
-        analyze_concatenated_times(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, 
+        try:
+            analyze_concatenated_times(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH)
+        except Exception as e:
+            print(f"Error in concatenated time window analysis with method {method}: {e}")
+            
+        try:
+            analyze_concatenated_times(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_limited=True)
+        except Exception as e:
+            print(f"Error in concatenated time window analysis with method {method} (limited features): {e}")
+            
+        try:
+            analyze_concatenated_times(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_binary=True)
+        except Exception as e:
+            print(f"Error in concatenated time window analysis with method {method} (binary): {e}")
+            
+        try:
+            analyze_concatenated_times(all_patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, 
                                     is_limited=True, is_binary=True)
+        except Exception as e:
+            print(f"Error in concatenated time window analysis with method {method} (limited features, binary): {e}")
     
     print("Analysis complete!")
 
