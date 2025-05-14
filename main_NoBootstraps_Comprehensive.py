@@ -110,15 +110,38 @@ def binarize_mood(df):
         DataFrame with binarized scores, or None if all scores would be identical
     """
     mood_col = df.columns[-1]
+    
+    # First check if we already have binary values
+    unique_vals = df[mood_col].unique()
+    if set(unique_vals).issubset({0, 1, -1}):
+        print(f"  WARNING: Mood scores already appear to be binary: {unique_vals}")
+        return None
+    
     median_mood = df[mood_col].median()
+    binary_values = (df[mood_col] > median_mood)
+    
+    # Debug prints
+    print(f"  Debug - Mood value stats:")
+    print(f"    Original values: {df[mood_col].unique()}")
+    print(f"    Median: {median_mood}")
+    print(f"    Unique binary values after comparison: {binary_values.unique()}")
     
     # Check if all values would map to same binary value
-    if (df[mood_col] > median_mood).nunique() == 1:
-        print(f"  All mood scores would map to same binary value (all {'above' if df[mood_col].iloc[0] > median_mood else 'below'} median). Skipping binarization.")
+    if binary_values.nunique() == 1:
+        print(f"  All mood scores would map to same binary value (all {'above' if binary_values.iloc[0] else 'below'} median {median_mood}). Skipping binarization.")
+        return None
+    
+    # Create new dataframe to avoid modifying original
+    new_df = df.copy()
+    new_df[mood_col] = binary_values.astype(int)
+    
+    # Final verification
+    final_unique = new_df[mood_col].unique()
+    if not set(final_unique).issubset({0, 1}):
+        print(f"  ERROR: Unexpected values after binarization: {final_unique}")
         return None
         
-    df[mood_col] = (df[mood_col] > median_mood).astype(int)
-    return df
+    return new_df
 
 def inclusion_criteria(mood_scores):
     """Check if mood scores meet inclusion criteria.
@@ -233,8 +256,18 @@ def analyze_single_patient(patient_id, patient_data, time_windows, method, outpu
         if is_binary:
             binarized_df = binarize_mood(df)
             if binarized_df is None:
-                print(f"  Skipping binary analysis for patient {patient_id} at time window {time_window} - all scores would be identical")
+                print(f"  Skipping binary analysis for patient {patient_id} at time window {time_window} - invalid binarization")
                 continue
+            
+            # Additional verification
+            unique_classes = binarized_df.iloc[:, -1].unique()
+            if len(unique_classes) < 2:
+                print(f"  Skipping binary analysis - only found classes: {unique_classes}")
+                continue
+            if not set(unique_classes).issubset({0, 1}):
+                print(f"  Skipping binary analysis - unexpected class values: {unique_classes}")
+                continue
+            
             df = binarized_df
         
         # Extract features and target
@@ -423,8 +456,17 @@ def analyze_leave_one_patient_out(all_patient_data, time_windows, method, output
                 if is_binary:
                     binarized_df = binarize_mood(df)
                     if binarized_df is None:
-                        print(f"  Skipping binary analysis for patient {patient_id} at time window {time_window} - all scores would be identical")
+                        print(f"  Skipping binary analysis for patient {patient_id} at time window {time_window} - invalid binarization")
                         continue
+                    # Additional verification
+                    unique_classes = binarized_df.iloc[:, -1].unique()
+                    if len(unique_classes) < 2:
+                        print(f"  Skipping binary analysis - only found classes: {unique_classes}")
+                        continue
+                    if not set(unique_classes).issubset({0, 1}):
+                        print(f"  Skipping binary analysis - unexpected class values: {unique_classes}")
+                        continue
+                    
                     df = binarized_df
                 
                 patient_data_for_window[patient_id] = df
@@ -667,8 +709,18 @@ def analyze_concatenated_times(all_patient_data, time_windows, method, output_fo
             if is_binary:
                 binarized_df = binarize_mood(df)
                 if binarized_df is None:
-                    print(f"  Skipping binary analysis for patient {patient_id} at time window {time_window} - all scores would be identical")
+                    print(f"  Skipping binary analysis for patient {patient_id} at time window {time_window} - invalid binarization")
                     continue
+
+                # Additional verification
+                unique_classes = binarized_df.iloc[:, -1].unique()
+                if len(unique_classes) < 2:
+                    print(f"  Skipping binary analysis - only found classes: {unique_classes}")
+                    continue
+                if not set(unique_classes).issubset({0, 1}):
+                    print(f"  Skipping binary analysis - unexpected class values: {unique_classes}")
+                    continue
+                
                 df = binarized_df
             
             # Rename columns to include time window
