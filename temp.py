@@ -2,41 +2,34 @@ Loading data files...
 Loaded data for 9 patients who meet inclusion criteria
 
 Analyzing patient S23_203 with method OpenFace
+  Skipping binary analysis - insufficient samples per class (need at least 2)
+  Skipping binary analysis - insufficient samples per class (need at least 2)
+  Skipping binary analysis - insufficient samples per class (need at least 2)
+  Skipping binary analysis - insufficient samples per class (need at least 2)
+  Skipping binary analysis - insufficient samples per class (need at least 2)
+  Skipping binary analysis - insufficient samples per class (need at least 2)
+  Skipping binary analysis - insufficient samples per class (need at least 2)
+  Skipping binary analysis - insufficient samples per class (need at least 2)
 
-Debug before binarization:
-  Original values: [ 0.          6.66666667 10.          5.        ]
-  Original value counts:
-Self-Reported
-6.666667     2
-0.000000     1
-10.000000    1
-5.000000     1
-Name: count, dtype: int64
+Analyzing patient S23_174 with method OpenFace
 
-Debug after binarization:
-  Binarized values: [0 1]
-  Binarized value counts:
-Self-Reported
-0    4
-1    1
-Name: count, dtype: int64
+Analyzing patient S24_227 with method OpenFace
 
-Debug before LOO CV:
-  Target values: [0 1]
-  Target value counts:
-0    4
-1    1
-Name: count, dtype: int64
+Analyzing patient S24_218 with method OpenFace
 
-Debug LOO split:
-  Train set unique values: [0 1]
-  Test set value: 0
+Analyzing patient S24_217 with method OpenFace
+
+Analyzing patient S24_219 with method OpenFace
+
+Analyzing patient S24_226 with method OpenFace
+
+Analyzing patient S23_207 with method OpenFace
 Traceback (most recent call last):
-  File "/home/jgopal/Desktop/FaceEmotionDetection/main_NoBootstraps_Comprehensive.py", line 1296, in <module>
+  File "/home/jgopal/Desktop/FaceEmotionDetection/main_NoBootstraps_Comprehensive.py", line 1276, in <module>
     main()
-  File "/home/jgopal/Desktop/FaceEmotionDetection/main_NoBootstraps_Comprehensive.py", line 1271, in main
+  File "/home/jgopal/Desktop/FaceEmotionDetection/main_NoBootstraps_Comprehensive.py", line 1251, in main
     analyze_single_patient(patient_id, patient_data, TIME_WINDOWS, method, RESULTS_OUTPUT_PATH, is_binary=True)
-  File "/home/jgopal/Desktop/FaceEmotionDetection/main_NoBootstraps_Comprehensive.py", line 329, in analyze_single_patient
+  File "/home/jgopal/Desktop/FaceEmotionDetection/main_NoBootstraps_Comprehensive.py", line 309, in analyze_single_patient
     model.fit(X_train, y_train)
   File "/home/jgopal/miniconda3/envs/cvquant/lib/python3.10/site-packages/sklearn/base.py", line 1473, in wrapper
     return fit_method(estimator, *args, **kwargs)
