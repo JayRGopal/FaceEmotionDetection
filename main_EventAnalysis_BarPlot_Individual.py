@@ -204,11 +204,7 @@ def analyze_and_plot(data_type, title_suffix=""):
         row.update(plot_metadata)
 
     export_df = pd.DataFrame(export_rows)
-    # Save to CSV in output_dir (create if needed)
-    if "output_dir" not in globals():
-        output_dir = "./"
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
+    # Save to CSV in output_dir
     csv_filename = f"{output_dir}/AU_{data_type}_plotdata_{PATIENT_CODE}.csv"
     export_df.to_csv(csv_filename, index=False)
     print(f"[LOG] Bar plot data and metadata saved to: {csv_filename}")
