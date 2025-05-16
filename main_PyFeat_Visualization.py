@@ -36,9 +36,9 @@ muscles = {'all': 'heatmap'}
 # Plot the face with muscle heatmaps
 ax = plot_face(au=au_vector, muscles=muscles, title=f"Patient {PAT_SHORT_NAME} - {METRIC_NOW} AU Activation")
 
-# Save the plot to the results folder
-output_path = os.path.join(RESULTS_PATH_BASE, f"{METRIC_NOW}_face_heatmap.png")
-plt.savefig(output_path, dpi=300, bbox_inches='tight')
+# Save the plot to the results folder in high quality vectorized format (SVG)
+output_path = os.path.join(RESULTS_PATH_BASE, f"{METRIC_NOW}_face_heatmap.svg")
+plt.savefig(output_path, format='svg', bbox_inches='tight')
 plt.close()
 
 print(f"[LOG] Face heatmap saved to {output_path}")
