@@ -225,6 +225,42 @@ def analyze_and_plot_aggregated(data_type="binarized_avg"):
                       key=lambda au: (pvalues[au] < 0.05, abs(mean_smile[au] - mean_neutral[au])),
                       reverse=True)
     
+    # --- Save all the bar plot data and metadata to CSV for external plotting ---
+    export_rows = []
+    for i, au in enumerate(sorted_aus):
+        export_rows.append({
+            "AU": au,
+            "Smile_Mean": mean_smile[au],
+            "Smile_SEM": sem_smile[au],
+            "Neutral_Mean": mean_neutral[au],
+            "Neutral_SEM": sem_neutral[au],
+            "p_value": pvalues[au],
+            "Significant": significant_levels[au],
+            "Significant_Higher": (
+                "Smile" if au in significant_smile else ("Neutral" if au in significant_neutral else "")
+            ),
+            "Bar_Index": i
+        })
+    # Add plot-level metadata as a separate row (or could be a separate file, but here as extra columns)
+    plot_metadata = {
+        "Plot_Title": f"Facial Action Unit Presence: Smile vs. Neutral (Aggregated Across {len(patient_codes)} Patients)",
+        "X_Label": "Facial Action Units",
+        "Y_Label": "Proportion of Clips (Averaged Across Patients)" if data_type == "binarized_avg" else "",
+        "Legend_Smile": "Smile",
+        "Legend_Neutral": "Neutral",
+        "Legend_Significance": "p < 0.05",
+        "Num_Patients": len(patient_codes),
+        "Data_Type": data_type
+    }
+    # Add metadata to every row for convenience
+    for row in export_rows:
+        row.update(plot_metadata)
+    export_df = pd.DataFrame(export_rows)
+    csv_filename = f"{output_dir}/AU_binarized_presence_ALL_PATIENTS_plotdata.csv"
+    export_df.to_csv(csv_filename, index=False)
+    print(f"Bar plot data and metadata saved to: {csv_filename}")
+    # --- End CSV export ---
+
     # Create the plot
     fig, ax = plt.subplots(figsize=(16, 10))
     
