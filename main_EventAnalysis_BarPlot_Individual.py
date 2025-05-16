@@ -116,112 +116,199 @@ if smile_frames is not None and neutral_frames is not None:
 else:
     print("Warning: One or both expression types have no data")
 
-# Function to perform t-tests and create bar plots
+# Function to perform t-tests, create bar plots, and export all plotting data to CSV
 def analyze_and_plot(data_type, title_suffix=""):
     smile_data = analysis_results[data_type]["smile"]
     neutral_data = analysis_results[data_type]["neutral"]
-    
+
     # Prepare data for plotting
     mean_smile = {au: np.mean(smile_data[au]) for au in au_columns}
     mean_neutral = {au: np.mean(neutral_data[au]) for au in au_columns}
-    
+
     sem_smile = {au: stats.sem(smile_data[au]) for au in au_columns}
     sem_neutral = {au: stats.sem(neutral_data[au]) for au in au_columns}
-    
+
     # Perform t-tests
     pvalues = {}
     significant_levels = {}
     significant_smile = []
     significant_neutral = []
-    
+
     for au in au_columns:
         t_stat, p_val = stats.ttest_ind(smile_data[au], neutral_data[au], equal_var=False)
         pvalues[au] = p_val
-        
+
         # Determine significance level
         if p_val < 0.05:
             significant_levels[au] = '*'
         else:
             significant_levels[au] = ''
-        
+
         if p_val < 0.05:
             if mean_smile[au] > mean_neutral[au]:
                 significant_smile.append(au)
             else:
                 significant_neutral.append(au)
-    
+
     # Sort AUs by significance and difference magnitude
-    sorted_aus = sorted(au_columns, 
-                        key=lambda au: (pvalues[au] < 0.05, abs(mean_smile[au] - mean_neutral[au])),
-                        reverse=True)
-    
+    sorted_aus = sorted(
+        au_columns,
+        key=lambda au: (pvalues[au] < 0.05, abs(mean_smile[au] - mean_neutral[au])),
+        reverse=True,
+    )
+
+    # --- Export all plotting data to CSV ---
+    export_rows = []
+    for i, au in enumerate(sorted_aus):
+        row = {
+            "AU": au,
+            "Bar_Index": i,
+            "Smile_Mean": mean_smile[au],
+            "Smile_SEM": sem_smile[au],
+            "Neutral_Mean": mean_neutral[au],
+            "Neutral_SEM": sem_neutral[au],
+            "p_value": pvalues[au],
+            "Significant": significant_levels[au],
+            "Significant_Higher": (
+                "Smile" if au in significant_smile else ("Neutral" if au in significant_neutral else "")
+            ),
+            "XTick_Label": au,
+            "XTick_Index": i,
+            "Data_Type": data_type,
+            "Patient_Code": PATIENT_CODE,
+        }
+        export_rows.append(row)
+
+    # Add plot-level metadata (same for all rows, for convenience)
+    plot_metadata = {
+        "Plot_Title": (
+            f"Facial Action Unit Presence: Smile vs. Neutral (Patient: {PATIENT_CODE})"
+            if data_type == "binarized_avg"
+            else (
+                f"Frame Count Analysis: Smile vs. Neutral (Patient: {PATIENT_CODE})"
+                if data_type == "threshold_count"
+                else f"Raw AU Intensity: Smile vs. Neutral (Patient: {PATIENT_CODE})"
+            )
+        ),
+        "X_Label": "Facial Action Units",
+        "Y_Label": (
+            "Proportion of Clips"
+            if data_type == "binarized_avg"
+            else ("Average Frame Count" if data_type == "threshold_count" else "Average Intensity")
+        ),
+        "Legend_Smile": "Smile",
+        "Legend_Neutral": "Neutral",
+        "Legend_Significance": "p < 0.05",
+    }
+    for row in export_rows:
+        row.update(plot_metadata)
+
+    export_df = pd.DataFrame(export_rows)
+    # Save to CSV in output_dir (create if needed)
+    if "output_dir" not in globals():
+        output_dir = "./"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    csv_filename = f"{output_dir}/AU_{data_type}_plotdata_{PATIENT_CODE}.csv"
+    export_df.to_csv(csv_filename, index=False)
+    print(f"[LOG] Bar plot data and metadata saved to: {csv_filename}")
+    # --- End CSV export ---
+
     # Create the plot
     fig, ax = plt.subplots(figsize=(14, 8))
-    
+
     x = np.arange(len(sorted_aus))
     width = 0.35
-    
+
     # Plot bars
-    smile_bars = ax.bar(x - width/2, [mean_smile[au] for au in sorted_aus], width, 
-                         label='Smile', color='#FFA500', 
-                         yerr=[sem_smile[au] for au in sorted_aus], capsize=5)
-    
-    neutral_bars = ax.bar(x + width/2, [mean_neutral[au] for au in sorted_aus], width,
-                          label='Neutral', color='#4682B4', 
-                          yerr=[sem_neutral[au] for au in sorted_aus], capsize=5)
-    
+    smile_bars = ax.bar(
+        x - width / 2,
+        [mean_smile[au] for au in sorted_aus],
+        width,
+        label="Smile",
+        color="#FFA500",
+        yerr=[sem_smile[au] for au in sorted_aus],
+        capsize=5,
+    )
+
+    neutral_bars = ax.bar(
+        x + width / 2,
+        [mean_neutral[au] for au in sorted_aus],
+        width,
+        label="Neutral",
+        color="#4682B4",
+        yerr=[sem_neutral[au] for au in sorted_aus],
+        capsize=5,
+    )
+
     # Add significance markers
     for i, au in enumerate(sorted_aus):
         if significant_levels[au]:
             height = max(mean_smile[au], mean_neutral[au]) + max(sem_smile[au], sem_neutral[au]) + 0.02
-            ax.text(i, height, significant_levels[au], ha='center', va='bottom', fontsize=14)
-    
+            ax.text(i, height, significant_levels[au], ha="center", va="bottom", fontsize=14)
+
     # Customize plot
-    ax.set_xlabel('Facial Action Units', fontsize=14, fontweight='bold')
-    
+    ax.set_xlabel("Facial Action Units", fontsize=14, fontweight="bold")
+
     if data_type == "binarized_avg":
-        ax.set_ylabel('Proportion of Clips', fontsize=14, fontweight='bold')
-        ax.set_title(f'Facial Action Unit Presence: Smile vs. Neutral\nPatient: {PATIENT_CODE}', 
-                     fontsize=16, fontweight='bold')
+        ax.set_ylabel("Proportion of Clips", fontsize=14, fontweight="bold")
+        ax.set_title(
+            f"Facial Action Unit Presence: Smile vs. Neutral\nPatient: {PATIENT_CODE}",
+            fontsize=16,
+            fontweight="bold",
+        )
     elif data_type == "threshold_count":
-        ax.set_ylabel('Average Frame Count', fontsize=14, fontweight='bold')
-        ax.set_title(f'Frame Count Analysis: Smile vs. Neutral\nPatient: {PATIENT_CODE}', 
-                    fontsize=16, fontweight='bold')
+        ax.set_ylabel("Average Frame Count", fontsize=14, fontweight="bold")
+        ax.set_title(
+            f"Frame Count Analysis: Smile vs. Neutral\nPatient: {PATIENT_CODE}",
+            fontsize=16,
+            fontweight="bold",
+        )
     else:  # raw_avg
-        ax.set_ylabel('Average Intensity', fontsize=14, fontweight='bold')
-        ax.set_title(f'Raw AU Intensity: Smile vs. Neutral\nPatient: {PATIENT_CODE}', 
-                    fontsize=16, fontweight='bold')
-    
+        ax.set_ylabel("Average Intensity", fontsize=14, fontweight="bold")
+        ax.set_title(
+            f"Raw AU Intensity: Smile vs. Neutral\nPatient: {PATIENT_CODE}",
+            fontsize=16,
+            fontweight="bold",
+        )
+
     ax.set_xticks(x)
-    ax.set_xticklabels(sorted_aus, rotation=45, ha='right')
-    
+    ax.set_xticklabels(sorted_aus, rotation=45, ha="right")
+
     # Create custom legend with significance levels
     from matplotlib.lines import Line2D
+
     legend_elements = [
-        Line2D([0], [0], color='#FFA500', lw=4, label='Smile'),
-        Line2D([0], [0], color='#4682B4', lw=4, label='Neutral'),
-        Line2D([0], [0], marker='*', color='w', markerfacecolor='k', markersize=10, label='p < 0.05', linestyle='None')
+        Line2D([0], [0], color="#FFA500", lw=4, label="Smile"),
+        Line2D([0], [0], color="#4682B4", lw=4, label="Neutral"),
+        Line2D(
+            [0],
+            [0],
+            marker="*",
+            color="w",
+            markerfacecolor="k",
+            markersize=10,
+            label="p < 0.05",
+            linestyle="None",
+        ),
     ]
-    # Add custom text strings to legend to properly show multiple asterisks
-    first_legend = ax.legend(handles=legend_elements, loc='upper right', fontsize=12)
-    
-    # Add the second legend for multiple asterisks
+    first_legend = ax.legend(handles=legend_elements, loc="upper right", fontsize=12)
     ax.add_artist(first_legend)
-    
+
     # Add grid lines for readability
-    ax.yaxis.grid(True, linestyle='--', alpha=0.7)
-    
+    ax.yaxis.grid(True, linestyle="--", alpha=0.7)
+
     # Add padding to avoid text overlap
     plt.tight_layout(pad=2.0)
-    
+
     # Show the plot
     plt.show()
-    
+
     # Print significant AUs
     print(f"\n--- Significant differences for {data_type} ---")
     print(f"AUs significantly higher in Smile: {', '.join(significant_smile)}")
     print(f"AUs significantly higher in Neutral: {', '.join(significant_neutral)}")
-    
+
     return significant_smile, significant_neutral
 
 # Perform only the binarized averages analysis as requested
