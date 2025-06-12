@@ -61,16 +61,27 @@ def parse_filename(filename):
     time_window = int(time_match.group(1)) if time_match else None
     return time_window
 
-def remove_duplicate_features(df):
-    feature_cols = df.columns[:-1]
-    unique_cols = []
-    seen = set()
+def remove_duplicate_features_take_second(df):
+    """
+    Remove duplicate columns, keeping the second occurrence (e.g., the .1 version).
+    """
+    feature_cols = list(df.columns[:-1])
+    target_col = df.columns[-1]
+    col_counts = {}
+    keep_cols = []
     for col in feature_cols:
-        if col not in seen:
-            seen.add(col)
-            unique_cols.append(col)
-    unique_cols.append(df.columns[-1])
-    return df[unique_cols]
+        base = col
+        if base.endswith('.1'):
+            base = base[:-2]
+        col_counts.setdefault(base, []).append(col)
+    # For each base, if duplicate, keep the last (second) occurrence
+    for base, col_list in col_counts.items():
+        if len(col_list) == 1:
+            keep_cols.append(col_list[0])
+        else:
+            keep_cols.append(col_list[-1])
+    keep_cols.append(target_col)
+    return df[keep_cols]
 
 def filter_limited_features(df):
     feature_cols = df.columns[:-1]
@@ -113,6 +124,9 @@ def inclusion_criteria(mood_scores):
 def load_patient_data(method, limited=False):
     all_patient_data = {}
     patient_folders = [pf for pf in os.listdir(FEATURE_SAVE_FOLDER) if os.path.isdir(os.path.join(FEATURE_SAVE_FOLDER, pf))]
+    # First, load all data and keep track of feature sets
+    patient_time_features = {}
+    patient_time_dfs = {}
     for patient_folder in tqdm(patient_folders, desc=f"Loading data for method {method}{' (limited)' if limited else ''}"):
         patient_folder_path = os.path.join(FEATURE_SAVE_FOLDER, patient_folder)
         patient_id = patient_folder
@@ -123,6 +137,10 @@ def load_patient_data(method, limited=False):
                 time_window = parse_filename(filename)
                 file_path = os.path.join(patient_folder_path, filename)
                 df = pd.read_csv(file_path)
+                # Remove duplicate features, keeping the second occurrence
+                df = remove_duplicate_features_take_second(df)
+                if limited:
+                    df = filter_limited_features(df)
                 if not patient_data_loaded:
                     mood_scores = df.iloc[:, -1]
                     patient_meets_criteria = inclusion_criteria(mood_scores)
@@ -131,12 +149,43 @@ def load_patient_data(method, limited=False):
                         break
                 if not patient_meets_criteria:
                     break
-                df = remove_duplicate_features(df)
-                if limited:
-                    df = filter_limited_features(df)
-                if patient_id not in all_patient_data:
-                    all_patient_data[patient_id] = {}
-                all_patient_data[patient_id][time_window] = df
+                # Save feature set and df for this patient/time_window
+                feature_set = set(df.columns[:-1])
+                patient_time_features.setdefault(patient_id, {})[time_window] = feature_set
+                patient_time_dfs.setdefault(patient_id, {})[time_window] = df
+    # Now, for this method, only keep patients who have ALL time windows
+    valid_patients = []
+    for pid in patient_time_features:
+        if all(tw in patient_time_features[pid] for tw in TIME_WINDOWS):
+            valid_patients.append(pid)
+    # Find intersection of features across all valid patients and all time windows
+    all_feature_sets = []
+    for pid in valid_patients:
+        for tw in TIME_WINDOWS:
+            all_feature_sets.append(patient_time_features[pid][tw])
+    if len(all_feature_sets) == 0:
+        print(f"WARNING: No valid patients for method {method}")
+        return {}
+    common_features = set.intersection(*all_feature_sets)
+    # For each patient/time_window, drop any extra columns not in common_features
+    for pid in valid_patients:
+        all_patient_data[pid] = {}
+        for tw in TIME_WINDOWS:
+            df = patient_time_dfs[pid][tw]
+            # Only keep columns in common_features + target
+            feature_cols = [col for col in df.columns[:-1] if col in common_features]
+            feature_cols_sorted = sorted(feature_cols)  # sort for consistency
+            cols_to_keep = feature_cols_sorted + [df.columns[-1]]
+            df_clean = df[cols_to_keep]
+            all_patient_data[pid][tw] = df_clean
+    # Print concise confirmation
+    n_features = len(common_features)
+    if method.startswith('OGAUHSE'):
+        print(f"all OGAUHSE has {n_features} features. Confirmed!")
+    elif method.startswith('OF'):
+        print(f"all OF has {n_features} features. Confirmed!")
+    else:
+        print(f"all {method} has {n_features} features. Confirmed!")
     return all_patient_data
 
 def permutation_test(X, y, model_type, alphas, binary, n_permutations=50, random_state=42):
@@ -506,26 +555,78 @@ def main():
     # --- A, B, D, E, F for OGAUHSE_L_ --- #
     # Standard features
     print("Loading OGAUHSE_L_ data (standard features)...")
-    oga_data = load_patient_data('OGAUHSE_L_', limited=False)
+    try:
+        oga_data = load_patient_data('OGAUHSE_L_', limited=False)
+    except Exception as e:
+        print(f"[ERROR] Failed to load OGAUHSE_L_ standard features: {e}")
+        oga_data = None
+
     # A) Per-patient R barplots
-    #per_patient_r_barplots(oga_data, 'OGAUHSE_L_', limited=False, binary=False)
+    try:
+        #per_patient_r_barplots(oga_data, 'OGAUHSE_L_', limited=False, binary=False)
+        pass
+    except Exception as e:
+        print(f"[ERROR] A) Per-patient R barplots failed: {e}")
+
     # B) Group-level R barplot
-    #group_level_barplot(oga_data, 'OGAUHSE_L_', limited=False, binary=False)
+    try:
+        group_level_barplot(oga_data, 'OGAUHSE_L_', limited=False, binary=False)
+    except Exception as e:
+        print(f"[ERROR] B) Group-level R barplot failed: {e}")
+
     # D) Leave-one-patient-out decoding (R)
-    #leave_one_patient_out_decoding(oga_data, 'OGAUHSE_L_', limited=False, binary=False)
+    try:
+        leave_one_patient_out_decoding(oga_data, 'OGAUHSE_L_', limited=False, binary=False)
+    except Exception as e:
+        print(f"[ERROR] D) Leave-one-patient-out decoding failed: {e}")
+
     # E) Per-patient AUC barplots (binary decoding)
-    per_patient_r_barplots(oga_data, 'OGAUHSE_L_', limited=False, binary=True)
+    try:
+        per_patient_r_barplots(oga_data, 'OGAUHSE_L_', limited=False, binary=True)
+    except Exception as e:
+        print(f"[ERROR] E) Per-patient AUC barplots (binary decoding) failed: {e}")
+
     # F) Limited features
     print("Loading OGAUHSE_L_ data (limited features)...")
-    oga_data_limited = load_patient_data('OGAUHSE_L_', limited=True)
-    per_patient_r_barplots(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=False)
-    group_level_barplot(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=False)
-    #leave_one_patient_out_decoding(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=False)
-    per_patient_r_barplots(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=True)
+    try:
+        oga_data_limited = load_patient_data('OGAUHSE_L_', limited=True)
+    except Exception as e:
+        print(f"[ERROR] Failed to load OGAUHSE_L_ limited features: {e}")
+        oga_data_limited = None
+
+    try:
+        per_patient_r_barplots(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=False)
+    except Exception as e:
+        print(f"[ERROR] F1) Per-patient R barplots (limited features) failed: {e}")
+
+    try:
+        group_level_barplot(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=False)
+    except Exception as e:
+        print(f"[ERROR] F2) Group-level R barplot (limited features) failed: {e}")
+
+    try:
+        leave_one_patient_out_decoding(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=False)
+    except Exception as e:
+        print(f"[ERROR] F3) Leave-one-patient-out decoding (limited features) failed: {e}")
+
+    try:
+        per_patient_r_barplots(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=True)
+    except Exception as e:
+        print(f"[ERROR] F4) Per-patient AUC barplots (limited features, binary) failed: {e}")
+
     # --- C for OF_L_ --- #
     print("Loading OF_L_ data (standard features)...")
-    of_data = load_patient_data('OF_L_', limited=False)
-    group_level_barplot(of_data, 'OF_L_', limited=False, binary=False)
+    try:
+        of_data = load_patient_data('OF_L_', limited=False)
+    except Exception as e:
+        print(f"[ERROR] Failed to load OF_L_ standard features: {e}")
+        of_data = None
+
+    try:
+        group_level_barplot(of_data, 'OF_L_', limited=False, binary=False)
+    except Exception as e:
+        print(f"[ERROR] C) Group-level R barplot (OF_L_) failed: {e}")
+
     # Optionally, add more for OF_L_ if needed (e.g., per-patient, binary, limited)
     print("All paper-ready figures generated.")
 
