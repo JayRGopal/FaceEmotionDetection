@@ -4,7 +4,7 @@ import pandas as pd
 from tqdm import tqdm
 
 # --- CONFIGURATION --- #
-FEATURE_SAVE_FOLDER = '/Users/jaygopal/Documents/GitHub/temp_outputs/'
+FEATURE_SAVE_FOLDER = './temp_outputs/'
 TIME_WINDOWS = list(range(30, 241, 30))
 METHODS = ['OGAUHSE_L_', 'OF_L_']
 INTERNAL_STATE = 'Mood'
@@ -34,14 +34,13 @@ def filter_limited_features(df):
     return df[matching_cols]
 
 def main():
-    print("Counting features for each method and time window:\n")
+    print("Counting features for each patient, method, and time window:\n")
     for method in METHODS:
         print(f"Method: {method}")
-        # For both standard and limited features
         for limited in [False, True]:
             limited_str = " (limited features)" if limited else ""
             print(f"  {'Limited' if limited else 'All'} features:")
-            feature_counts = {tw: [] for tw in TIME_WINDOWS}
+            feature_counts = {}  # (patient, time_window) -> n_features
             patient_folders = [pf for pf in os.listdir(FEATURE_SAVE_FOLDER) if os.path.isdir(os.path.join(FEATURE_SAVE_FOLDER, pf))]
             for patient_folder in tqdm(patient_folders, desc=f"    Patients for {method}{limited_str}", leave=False):
                 patient_folder_path = os.path.join(FEATURE_SAVE_FOLDER, patient_folder)
@@ -56,14 +55,26 @@ def main():
                         if limited:
                             df = filter_limited_features(df)
                         n_features = df.shape[1] - 1  # Exclude target column
-                        feature_counts[time_window].append(n_features)
+                        feature_counts[(patient_folder, time_window)] = n_features
+            # Print per patient, per time window
+            for patient in sorted(patient_folders):
+                for tw in TIME_WINDOWS:
+                    key = (patient, tw)
+                    if key in feature_counts:
+                        print(f"    Patient: {patient}, Time window: {tw} min, Features: {feature_counts[key]}")
+                    else:
+                        print(f"    Patient: {patient}, Time window: {tw} min, Features: MISSING")
+            # Check for discrepancies
+            # For each time window, check if all patients have the same feature count
             for tw in TIME_WINDOWS:
-                counts = feature_counts[tw]
-                if counts:
-                    count_str = f"min={min(counts)}, max={max(counts)}, mean={sum(counts)/len(counts):.1f}"
-                else:
-                    count_str = "No data"
-                print(f"    Time window {tw} min: {count_str}")
+                counts = [feature_counts[(patient, tw)] for patient in patient_folders if (patient, tw) in feature_counts]
+                if counts and len(set(counts)) > 1:
+                    print(f"  WARNING: Discrepancy detected in feature counts for time window {tw} min: counts = {counts}")
+            # For each patient, check if all time windows have the same feature count
+            for patient in patient_folders:
+                counts = [feature_counts[(patient, tw)] for tw in TIME_WINDOWS if (patient, tw) in feature_counts]
+                if counts and len(set(counts)) > 1:
+                    print(f"  WARNING: Discrepancy detected in feature counts for patient {patient}: counts = {counts}")
         print()
 
 if __name__ == "__main__":
