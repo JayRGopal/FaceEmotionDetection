@@ -23,7 +23,7 @@ for col in df_overview.columns:
         metrics.append(match.group(1))
 
 metrics = sorted(set(metrics))  # unique metric names
-print(metrics)
+print("Metrics found:", metrics)
 
 ###############################################################################
 # 3) For each metric, print the list of patient sheet names that meet inclusion criteria
@@ -47,14 +47,36 @@ def inclusion_criteria(num_datapoints, min_score, max_score, num_unique):
         return False
     return True
 
+# DEBUG: Print all columns to check for typos or unexpected names
+print("All columns in overview file:")
+for col in df_overview.columns:
+    print(f"  - {col}")
+
 for metric in metrics:
     col_num_datapoints = f"Num Datapoints - {metric}"
     col_min_score = f"Min Score - {metric}"
     col_max_score = f"Max Score - {metric}"
     col_num_unique = f"Num Unique Scores - {metric}"
-    col_sheet_name = "Sheet Name" if "Sheet Name" in df_overview.columns else "Patient"
+    # Try both possible column names for patient/sheet
+    if "Sheet Name" in df_overview.columns:
+        col_sheet_name = "Sheet Name"
+    elif "Patient" in df_overview.columns:
+        col_sheet_name = "Patient"
+    else:
+        print(f"  ERROR: Neither 'Sheet Name' nor 'Patient' column found for metric {metric}")
+        continue
 
-    if not all(col in df_overview.columns for col in [col_num_datapoints, col_min_score, col_max_score, col_num_unique, col_sheet_name]):
+    # DEBUG: Print which columns are being checked for this metric
+    print(f"\nChecking columns for metric '{metric}':")
+    print(f"  - {col_num_datapoints}")
+    print(f"  - {col_min_score}")
+    print(f"  - {col_max_score}")
+    print(f"  - {col_num_unique}")
+    print(f"  - {col_sheet_name}")
+
+    missing_cols = [col for col in [col_num_datapoints, col_min_score, col_max_score, col_num_unique, col_sheet_name] if col not in df_overview.columns]
+    if missing_cols:
+        print(f"  SKIPPING metric '{metric}' due to missing columns: {missing_cols}")
         continue  # Skip if any required column is missing
 
     included_patients = []
@@ -63,11 +85,13 @@ for metric in metrics:
         min_score = row[col_min_score]
         max_score = row[col_max_score]
         num_unique = row[col_num_unique]
+        # DEBUG: Print row info if something looks off
+        if any(pd.isna(x) for x in [num_datapoints, min_score, max_score, num_unique]):
+            print(f"  Row {idx} missing data: {row[col_sheet_name]} ({num_datapoints}, {min_score}, {max_score}, {num_unique})")
         if inclusion_criteria(num_datapoints, min_score, max_score, num_unique):
             included_patients.append(row[col_sheet_name])
-
-    print(included_patients)
-    print(f"=== Metric: {metric} ===")
+    
+    print(f"\n=== Metric: {metric} ===")
     if not included_patients:
         print("  No patients included.")
     else:
