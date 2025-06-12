@@ -1,7 +1,6 @@
 import os
 import re
 import pandas as pd
-from tqdm import tqdm
 
 # --- CONFIGURATION --- #
 FEATURE_SAVE_FOLDER = './temp_outputs/'
@@ -33,6 +32,29 @@ def filter_limited_features(df):
     matching_cols.append(target_col)
     return df[matching_cols]
 
+def print_narrow_table(header, rows, max_cols=5):
+    """
+    Print a table with a limited number of columns at a time.
+    header: list of column names (first is row label)
+    rows: list of lists (each row)
+    max_cols: max number of patient columns to show at once
+    """
+    n_patients = len(header) - 1
+    for start in range(0, n_patients, max_cols):
+        end = min(start + max_cols, n_patients)
+        sub_header = [header[0]] + header[1+start:1+end]
+        print("{:<18}".format(sub_header[0]), end="")
+        for h in sub_header[1:]:
+            print("{:>15}".format(h), end="")
+        print()
+        print("-" * (18 + 15 * (end - start)))
+        for row in rows:
+            print("{:<18}".format(row[0]), end="")
+            for val in row[1+start:1+end]:
+                print("{:>15}".format(val), end="")
+            print()
+        print()  # Blank line between blocks
+
 def main():
     print("\nFeature counts for every patient, every time window, every method:\n")
     all_data = {}  # method -> time_window -> patient -> n_features
@@ -61,7 +83,8 @@ def main():
             method_data[tw] = tw_data
         all_data[method] = method_data
 
-    # Print in a nice table format
+    # Print in a narrow table format (chunked by max_cols)
+    max_cols = 5  # Number of patient columns per block
     for method in METHODS:
         print(f"\n=== Method: {method} ===")
         # Gather all patients for this method
@@ -69,23 +92,16 @@ def main():
         for tw in TIME_WINDOWS:
             all_patients.update(all_data[method][tw].keys())
         all_patients = sorted(list(all_patients))
-        # Print header
+        # Prepare header and rows
         header = ["Time Window (min)"] + all_patients
-        print("{:<18}".format(header[0]), end="")
-        for p in all_patients:
-            print("{:>15}".format(p), end="")
-        print()
-        print("-" * (18 + 15 * len(all_patients)))
-        # Print each row
+        rows = []
         for tw in TIME_WINDOWS:
-            print("{:<18}".format(str(tw)), end="")
+            row = [str(tw)]
             for p in all_patients:
                 val = all_data[method][tw].get(p, None)
-                if val is None:
-                    print("{:>15}".format("-"), end="")
-                else:
-                    print("{:>15}".format(val), end="")
-            print()
+                row.append("-" if val is None else str(val))
+            rows.append(row)
+        print_narrow_table(header, rows, max_cols=max_cols)
     print("\nLegend: Each cell shows the number of features for that patient and time window (or '-' if missing).")
 
 if __name__ == "__main__":
