@@ -6,7 +6,7 @@ from tqdm import tqdm
 # --- CONFIGURATION --- #
 FEATURE_SAVE_FOLDER = './temp_outputs/'
 TIME_WINDOWS = list(range(30, 241, 30))
-METHODS = ['OGAUHSE_L_']  # TEMPORARILY limit to just OGAUHSE_L_
+METHODS = ['OGAUHSE_L_']  # You can add more methods if needed
 INTERNAL_STATE = 'Mood'
 LIMITED_FEATURES_SUBSTRINGS = ["AU10", "AU12", "AU25", "AU27", "AU6", "AU7"]
 
@@ -34,44 +34,59 @@ def filter_limited_features(df):
     return df[matching_cols]
 
 def main():
-    print("Comparing features for two patients (one with fewer, one with more features):\n")
-    method = 'OGAUHSE_L_'
-    limited = False  # Only standard features for now
-    feature_counts = {}  # (patient, time_window) -> n_features
-    feature_names = {}   # (patient, time_window) -> set of feature names
-    patient_folders = [pf for pf in os.listdir(FEATURE_SAVE_FOLDER) if os.path.isdir(os.path.join(FEATURE_SAVE_FOLDER, pf))]
-    for patient_folder in tqdm(patient_folders, desc=f"    Patients for {method}", leave=False):
-        patient_folder_path = os.path.join(FEATURE_SAVE_FOLDER, patient_folder)
-        for filename in os.listdir(patient_folder_path):
-            if filename.endswith('.csv') and INTERNAL_STATE in filename and method in filename:
-                time_window = parse_filename(filename)
-                if time_window not in TIME_WINDOWS:
-                    continue
-                file_path = os.path.join(patient_folder_path, filename)
-                df = pd.read_csv(file_path)
-                df = remove_duplicate_features(df)
-                n_features = df.shape[1] - 1  # Exclude target column
-                feature_counts[(patient_folder, time_window)] = n_features
-                feature_names[(patient_folder, time_window)] = set(df.columns[:-1])
-    # Pick a time window that exists for at least two patients
-    for tw in TIME_WINDOWS:
-        patients_with_tw = [p for p in patient_folders if (p, tw) in feature_counts]
-        if len(patients_with_tw) >= 2:
-            # Sort by feature count
-            sorted_patients = sorted(patients_with_tw, key=lambda p: feature_counts[(p, tw)])
-            patient_few = sorted_patients[0]
-            patient_more = sorted_patients[-1]
-            print(f"Time window: {tw} min")
-            print(f"  Patient with fewer features: {patient_few} ({feature_counts[(patient_few, tw)]} features)")
-            print(f"  Patient with more features: {patient_more} ({feature_counts[(patient_more, tw)]} features)")
-            delta = feature_names[(patient_more, tw)] - feature_names[(patient_few, tw)]
-            print(f"  Features in patient with more features but NOT in patient with fewer features (delta):")
-            print(delta)
-            is_subset = feature_names[(patient_few, tw)].issubset(feature_names[(patient_more, tw)])
-            print(f"  Are ALL features in the patient with fewer features also in the one with more? {'Yes' if is_subset else 'No'}")
-            break
-    else:
-        print("No time window found with at least two patients having data.")
+    print("\nFeature counts for every patient, every time window, every method:\n")
+    all_data = {}  # method -> time_window -> patient -> n_features
+
+    for method in METHODS:
+        method_data = {}
+        patient_folders = [pf for pf in os.listdir(FEATURE_SAVE_FOLDER) if os.path.isdir(os.path.join(FEATURE_SAVE_FOLDER, pf))]
+        for tw in TIME_WINDOWS:
+            tw_data = {}
+            for patient_folder in patient_folders:
+                patient_folder_path = os.path.join(FEATURE_SAVE_FOLDER, patient_folder)
+                found = False
+                for filename in os.listdir(patient_folder_path):
+                    if filename.endswith('.csv') and INTERNAL_STATE in filename and method in filename:
+                        time_window = parse_filename(filename)
+                        if time_window == tw:
+                            file_path = os.path.join(patient_folder_path, filename)
+                            df = pd.read_csv(file_path)
+                            df = remove_duplicate_features(df)
+                            n_features = df.shape[1] - 1  # Exclude target column
+                            tw_data[patient_folder] = n_features
+                            found = True
+                            break
+                if not found:
+                    tw_data[patient_folder] = None  # Mark as missing
+            method_data[tw] = tw_data
+        all_data[method] = method_data
+
+    # Print in a nice table format
+    for method in METHODS:
+        print(f"\n=== Method: {method} ===")
+        # Gather all patients for this method
+        all_patients = set()
+        for tw in TIME_WINDOWS:
+            all_patients.update(all_data[method][tw].keys())
+        all_patients = sorted(list(all_patients))
+        # Print header
+        header = ["Time Window (min)"] + all_patients
+        print("{:<18}".format(header[0]), end="")
+        for p in all_patients:
+            print("{:>15}".format(p), end="")
+        print()
+        print("-" * (18 + 15 * len(all_patients)))
+        # Print each row
+        for tw in TIME_WINDOWS:
+            print("{:<18}".format(str(tw)), end="")
+            for p in all_patients:
+                val = all_data[method][tw].get(p, None)
+                if val is None:
+                    print("{:>15}".format("-"), end="")
+                else:
+                    print("{:>15}".format(val), end="")
+            print()
+    print("\nLegend: Each cell shows the number of features for that patient and time window (or '-' if missing).")
 
 if __name__ == "__main__":
-    main() 
+    main()
