@@ -193,7 +193,7 @@ def binarize_mood(df):
     new_df = df.copy()
     new_df[mood_col] = binary_values.astype(int)
     value_counts = new_df[mood_col].value_counts()
-    if (value_counts < 2).any():
+    if (value_counts < 2).any() or len(value_counts) < 2:
         return None
     return new_df
 
