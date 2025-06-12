@@ -46,6 +46,34 @@ METHOD_DISPLAY_MAP = {
     'OGAUHSE_L_': 'FaceDx Complete'
 }
 
+# --- PATIENT FILTERING --- #
+INCLUDED_PATIENTS = [
+    'S23_174', 'S23_199', 'S23_212', 'S23_214', 'S24_217', 'S24_219',
+    'S24_224', 'S24_226', 'S24_227', 'S24_230', 'S24_231', 'S24_234'
+]
+
+# --- PATIENT NUMBER MAPPING --- #
+# Full mapping for all 15 patients (in order)
+PATIENT_NUMBER_MAP_FULL = {
+    'S23_174': 1,
+    'S23_199': 2,
+    'S23_211': 3,
+    'S23_212': 4,
+    'S23_214': 5,
+    'S24_217': 6,
+    'S24_219': 7,
+    'S24_222': 8,
+    'S24_224': 9,
+    'S24_226': 10,
+    'S24_227': 11,
+    'S24_230': 12,
+    'S24_231': 13,
+    'S24_233': 14,
+    'S24_234': 15
+}
+# Only keep mapping for included patients
+PATIENT_NUMBER_MAP = {pid: PATIENT_NUMBER_MAP_FULL[pid] for pid in INCLUDED_PATIENTS if pid in PATIENT_NUMBER_MAP_FULL}
+
 plt.style.use('seaborn-v0_8-whitegrid')
 plt.rcParams['axes.labelsize'] = 14
 plt.rcParams['axes.titlesize'] = 16
@@ -124,6 +152,8 @@ def inclusion_criteria(mood_scores):
 def load_patient_data(method, limited=False):
     all_patient_data = {}
     patient_folders = [pf for pf in os.listdir(FEATURE_SAVE_FOLDER) if os.path.isdir(os.path.join(FEATURE_SAVE_FOLDER, pf))]
+    # Only keep patient folders that are in INCLUDED_PATIENTS
+    patient_folders = [pf for pf in patient_folders if pf in INCLUDED_PATIENTS]
     # First, load all data and keep track of feature sets
     patient_time_features = {}
     patient_time_dfs = {}
@@ -180,6 +210,7 @@ def load_patient_data(method, limited=False):
             all_patient_data[pid][tw] = df_clean
     # Print concise confirmation
     n_features = len(common_features)
+    print(f"Patients included for {method}: {valid_patients}")
     if method.startswith('OGAUHSE'):
         print(f"all OGAUHSE has {n_features} features. Confirmed!")
     elif method.startswith('OF'):
@@ -286,8 +317,10 @@ def compute_p_value(real_score, null_scores, tail='right'):
     return p
 
 def per_patient_r_barplots(all_patient_data, method, limited=False, binary=False, outdir=None, auc=False):
-    # For each patient, plot time window (x) vs R (y) or AUC (y)
-    for patient_id, patient_data in tqdm(all_patient_data.items(), desc=f"Per-patient barplots ({method}{' limited' if limited else ''}{' binary' if binary else ''})"):
+    # Only consider included patients present in all_patient_data
+    filtered_patient_ids = [pid for pid in INCLUDED_PATIENTS if pid in all_patient_data]
+    for patient_id in tqdm(filtered_patient_ids, desc=f"Per-patient barplots ({method}{' limited' if limited else ''}{' binary' if binary else ''})"):
+        patient_data = all_patient_data[patient_id]
         results = []
         pvals = []
         for time_window in tqdm(TIME_WINDOWS, desc=f"Patient {patient_id} time windows", leave=False):
@@ -345,15 +378,31 @@ def per_patient_r_barplots(all_patient_data, method, limited=False, binary=False
             pvals.append(pval)
         # Plot
         plt.figure(figsize=(8, 5))
-        plt.bar([str(tw) for tw in TIME_WINDOWS], results, color=COLORS[0])
+        bars = plt.bar([str(tw) for tw in TIME_WINDOWS], results, color=COLORS[0])
         plt.xlabel("Time Window (min)")
         plt.ylabel("AUC" if binary else "Pearson r")
-        plt.title(f"{METHOD_DISPLAY_MAP.get(method, method)} - {'Limited ' if limited else ''}{'Binary ' if binary else ''}Patient {patient_id}")
+        # Use patient number for labeling
+        patient_number = PATIENT_NUMBER_MAP.get(patient_id, None)
+        patient_label = f"Patient #{patient_number}" if patient_number is not None else patient_id
+        plt.title(f"{METHOD_DISPLAY_MAP.get(method, method)} - {'Limited ' if limited else ''}{'Binary ' if binary else ''}{patient_label}")
         plt.ylim(-0.1, 1.0 if binary else 1.0)
-        # Annotate p-values above bars
+        # Add patient number as an axis label (for clarity)
+        plt.gca().text(1.02, 0.5, patient_label, transform=plt.gca().transAxes, rotation=270, va='center', ha='left', fontsize=13, color='gray')
+        # Annotate p-values above bars, always above the top of the bar (even if bar is negative)
         for i, (val, pval) in enumerate(zip(results, pvals)):
             if not np.isnan(val) and not np.isnan(pval):
-                plt.text(i, val + 0.03, f"p={pval:.3f}", ha='center', va='bottom', fontsize=9, rotation=90)
+                bar = bars[i]
+                height = bar.get_height()
+                # If bar is positive, put text above the top; if negative, put text above the top (i.e., above zero)
+                offset = 0.03 * (plt.ylim()[1] - plt.ylim()[0])
+                if height >= 0:
+                    y = height + offset
+                    va = 'bottom'
+                else:
+                    y = height - offset
+                    va = 'top'
+                # Always place above the bar, not at the end
+                plt.text(bar.get_x() + bar.get_width()/2, y, f"p={pval:.3f}", ha='center', va=va, fontsize=9, rotation=90)
         plt.tight_layout()
         suffix = ""
         if limited: suffix += "_limited"
@@ -361,18 +410,22 @@ def per_patient_r_barplots(all_patient_data, method, limited=False, binary=False
         if outdir is None:
             outdir = RESULTS_OUTPUT_PATH
         os.makedirs(outdir, exist_ok=True)
-        plt.savefig(os.path.join(outdir, f"{method}{suffix}_patient_{patient_id}_barplot.png"), dpi=300)
+        # Save with patient number in filename for clarity
+        plt.savefig(os.path.join(outdir, f"{method}{suffix}_patient_{patient_label.replace(' ', '_')}_barplot.png"), dpi=300)
         plt.close()
-        # Save results to CSV
-        pd.DataFrame({"time_window": TIME_WINDOWS, "score": results, "pval": pvals}).to_csv(
-            os.path.join(outdir, f"{method}{suffix}_patient_{patient_id}_scores.csv"), index=False
+        # Save results to CSV (keep patient_id for traceability)
+        pd.DataFrame({"time_window": TIME_WINDOWS, "score": results, "pval": pvals, "patient_number": patient_number, "patient_id": patient_id}).to_csv(
+            os.path.join(outdir, f"{method}{suffix}_patient_{patient_label.replace(' ', '_')}_scores.csv"), index=False
         )
 
 def group_level_barplot(all_patient_data, method, limited=False, binary=False, outdir=None):
-    # For each time window, average R (or AUC) across patients
+    # Only consider included patients present in all_patient_data
+    filtered_patient_ids = [pid for pid in INCLUDED_PATIENTS if pid in all_patient_data]
     all_scores = []
     all_pvals = []
-    for patient_id, patient_data in tqdm(all_patient_data.items(), desc=f"Group-level ({method}{' limited' if limited else ''}{' binary' if binary else ''})"):
+    patient_numbers = []
+    for patient_id in tqdm(filtered_patient_ids, desc=f"Group-level ({method}{' limited' if limited else ''}{' binary' if binary else ''})"):
+        patient_data = all_patient_data[patient_id]
         patient_scores = []
         patient_pvals = []
         for time_window in tqdm(TIME_WINDOWS, desc=f"Patient {patient_id} time windows", leave=False):
@@ -430,6 +483,7 @@ def group_level_barplot(all_patient_data, method, limited=False, binary=False, o
             patient_pvals.append(pval)
         all_scores.append(patient_scores)
         all_pvals.append(patient_pvals)
+        patient_numbers.append(PATIENT_NUMBER_MAP.get(patient_id, None))
     all_scores = np.array(all_scores)
     all_pvals = np.array(all_pvals)
     mean_scores = np.nanmean(all_scores, axis=0)
@@ -437,15 +491,26 @@ def group_level_barplot(all_patient_data, method, limited=False, binary=False, o
     # For group-level p-value, use mean of patient p-values (or combine via Fisher's method if desired)
     group_pvals = np.nanmean(all_pvals, axis=0)
     plt.figure(figsize=(8, 5))
-    plt.bar([str(tw) for tw in TIME_WINDOWS], mean_scores, yerr=sem_scores, color=COLORS[0], capsize=5)
+    bars = plt.bar([str(tw) for tw in TIME_WINDOWS], mean_scores, yerr=sem_scores, color=COLORS[0], capsize=5)
     plt.xlabel("Time Window (min)")
     plt.ylabel("AUC" if binary else "Pearson r")
     plt.title(f"{METHOD_DISPLAY_MAP.get(method, method)} - {'Limited ' if limited else ''}{'Binary ' if binary else ''}Group Level")
     plt.ylim(-0.1, 1.0 if binary else 1.0)
-    # Annotate group p-values above bars
+    # Annotate group p-values above bars, always above the top of the bar (even if bar is negative)
     for i, (val, pval) in enumerate(zip(mean_scores, group_pvals)):
         if not np.isnan(val) and not np.isnan(pval):
-            plt.text(i, val + 0.03, f"p={pval:.3f}", ha='center', va='bottom', fontsize=9, rotation=90)
+            bar = bars[i]
+            height = bar.get_height()
+            # If bar is positive, put text above the top; if negative, put text above the top (i.e., above zero)
+            offset = 0.03 * (plt.ylim()[1] - plt.ylim()[0])
+            if height >= 0:
+                y = height + offset
+                va = 'bottom'
+            else:
+                y = height - offset
+                va = 'top'
+            # Always place above the bar, not at the end
+            plt.text(bar.get_x() + bar.get_width()/2, y, f"p={pval:.3f}", ha='center', va=va, fontsize=9, rotation=90)
     plt.tight_layout()
     suffix = ""
     if limited: suffix += "_limited"
@@ -455,16 +520,17 @@ def group_level_barplot(all_patient_data, method, limited=False, binary=False, o
     os.makedirs(outdir, exist_ok=True)
     plt.savefig(os.path.join(outdir, f"{method}{suffix}_group_barplot.png"), dpi=300)
     plt.close()
-    # Save group results to CSV
+    # Save group results to CSV, include patient numbers for traceability
     pd.DataFrame({"time_window": TIME_WINDOWS, "mean_score": mean_scores, "sem_score": sem_scores, "mean_pval": group_pvals}).to_csv(
         os.path.join(outdir, f"{method}{suffix}_group_scores.csv"), index=False
     )
 
 def leave_one_patient_out_decoding(all_patient_data, method, limited=False, binary=False, outdir=None):
-    # For each time window, train on all but one patient, test on left-out patient, collect R or AUC
+    # Only consider included patients present in all_patient_data
+    filtered_patient_ids = [pid for pid in INCLUDED_PATIENTS if pid in all_patient_data]
     lopo_results = {tw: [] for tw in TIME_WINDOWS}
     lopo_pvals = {tw: [] for tw in TIME_WINDOWS}
-    patient_ids = list(all_patient_data.keys())
+    patient_ids = filtered_patient_ids
     for test_patient in tqdm(patient_ids, desc=f"LOPO ({method}{' limited' if limited else ''}{' binary' if binary else ''})"):
         for time_window in tqdm(TIME_WINDOWS, desc=f"Test patient {test_patient} time windows", leave=False):
             # Gather training data
@@ -528,15 +594,26 @@ def leave_one_patient_out_decoding(all_patient_data, method, limited=False, bina
     sem_scores = [np.nanstd(lopo_results[tw]) / np.sqrt(np.sum(~np.isnan(lopo_results[tw]))) for tw in TIME_WINDOWS]
     mean_pvals = [np.nanmean(lopo_pvals[tw]) for tw in TIME_WINDOWS]
     plt.figure(figsize=(8, 5))
-    plt.bar([str(tw) for tw in TIME_WINDOWS], mean_scores, yerr=sem_scores, color=COLORS[1], capsize=5)
+    bars = plt.bar([str(tw) for tw in TIME_WINDOWS], mean_scores, yerr=sem_scores, color=COLORS[1], capsize=5)
     plt.xlabel("Time Window (min)")
     plt.ylabel("AUC" if binary else "Pearson r")
     plt.title(f"{METHOD_DISPLAY_MAP.get(method, method)} - {'Limited ' if limited else ''}{'Binary ' if binary else ''}Leave-One-Patient-Out")
     plt.ylim(-0.1, 1.0 if binary else 1.0)
-    # Annotate group p-values above bars
+    # Annotate group p-values above bars, always above the top of the bar (even if bar is negative)
     for i, (val, pval) in enumerate(zip(mean_scores, mean_pvals)):
         if not np.isnan(val) and not np.isnan(pval):
-            plt.text(i, val + 0.03, f"p={pval:.3f}", ha='center', va='bottom', fontsize=9, rotation=90)
+            bar = bars[i]
+            height = bar.get_height()
+            # If bar is positive, put text above the top; if negative, put text above the top (i.e., above zero)
+            offset = 0.03 * (plt.ylim()[1] - plt.ylim()[0])
+            if height >= 0:
+                y = height + offset
+                va = 'bottom'
+            else:
+                y = height - offset
+                va = 'top'
+            # Always place above the bar, not at the end
+            plt.text(bar.get_x() + bar.get_width()/2, y, f"p={pval:.3f}", ha='center', va=va, fontsize=9, rotation=90)
     plt.tight_layout()
     suffix = ""
     if limited: suffix += "_limited"
