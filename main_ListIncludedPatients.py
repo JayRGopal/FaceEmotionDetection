@@ -21,20 +21,33 @@ if not metrics:
     raise ValueError("No metrics found in overview file.")
 
 # ------------------- INCLUSION CRITERIA ------------------- #
-def inclusion_criteria(num_datapoints, score_range, num_unique):
+def inclusion_criteria(row, metric):
     """
     Returns True if the patient meets the inclusion criteria:
-    - At least 5 datapoints
-    - Score range at least 5
     - At least 3 unique scores
+    - The number of unique permutations of the scores (n!/(n-k)!) is greater than 10^3,
+      where n = num_datapoints, k = num_unique (i.e., number of ways to assign k unique values to n datapoints, with replacement)
     """
-    if pd.isna(num_datapoints) or pd.isna(score_range) or pd.isna(num_unique):
+    import math
+
+    col_num_datapoints = f"Num_Self_Reports_{metric}"
+    col_num_unique = f"Num_Distinct_Scores_{metric}"
+
+    if col_num_datapoints not in row or col_num_unique not in row:
         return False
-    if num_datapoints < 5:
-        return False
-    if score_range < 5:
+
+    num_datapoints = row[col_num_datapoints]
+    num_unique = row[col_num_unique]
+
+    if pd.isna(num_datapoints) or pd.isna(num_unique):
         return False
     if num_unique < 3:
+        return False
+    try:
+        num_permutations = num_unique ** int(num_datapoints)
+    except Exception:
+        return False
+    if num_permutations <= 1_000:
         return False
     return True
 
@@ -60,11 +73,8 @@ for metric in metrics:
 
     included_patients = []
     for _, row in df_overview.iterrows():
-        num_datapoints = row[col_num_datapoints]
-        score_range = row[col_range]
-        num_unique = row[col_num_unique]
         sheet_name = row[col_sheet_name]
-        if inclusion_criteria(num_datapoints, score_range, num_unique):
+        if inclusion_criteria(row, metric):
             included_patients.append(str(sheet_name))
     all_included[metric] = included_patients
 
