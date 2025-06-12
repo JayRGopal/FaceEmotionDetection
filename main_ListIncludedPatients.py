@@ -66,6 +66,7 @@ for metric in metrics:
         if inclusion_criteria(num_datapoints, min_score, max_score, num_unique):
             included_patients.append(row[col_sheet_name])
 
+    print(included_patients)
     print(f"=== Metric: {metric} ===")
     if not included_patients:
         print("  No patients included.")
