@@ -705,7 +705,7 @@ def leave_one_patient_out_decoding(all_patient_data, method, internal_state, lim
 
 def main():
     # --- NEW: Load and print Mood, Anxiety, Depression scores for each patient --- #
-    BEHAVIORAL_XLSX_PATH = os.path.expanduser('~/NAS/Analysis/AudioFacialEEG/Behavioral_Labeling/Mood_Tracking.xlsx')
+    BEHAVIORAL_XLSX_PATH = os.path.expanduser('~/NAS/Analysis/AudioFacialEEG/Behavioral\ Labeling/Mood_Tracking.xlsx')
     patient_scores = load_behavioral_scores(BEHAVIORAL_XLSX_PATH, INCLUDED_PATIENTS)
     print_behavioral_scores_table(patient_scores)
     # --- END NEW ---
