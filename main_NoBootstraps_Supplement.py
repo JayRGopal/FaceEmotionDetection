@@ -28,7 +28,7 @@ warnings.filterwarnings("ignore")
 
 # --- CONFIGURATION --- #
 FEATURE_SAVE_FOLDER = '/home/jgopal/Desktop/FaceEmotionDetection/temp_outputs/'
-RESULTS_OUTPUT_PATH = '/home/jgopal/NAS/Analysis/AudioFacialEEG/Results_May_2025/MoodPrediction'
+RESULTS_OUTPUT_PATH = '/home/jgopal/NAS/Analysis/AudioFacialEEG/Results_June_2025/MoodPrediction'
 ALPHAS = np.linspace(0.1, 10.0, 10)
 TIME_WINDOWS = list(range(30, 241, 30))
 METHODS = ['OGAUHSE_L_', 'OF_L_']
