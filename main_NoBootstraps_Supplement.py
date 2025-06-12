@@ -348,27 +348,31 @@ def per_patient_r_barplots(all_patient_data, method, limited=False, binary=False
                 model = LogisticRegressionCV(Cs=1/np.array(ALPHAS), cv=loo, penalty='l1', solver='liblinear', random_state=42)
             else:
                 model = LassoCV(alphas=ALPHAS, cv=loo, random_state=42)
-            for train_idx, test_idx in loo.split(X):
-                X_train, X_test = X[train_idx], X[test_idx]
-                y_train, y_test = y[train_idx], y[test_idx]
-                model.fit(X_train, y_train)
+            try:
+                for train_idx, test_idx in loo.split(X):
+                    X_train, X_test = X[train_idx], X[test_idx]
+                    y_train, y_test = y[train_idx], y[test_idx]
+                    model.fit(X_train, y_train)
+                    if binary:
+                        y_pred = model.predict_proba(X_test)[:, 1] if hasattr(model, 'predict_proba') else model.predict(X_test)
+                    else:
+                        y_pred = model.predict(X_test)
+                    preds.extend(y_pred)
+                    actuals.extend(y_test)
                 if binary:
-                    y_pred = model.predict_proba(X_test)[:, 1] if hasattr(model, 'predict_proba') else model.predict(X_test)
+                    if len(np.unique(actuals)) > 1:
+                        score = roc_auc_score(actuals, preds)
+                    else:
+                        score = np.nan
                 else:
-                    y_pred = model.predict(X_test)
-                preds.extend(y_pred)
-                actuals.extend(y_test)
-            if binary:
-                if len(np.unique(actuals)) > 1:
-                    score = roc_auc_score(actuals, preds)
-                else:
-                    score = np.nan
-            else:
-                if len(actuals) > 1:
-                    score, _ = pearsonr(actuals, preds)
-                else:
-                    score = np.nan
-            results.append(score)
+                    if len(actuals) > 1:
+                        score, _ = pearsonr(actuals, preds)
+                    else:
+                        score = np.nan
+                results.append(score)
+            except Exception as e:
+                print(f"[WARN] Exception in per-patient LOO barplot for patient {patient_id}, time_window {time_window}: {e}")
+                results.append(np.nan)
             # Permutation test for this patient/time_window
             if not np.isnan(score):
                 null_scores = permutation_test(X, y, model_type='logistic' if binary else 'lasso', alphas=ALPHAS, binary=binary, n_permutations=N_PERMUTATIONS, random_state=42)
@@ -453,27 +457,31 @@ def group_level_barplot(all_patient_data, method, limited=False, binary=False, o
                 model = LogisticRegressionCV(Cs=1/np.array(ALPHAS), cv=loo, penalty='l1', solver='liblinear', random_state=42)
             else:
                 model = LassoCV(alphas=ALPHAS, cv=loo, random_state=42)
-            for train_idx, test_idx in loo.split(X):
-                X_train, X_test = X[train_idx], X[test_idx]
-                y_train, y_test = y[train_idx], y[test_idx]
-                model.fit(X_train, y_train)
+            try:
+                for train_idx, test_idx in loo.split(X):
+                    X_train, X_test = X[train_idx], X[test_idx]
+                    y_train, y_test = y[train_idx], y[test_idx]
+                    model.fit(X_train, y_train)
+                    if binary:
+                        y_pred = model.predict_proba(X_test)[:, 1] if hasattr(model, 'predict_proba') else model.predict(X_test)
+                    else:
+                        y_pred = model.predict(X_test)
+                    preds.extend(y_pred)
+                    actuals.extend(y_test)
                 if binary:
-                    y_pred = model.predict_proba(X_test)[:, 1] if hasattr(model, 'predict_proba') else model.predict(X_test)
+                    if len(np.unique(actuals)) > 1:
+                        score = roc_auc_score(actuals, preds)
+                    else:
+                        score = np.nan
                 else:
-                    y_pred = model.predict(X_test)
-                preds.extend(y_pred)
-                actuals.extend(y_test)
-            if binary:
-                if len(np.unique(actuals)) > 1:
-                    score = roc_auc_score(actuals, preds)
-                else:
-                    score = np.nan
-            else:
-                if len(actuals) > 1:
-                    score, _ = pearsonr(actuals, preds)
-                else:
-                    score = np.nan
-            patient_scores.append(score)
+                    if len(actuals) > 1:
+                        score, _ = pearsonr(actuals, preds)
+                    else:
+                        score = np.nan
+                patient_scores.append(score)
+            except Exception as e:
+                print(f"[WARN] Exception in LOO-CV for patient {patient_id}, time_window {time_window}: {e}")
+                patient_scores.append(np.nan)
             # Permutation test for this patient/time_window
             if not np.isnan(score):
                 null_scores = permutation_test(X, y, model_type='logistic' if binary else 'lasso', alphas=ALPHAS, binary=binary, n_permutations=N_PERMUTATIONS, random_state=42)
@@ -568,22 +576,30 @@ def leave_one_patient_out_decoding(all_patient_data, method, limited=False, bina
                 model = LogisticRegressionCV(Cs=1/np.array(ALPHAS), cv=5, penalty='l1', solver='liblinear', random_state=42)
             else:
                 model = LassoCV(alphas=ALPHAS, cv=5, random_state=42)
-            model.fit(X_train, y_train)
-            if binary:
-                preds = model.predict_proba(X_test)[:, 1] if hasattr(model, 'predict_proba') else model.predict(X_test)
-                if len(np.unique(y_test)) > 1:
-                    score = roc_auc_score(y_test, preds)
-                else:
-                    score = np.nan
+            try:
+                model.fit(X_train, y_train)
+                fit_error = False
+            except Exception as e:
+                print(f"[ERROR] Model fitting failed for test_patient={test_patient}, time_window={time_window}: {e}")
+                fit_error = True
+            if fit_error:
+                score = np.nan
             else:
-                preds = model.predict(X_test)
-                if len(y_test) > 1:
-                    score, _ = pearsonr(y_test, preds)
+                if binary:
+                    preds = model.predict_proba(X_test)[:, 1] if hasattr(model, 'predict_proba') else model.predict(X_test)
+                    if len(np.unique(y_test)) > 1:
+                        score = roc_auc_score(y_test, preds)
+                    else:
+                        score = np.nan
                 else:
-                    score = np.nan
+                    preds = model.predict(X_test)
+                    if len(y_test) > 1:
+                        score, _ = pearsonr(y_test, preds)
+                    else:
+                        score = np.nan
             lopo_results[time_window].append(score)
             # Permutation test for this LOPO split
-            if not np.isnan(score):
+            if not np.isnan(score) and not fit_error:
                 null_scores = permutation_test_lopo(X_train, y_train, X_test, y_test, model_type='logistic' if binary else 'lasso', alphas=ALPHAS, binary=binary, n_permutations=N_PERMUTATIONS, random_state=42)
                 pval = compute_p_value(score, null_scores, tail='right')
             else:
@@ -640,8 +656,7 @@ def main():
 
     # A) Per-patient R barplots
     try:
-        #per_patient_r_barplots(oga_data, 'OGAUHSE_L_', limited=False, binary=False)
-        pass
+        per_patient_r_barplots(oga_data, 'OGAUHSE_L_', limited=False, binary=False)
     except Exception as e:
         print(f"[ERROR] A) Per-patient R barplots failed: {e}")
 
