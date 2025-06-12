@@ -13,7 +13,7 @@ except Exception as e:
     raise RuntimeError(f"Failed to read overview Excel file: {e}")
 
 # ------------------- EXTRACT METRICS ------------------- #
-pattern_metric = re.compile(r"^Num Datapoints - (.+)$")
+pattern_metric = re.compile(r"^Num_Self_Reports_(.+)$")
 metrics = sorted(
     set(
         match.group(1)
