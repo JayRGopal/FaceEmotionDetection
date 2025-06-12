@@ -646,78 +646,84 @@ def leave_one_patient_out_decoding(all_patient_data, method, limited=False, bina
 
 def main():
     # --- A, B, D, E, F for OGAUHSE_L_ --- #
-    # Standard features
-    print("Loading OGAUHSE_L_ data (standard features)...")
-    try:
-        oga_data = load_patient_data('OGAUHSE_L_', limited=False)
-    except Exception as e:
-        print(f"[ERROR] Failed to load OGAUHSE_L_ standard features: {e}")
-        oga_data = None
+    # # Standard features
+    # print("Loading OGAUHSE_L_ data (standard features)...")
+    # try:
+    #     oga_data = load_patient_data('OGAUHSE_L_', limited=False)
+    # except Exception as e:
+    #     print(f"[ERROR] Failed to load OGAUHSE_L_ standard features: {e}")
+    #     oga_data = None
 
-    # A) Per-patient R barplots
-    try:
-        per_patient_r_barplots(oga_data, 'OGAUHSE_L_', limited=False, binary=False)
-    except Exception as e:
-        print(f"[ERROR] A) Per-patient R barplots failed: {e}")
+    # # A) Per-patient R barplots
+    # try:
+    #     per_patient_r_barplots(oga_data, 'OGAUHSE_L_', limited=False, binary=False)
+    # except Exception as e:
+    #     print(f"[ERROR] A) Per-patient R barplots failed: {e}")
 
-    # B) Group-level R barplot
-    try:
-        group_level_barplot(oga_data, 'OGAUHSE_L_', limited=False, binary=False)
-    except Exception as e:
-        print(f"[ERROR] B) Group-level R barplot failed: {e}")
+    # # B) Group-level R barplot
+    # try:
+    #     group_level_barplot(oga_data, 'OGAUHSE_L_', limited=False, binary=False)
+    # except Exception as e:
+    #     print(f"[ERROR] B) Group-level R barplot failed: {e}")
 
-    # D) Leave-one-patient-out decoding (R)
-    try:
-        leave_one_patient_out_decoding(oga_data, 'OGAUHSE_L_', limited=False, binary=False)
-    except Exception as e:
-        print(f"[ERROR] D) Leave-one-patient-out decoding failed: {e}")
+    # # D) Leave-one-patient-out decoding (R)
+    # try:
+    #     leave_one_patient_out_decoding(oga_data, 'OGAUHSE_L_', limited=False, binary=False)
+    # except Exception as e:
+    #     print(f"[ERROR] D) Leave-one-patient-out decoding failed: {e}")
 
-    # E) Per-patient AUC barplots (binary decoding)
-    try:
-        per_patient_r_barplots(oga_data, 'OGAUHSE_L_', limited=False, binary=True)
-    except Exception as e:
-        print(f"[ERROR] E) Per-patient AUC barplots (binary decoding) failed: {e}")
+    # # E) Per-patient AUC barplots (binary decoding)
+    # try:
+    #     per_patient_r_barplots(oga_data, 'OGAUHSE_L_', limited=False, binary=True)
+    # except Exception as e:
+    #     print(f"[ERROR] E) Per-patient AUC barplots (binary decoding) failed: {e}")
 
-    # F) Limited features
-    print("Loading OGAUHSE_L_ data (limited features)...")
-    try:
-        oga_data_limited = load_patient_data('OGAUHSE_L_', limited=True)
-    except Exception as e:
-        print(f"[ERROR] Failed to load OGAUHSE_L_ limited features: {e}")
-        oga_data_limited = None
+    # # F) Limited features
+    # print("Loading OGAUHSE_L_ data (limited features)...")
+    # try:
+    #     oga_data_limited = load_patient_data('OGAUHSE_L_', limited=True)
+    # except Exception as e:
+    #     print(f"[ERROR] Failed to load OGAUHSE_L_ limited features: {e}")
+    #     oga_data_limited = None
 
-    try:
-        per_patient_r_barplots(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=False)
-    except Exception as e:
-        print(f"[ERROR] F1) Per-patient R barplots (limited features) failed: {e}")
+    # try:
+    #     per_patient_r_barplots(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=False)
+    # except Exception as e:
+    #     print(f"[ERROR] F1) Per-patient R barplots (limited features) failed: {e}")
 
-    try:
-        group_level_barplot(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=False)
-    except Exception as e:
-        print(f"[ERROR] F2) Group-level R barplot (limited features) failed: {e}")
+    # try:
+    #     group_level_barplot(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=False)
+    # except Exception as e:
+    #     print(f"[ERROR] F2) Group-level R barplot (limited features) failed: {e}")
 
-    try:
-        leave_one_patient_out_decoding(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=False)
-    except Exception as e:
-        print(f"[ERROR] F3) Leave-one-patient-out decoding (limited features) failed: {e}")
+    # try:
+    #     leave_one_patient_out_decoding(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=False)
+    # except Exception as e:
+    #     print(f"[ERROR] F3) Leave-one-patient-out decoding (limited features) failed: {e}")
 
-    try:
-        per_patient_r_barplots(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=True)
-    except Exception as e:
-        print(f"[ERROR] F4) Per-patient AUC barplots (limited features, binary) failed: {e}")
+    # try:
+    #     per_patient_r_barplots(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=True)
+    # except Exception as e:
+    #     print(f"[ERROR] F4) Per-patient AUC barplots (limited features, binary) failed: {e}")
 
-    # --- C for OF_L_ --- #
+    # --- C and G for OF_L_ --- #
     print("Loading OF_L_ data (standard features)...")
     try:
         of_data = load_patient_data('OF_L_', limited=False)
     except Exception as e:
         print(f"[ERROR] Failed to load OF_L_ standard features: {e}")
         of_data = None
-
+    # G) Per-patient R barplots
     try:
-        group_level_barplot(of_data, 'OF_L_', limited=False, binary=False)
+        per_patient_r_barplots(of_data, 'OF_L_', limited=False, binary=False)
     except Exception as e:
-        print(f"[ERROR] C) Group-level R barplot (OF_L_) failed: {e}")
+        print(f"[ERROR] G) Per-patient R barplots failed: {e}")
+
+    # # C) OF plots
+    # try:
+    #     group_level_barplot(of_data, 'OF_L_', limited=False, binary=False)
+    # except Exception as e:
+    #     print(f"[ERROR] C) Group-level R barplot (OF_L_) failed: {e}")
 
     # Optionally, add more for OF_L_ if needed (e.g., per-patient, binary, limited)
     print("All paper-ready figures generated.")
