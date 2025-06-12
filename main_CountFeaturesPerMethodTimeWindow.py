@@ -5,7 +5,7 @@ import pandas as pd
 # --- CONFIGURATION --- #
 FEATURE_SAVE_FOLDER = './temp_outputs/'
 TIME_WINDOWS = list(range(30, 241, 30))
-METHODS = ['OGAUHSE_L_']  # You can add more methods if needed
+METHODS = ['OGAUHSE_L_', 'OF_L_']  # You can add more methods if needed
 INTERNAL_STATE = 'Mood'
 LIMITED_FEATURES_SUBSTRINGS = ["AU10", "AU12", "AU25", "AU27", "AU6", "AU7"]
 
