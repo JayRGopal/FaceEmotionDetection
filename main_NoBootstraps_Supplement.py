@@ -228,6 +228,9 @@ def load_patient_data(method, internal_state, limited=False):
                 df = pd.read_csv(file_path)
                 # Remove duplicate features, keeping the second occurrence
                 df = remove_duplicate_features_take_second(df)
+                # --- NEW: Drop rows where the self-report (last column) is NaN --- #
+                df = df[df.iloc[:, -1].notna()].reset_index(drop=True)
+                # --- END NEW ---
                 if limited:
                     df = filter_limited_features(df)
                 if not patient_data_loaded:
