@@ -23,6 +23,7 @@ for col in df_overview.columns:
         metrics.append(match.group(1))
 
 metrics = sorted(set(metrics))  # unique metric names
+print(metrics)
 
 ###############################################################################
 # 3) For each metric, print the list of patient sheet names that meet inclusion criteria
