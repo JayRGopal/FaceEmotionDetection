@@ -1,4 +1,4 @@
-import os
+﻿import os
 import re
 import pandas as pd
 
@@ -98,3 +98,80 @@ for metric in metrics:
         for sheet_name in included_patients:
             print(f"  {sheet_name}")
     print()
+
+
+Metrics found: ['Anxiety', 'Depression', 'Hunger', 'Mood', 'Pain', 'Sleepiness']
+All columns in overview file:
+  - Sheet Name
+  - Num Datapoints - Anxiety
+  - Num Unique - Anxiety
+  - Range - Anxiety
+  - Is Included - Anxiety
+  - Num Datapoints - Depression
+  - Num Unique - Depression
+  - Range - Depression
+  - Is Included - Depression
+  - Num Datapoints - Hunger
+  - Num Unique - Hunger
+  - Range - Hunger
+  - Is Included - Hunger
+  - Num Datapoints - Mood
+  - Num Unique - Mood
+  - Range - Mood
+  - Is Included - Mood
+  - Num Datapoints - Pain
+  - Num Unique - Pain
+  - Range - Pain
+  - Is Included - Pain
+  - Num Datapoints - Sleepiness
+  - Num Unique - Sleepiness
+  - Range - Sleepiness
+  - Is Included - Sleepiness
+
+Checking columns for metric 'Anxiety':
+  - Num Datapoints - Anxiety
+  - Min Score - Anxiety
+  - Max Score - Anxiety
+  - Num Unique Scores - Anxiety
+  - Sheet Name
+  SKIPPING metric 'Anxiety' due to missing columns: ['Min Score - Anxiety', 'Max Score - Anxiety', 'Num Unique Scores - Anxiety']
+
+Checking columns for metric 'Depression':
+  - Num Datapoints - Depression
+  - Min Score - Depression
+  - Max Score - Depression
+  - Num Unique Scores - Depression
+  - Sheet Name
+  SKIPPING metric 'Depression' due to missing columns: ['Min Score - Depression', 'Max Score - Depression', 'Num Unique Scores - Depression']
+
+Checking columns for metric 'Hunger':
+  - Num Datapoints - Hunger
+  - Min Score - Hunger
+  - Max Score - Hunger
+  - Num Unique Scores - Hunger
+  - Sheet Name
+  SKIPPING metric 'Hunger' due to missing columns: ['Min Score - Hunger', 'Max Score - Hunger', 'Num Unique Scores - Hunger']
+
+Checking columns for metric 'Mood':
+  - Num Datapoints - Mood
+  - Min Score - Mood
+  - Max Score - Mood
+  - Num Unique Scores - Mood
+  - Sheet Name
+  SKIPPING metric 'Mood' due to missing columns: ['Min Score - Mood', 'Max Score - Mood', 'Num Unique Scores - Mood']
+
+Checking columns for metric 'Pain':
+  - Num Datapoints - Pain
+  - Min Score - Pain
+  - Max Score - Pain
+  - Num Unique Scores - Pain
+  - Sheet Name
+  SKIPPING metric 'Pain' due to missing columns: ['Min Score - Pain', 'Max Score - Pain', 'Num Unique Scores - Pain']
+
+Checking columns for metric 'Sleepiness':
+  - Num Datapoints - Sleepiness
+  - Min Score - Sleepiness
+  - Max Score - Sleepiness
+  - Num Unique Scores - Sleepiness
+  - Sheet Name
+  SKIPPING metric 'Sleepiness' due to missing columns: ['Min Score - Sleepiness', 'Max Score - Sleepiness', 'Num Unique Scores - Sleepiness']
