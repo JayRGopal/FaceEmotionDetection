@@ -508,11 +508,11 @@ def main():
     print("Loading OGAUHSE_L_ data (standard features)...")
     oga_data = load_patient_data('OGAUHSE_L_', limited=False)
     # A) Per-patient R barplots
-    per_patient_r_barplots(oga_data, 'OGAUHSE_L_', limited=False, binary=False)
+    #per_patient_r_barplots(oga_data, 'OGAUHSE_L_', limited=False, binary=False)
     # B) Group-level R barplot
-    group_level_barplot(oga_data, 'OGAUHSE_L_', limited=False, binary=False)
+    #group_level_barplot(oga_data, 'OGAUHSE_L_', limited=False, binary=False)
     # D) Leave-one-patient-out decoding (R)
-    leave_one_patient_out_decoding(oga_data, 'OGAUHSE_L_', limited=False, binary=False)
+    #leave_one_patient_out_decoding(oga_data, 'OGAUHSE_L_', limited=False, binary=False)
     # E) Per-patient AUC barplots (binary decoding)
     per_patient_r_barplots(oga_data, 'OGAUHSE_L_', limited=False, binary=True)
     # F) Limited features
@@ -520,7 +520,7 @@ def main():
     oga_data_limited = load_patient_data('OGAUHSE_L_', limited=True)
     per_patient_r_barplots(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=False)
     group_level_barplot(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=False)
-    leave_one_patient_out_decoding(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=False)
+    #leave_one_patient_out_decoding(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=False)
     per_patient_r_barplots(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=True)
     # --- C for OF_L_ --- #
     print("Loading OF_L_ data (standard features)...")
