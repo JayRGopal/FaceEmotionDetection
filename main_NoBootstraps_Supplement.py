@@ -1,5 +1,5 @@
 """
-Simplified Mood Prediction Analysis Script for Paper-Ready Figures
+Simplified Mood, Anxiety, and Depression Prediction Analysis Script for Paper-Ready Figures
 
 Produces:
 A) One panel per patient: time window (x) vs R (y), bar plot, OGAUHSE_L_
@@ -10,6 +10,8 @@ E) Binary decoding AUC per patient, per time window (bar plot, like R but for AU
 F) Same as above, but with features limited to LIMITED_FEATURES_SUBSTRINGS
 
 Permutation-based null distribution testing is included for all panels, with p-values reported for each real R/AUC value.
+
+Additionally, prints a table of Mood, Anxiety, and Depression scores for each patient before analysis.
 """
 
 import os
@@ -35,7 +37,7 @@ RESULTS_OUTPUT_PATH = '/home/jgopal/NAS/Analysis/AudioFacialEEG/Results_June_202
 ALPHAS = np.linspace(0.1, 10.0, 10)
 TIME_WINDOWS = list(range(30, 241, 30))
 METHODS = ['OGAUHSE_L_', 'OF_L_']
-INTERNAL_STATE = 'Mood'
+INTERNAL_STATES = ['Mood', 'Anxiety', 'Depression']
 LIMITED_FEATURES_SUBSTRINGS = ["AU10", "AU12", "AU25", "AU27", "AU6", "AU7"]
 N_PERMUTATIONS = 50  # Number of permutations for null distribution
 
@@ -83,6 +85,63 @@ plt.rcParams['legend.fontsize'] = 12
 plt.rcParams['figure.titlesize'] = 18
 
 COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+
+# --- NEW: Load Mood, Anxiety, Depression scores for each patient --- #
+def load_behavioral_scores(xlsx_path, included_patients):
+    """
+    Loads Mood, Anxiety, and Depression scores for each patient from the Excel file.
+    Returns a dict: patient_id -> DataFrame with columns ['Mood', 'Anxiety', 'Depression']
+    """
+    xl = pd.ExcelFile(xlsx_path)
+    patient_scores = {}
+    for pid in included_patients:
+        # Convert S24_241 -> S_241
+        if '_' in pid:
+            s_code = 'S_' + pid.split('_')[1]
+        else:
+            s_code = pid
+        if s_code not in xl.sheet_names:
+            print(f"[WARN] Sheet {s_code} not found in {xlsx_path} for patient {pid}")
+            continue
+        df = xl.parse(s_code)
+        # Only keep rows where Mood is not null
+        if 'Mood' not in df.columns or 'Anxiety' not in df.columns or 'Depression' not in df.columns:
+            print(f"[WARN] Missing columns in sheet {s_code} for patient {pid}")
+            continue
+        df = df.loc[df['Mood'].notnull(), ['Mood', 'Anxiety', 'Depression']]
+        # Reset index for clean display
+        df = df.reset_index(drop=True)
+        patient_scores[pid] = df
+    return patient_scores
+
+def print_behavioral_scores_table(patient_scores):
+    """
+    Prints a table of Mood, Anxiety, and Depression scores for each patient.
+    """
+    print("\n=== Mood, Anxiety, and Depression Scores for Each Patient ===")
+    # Find max number of entries for any patient
+    max_len = max([len(df) for df in patient_scores.values()]) if patient_scores else 0
+    # Build header
+    header = ["Patient", "Entry#", "Mood", "Anxiety", "Depression"]
+    print("{:<12} {:<7} {:<8} {:<8} {:<10}".format(*header))
+    print("-" * 50)
+    for pid in INCLUDED_PATIENTS:
+        df = patient_scores.get(pid, None)
+        if df is None or df.empty:
+            print("{:<12} {:<7} {:<8} {:<8} {:<10}".format(pid, "", "N/A", "N/A", "N/A"))
+            continue
+        for idx, row in df.iterrows():
+            print("{:<12} {:<7} {:<8} {:<8} {:<10}".format(
+                pid if idx == 0 else "",
+                idx+1,
+                str(row['Mood']),
+                str(row['Anxiety']),
+                str(row['Depression'])
+            ))
+    print("-" * 50)
+    print("")
+
+# --- END NEW ---
 
 def parse_filename(filename):
     time_match = re.search(r'time_(\d+)_minutes_', filename)
@@ -149,7 +208,7 @@ def inclusion_criteria(mood_scores):
         return False
     return True
 
-def load_patient_data(method, limited=False):
+def load_patient_data(method, internal_state, limited=False):
     all_patient_data = {}
     patient_folders = [pf for pf in os.listdir(FEATURE_SAVE_FOLDER) if os.path.isdir(os.path.join(FEATURE_SAVE_FOLDER, pf))]
     # Only keep patient folders that are in INCLUDED_PATIENTS
@@ -157,13 +216,13 @@ def load_patient_data(method, limited=False):
     # First, load all data and keep track of feature sets
     patient_time_features = {}
     patient_time_dfs = {}
-    for patient_folder in tqdm(patient_folders, desc=f"Loading data for method {method}{' (limited)' if limited else ''}"):
+    for patient_folder in tqdm(patient_folders, desc=f"Loading data for method {method}{' (limited)' if limited else ''} | {internal_state}"):
         patient_folder_path = os.path.join(FEATURE_SAVE_FOLDER, patient_folder)
         patient_id = patient_folder
         patient_data_loaded = False
         patient_meets_criteria = False
         for filename in os.listdir(patient_folder_path):
-            if filename.endswith('.csv') and INTERNAL_STATE in filename and method in filename:
+            if filename.endswith('.csv') and internal_state in filename and method in filename:
                 time_window = parse_filename(filename)
                 file_path = os.path.join(patient_folder_path, filename)
                 df = pd.read_csv(file_path)
@@ -194,7 +253,7 @@ def load_patient_data(method, limited=False):
         for tw in TIME_WINDOWS:
             all_feature_sets.append(patient_time_features[pid][tw])
     if len(all_feature_sets) == 0:
-        print(f"WARNING: No valid patients for method {method}")
+        print(f"WARNING: No valid patients for method {method} | {internal_state}")
         return {}
     common_features = set.intersection(*all_feature_sets)
     # For each patient/time_window, drop any extra columns not in common_features
@@ -210,7 +269,7 @@ def load_patient_data(method, limited=False):
             all_patient_data[pid][tw] = df_clean
     # Print concise confirmation
     n_features = len(common_features)
-    print(f"Patients included for {method}: {valid_patients}")
+    print(f"Patients included for {method} | {internal_state}: {valid_patients}")
     if method.startswith('OGAUHSE'):
         print(f"all OGAUHSE has {n_features} features. Confirmed!")
     elif method.startswith('OF'):
@@ -316,10 +375,10 @@ def compute_p_value(real_score, null_scores, tail='right'):
         p = (np.sum(np.abs(null_scores) >= np.abs(real_score)) + 1) / (len(null_scores) + 1)
     return p
 
-def per_patient_r_barplots(all_patient_data, method, limited=False, binary=False, outdir=None, auc=False):
+def per_patient_r_barplots(all_patient_data, method, internal_state, limited=False, binary=False, outdir=None, auc=False):
     # Only consider included patients present in all_patient_data
     filtered_patient_ids = [pid for pid in INCLUDED_PATIENTS if pid in all_patient_data]
-    for patient_id in tqdm(filtered_patient_ids, desc=f"Per-patient barplots ({method}{' limited' if limited else ''}{' binary' if binary else ''})"):
+    for patient_id in tqdm(filtered_patient_ids, desc=f"Per-patient barplots ({method}{' limited' if limited else ''}{' binary' if binary else ''}) | {internal_state}"):
         patient_data = all_patient_data[patient_id]
         results = []
         pvals = []
@@ -388,7 +447,7 @@ def per_patient_r_barplots(all_patient_data, method, limited=False, binary=False
         # Use patient number for labeling
         patient_number = PATIENT_NUMBER_MAP.get(patient_id, None)
         patient_label = f"Patient #{patient_number}" if patient_number is not None else patient_id
-        plt.title(f"{METHOD_DISPLAY_MAP.get(method, method)} - {'Limited ' if limited else ''}{'Binary ' if binary else ''}{patient_label}")
+        plt.title(f"{METHOD_DISPLAY_MAP.get(method, method)} - {'Limited ' if limited else ''}{'Binary ' if binary else ''}{patient_label} | {internal_state}")
         plt.ylim(-0.1, 1.0 if binary else 1.0)
         # Add patient number as an axis label (for clarity)
         plt.gca().text(1.02, 0.5, patient_label, transform=plt.gca().transAxes, rotation=270, va='center', ha='left', fontsize=13, color='gray')
@@ -422,13 +481,13 @@ def per_patient_r_barplots(all_patient_data, method, limited=False, binary=False
             os.path.join(outdir, f"{method}{suffix}_patient_{patient_label.replace(' ', '_')}_scores.csv"), index=False
         )
 
-def group_level_barplot(all_patient_data, method, limited=False, binary=False, outdir=None):
+def group_level_barplot(all_patient_data, method, internal_state, limited=False, binary=False, outdir=None):
     # Only consider included patients present in all_patient_data
     filtered_patient_ids = [pid for pid in INCLUDED_PATIENTS if pid in all_patient_data]
     all_scores = []
     all_pvals = []
     patient_numbers = []
-    for patient_id in tqdm(filtered_patient_ids, desc=f"Group-level ({method}{' limited' if limited else ''}{' binary' if binary else ''})"):
+    for patient_id in tqdm(filtered_patient_ids, desc=f"Group-level ({method}{' limited' if limited else ''}{' binary' if binary else ''}) | {internal_state}"):
         patient_data = all_patient_data[patient_id]
         patient_scores = []
         patient_pvals = []
@@ -502,7 +561,7 @@ def group_level_barplot(all_patient_data, method, limited=False, binary=False, o
     bars = plt.bar([str(tw) for tw in TIME_WINDOWS], mean_scores, yerr=sem_scores, color=COLORS[0], capsize=5)
     plt.xlabel("Time Window (min)")
     plt.ylabel("AUC" if binary else "Pearson r")
-    plt.title(f"{METHOD_DISPLAY_MAP.get(method, method)} - {'Limited ' if limited else ''}{'Binary ' if binary else ''}Group Level")
+    plt.title(f"{METHOD_DISPLAY_MAP.get(method, method)} - {'Limited ' if limited else ''}{'Binary ' if binary else ''}Group Level | {internal_state}")
     plt.ylim(-0.1, 1.0 if binary else 1.0)
     # Annotate group p-values above bars, always above the top of the bar (even if bar is negative)
     for i, (val, pval) in enumerate(zip(mean_scores, group_pvals)):
@@ -533,13 +592,13 @@ def group_level_barplot(all_patient_data, method, limited=False, binary=False, o
         os.path.join(outdir, f"{method}{suffix}_group_scores.csv"), index=False
     )
 
-def leave_one_patient_out_decoding(all_patient_data, method, limited=False, binary=False, outdir=None):
+def leave_one_patient_out_decoding(all_patient_data, method, internal_state, limited=False, binary=False, outdir=None):
     # Only consider included patients present in all_patient_data
     filtered_patient_ids = [pid for pid in INCLUDED_PATIENTS if pid in all_patient_data]
     lopo_results = {tw: [] for tw in TIME_WINDOWS}
     lopo_pvals = {tw: [] for tw in TIME_WINDOWS}
     patient_ids = filtered_patient_ids
-    for test_patient in tqdm(patient_ids, desc=f"LOPO ({method}{' limited' if limited else ''}{' binary' if binary else ''})"):
+    for test_patient in tqdm(patient_ids, desc=f"LOPO ({method}{' limited' if limited else ''}{' binary' if binary else ''}) | {internal_state}"):
         for time_window in tqdm(TIME_WINDOWS, desc=f"Test patient {test_patient} time windows", leave=False):
             # Gather training data
             X_train, y_train, X_test, y_test = [], [], None, None
@@ -613,7 +672,7 @@ def leave_one_patient_out_decoding(all_patient_data, method, limited=False, bina
     bars = plt.bar([str(tw) for tw in TIME_WINDOWS], mean_scores, yerr=sem_scores, color=COLORS[1], capsize=5)
     plt.xlabel("Time Window (min)")
     plt.ylabel("AUC" if binary else "Pearson r")
-    plt.title(f"{METHOD_DISPLAY_MAP.get(method, method)} - {'Limited ' if limited else ''}{'Binary ' if binary else ''}Leave-One-Patient-Out")
+    plt.title(f"{METHOD_DISPLAY_MAP.get(method, method)} - {'Limited ' if limited else ''}{'Binary ' if binary else ''}Leave-One-Patient-Out | {internal_state}")
     plt.ylim(-0.1, 1.0 if binary else 1.0)
     # Annotate group p-values above bars, always above the top of the bar (even if bar is negative)
     for i, (val, pval) in enumerate(zip(mean_scores, mean_pvals)):
@@ -645,88 +704,95 @@ def leave_one_patient_out_decoding(all_patient_data, method, limited=False, bina
     )
 
 def main():
-    # --- A, B, D, E, F for OGAUHSE_L_ --- #
-    # # Standard features
-    # print("Loading OGAUHSE_L_ data (standard features)...")
-    # try:
-    #     oga_data = load_patient_data('OGAUHSE_L_', limited=False)
-    # except Exception as e:
-    #     print(f"[ERROR] Failed to load OGAUHSE_L_ standard features: {e}")
-    #     oga_data = None
+    # --- NEW: Load and print Mood, Anxiety, Depression scores for each patient --- #
+    BEHAVIORAL_XLSX_PATH = os.path.expanduser('~/NAS/Analysis/AudioFacialEEG/Behavioral_Labeling/Mood_Tracking.xlsx')
+    patient_scores = load_behavioral_scores(BEHAVIORAL_XLSX_PATH, INCLUDED_PATIENTS)
+    print_behavioral_scores_table(patient_scores)
+    # --- END NEW ---
 
-    # # A) Per-patient R barplots
-    # try:
-    #     per_patient_r_barplots(oga_data, 'OGAUHSE_L_', limited=False, binary=False)
-    # except Exception as e:
-    #     print(f"[ERROR] A) Per-patient R barplots failed: {e}")
+    for internal_state in INTERNAL_STATES:
+        print(f"\n===== Running analysis for {internal_state} =====\n")
+        # --- A, B, D, E, F for OGAUHSE_L_ --- #
+        # Standard features
+        print(f"Loading OGAUHSE_L_ data (standard features) for {internal_state}...")
+        try:
+            oga_data = load_patient_data('OGAUHSE_L_', internal_state, limited=False)
+        except Exception as e:
+            print(f"[ERROR] Failed to load OGAUHSE_L_ standard features for {internal_state}: {e}")
+            oga_data = None
 
-    # # B) Group-level R barplot
-    # try:
-    #     group_level_barplot(oga_data, 'OGAUHSE_L_', limited=False, binary=False)
-    # except Exception as e:
-    #     print(f"[ERROR] B) Group-level R barplot failed: {e}")
+        # A) Per-patient R barplots
+        try:
+            per_patient_r_barplots(oga_data, 'OGAUHSE_L_', internal_state, limited=False, binary=False)
+        except Exception as e:
+            print(f"[ERROR] A) Per-patient R barplots failed for {internal_state}: {e}")
 
-    # # D) Leave-one-patient-out decoding (R)
-    # try:
-    #     leave_one_patient_out_decoding(oga_data, 'OGAUHSE_L_', limited=False, binary=False)
-    # except Exception as e:
-    #     print(f"[ERROR] D) Leave-one-patient-out decoding failed: {e}")
+        # B) Group-level R barplot
+        try:
+            group_level_barplot(oga_data, 'OGAUHSE_L_', internal_state, limited=False, binary=False)
+        except Exception as e:
+            print(f"[ERROR] B) Group-level R barplot failed for {internal_state}: {e}")
 
-    # # E) Per-patient AUC barplots (binary decoding)
-    # try:
-    #     per_patient_r_barplots(oga_data, 'OGAUHSE_L_', limited=False, binary=True)
-    # except Exception as e:
-    #     print(f"[ERROR] E) Per-patient AUC barplots (binary decoding) failed: {e}")
+        # D) Leave-one-patient-out decoding (R)
+        try:
+            leave_one_patient_out_decoding(oga_data, 'OGAUHSE_L_', internal_state, limited=False, binary=False)
+        except Exception as e:
+            print(f"[ERROR] D) Leave-one-patient-out decoding failed for {internal_state}: {e}")
 
-    # # F) Limited features
-    # print("Loading OGAUHSE_L_ data (limited features)...")
-    # try:
-    #     oga_data_limited = load_patient_data('OGAUHSE_L_', limited=True)
-    # except Exception as e:
-    #     print(f"[ERROR] Failed to load OGAUHSE_L_ limited features: {e}")
-    #     oga_data_limited = None
+        # E) Per-patient AUC barplots (binary decoding)
+        try:
+            per_patient_r_barplots(oga_data, 'OGAUHSE_L_', internal_state, limited=False, binary=True)
+        except Exception as e:
+            print(f"[ERROR] E) Per-patient AUC barplots (binary decoding) failed for {internal_state}: {e}")
 
-    # try:
-    #     per_patient_r_barplots(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=False)
-    # except Exception as e:
-    #     print(f"[ERROR] F1) Per-patient R barplots (limited features) failed: {e}")
+        # F) Limited features
+        print(f"Loading OGAUHSE_L_ data (limited features) for {internal_state}...")
+        try:
+            oga_data_limited = load_patient_data('OGAUHSE_L_', internal_state, limited=True)
+        except Exception as e:
+            print(f"[ERROR] Failed to load OGAUHSE_L_ limited features for {internal_state}: {e}")
+            oga_data_limited = None
 
-    # try:
-    #     group_level_barplot(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=False)
-    # except Exception as e:
-    #     print(f"[ERROR] F2) Group-level R barplot (limited features) failed: {e}")
+        try:
+            per_patient_r_barplots(oga_data_limited, 'OGAUHSE_L_', internal_state, limited=True, binary=False)
+        except Exception as e:
+            print(f"[ERROR] F1) Per-patient R barplots (limited features) failed for {internal_state}: {e}")
 
-    # try:
-    #     leave_one_patient_out_decoding(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=False)
-    # except Exception as e:
-    #     print(f"[ERROR] F3) Leave-one-patient-out decoding (limited features) failed: {e}")
+        try:
+            group_level_barplot(oga_data_limited, 'OGAUHSE_L_', internal_state, limited=True, binary=False)
+        except Exception as e:
+            print(f"[ERROR] F2) Group-level R barplot (limited features) failed for {internal_state}: {e}")
 
-    # try:
-    #     per_patient_r_barplots(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=True)
-    # except Exception as e:
-    #     print(f"[ERROR] F4) Per-patient AUC barplots (limited features, binary) failed: {e}")
+        try:
+            leave_one_patient_out_decoding(oga_data_limited, 'OGAUHSE_L_', internal_state, limited=True, binary=False)
+        except Exception as e:
+            print(f"[ERROR] F3) Leave-one-patient-out decoding (limited features) failed for {internal_state}: {e}")
 
-    # --- C and G for OF_L_ --- #
-    print("Loading OF_L_ data (standard features)...")
-    try:
-        of_data = load_patient_data('OF_L_', limited=False)
-    except Exception as e:
-        print(f"[ERROR] Failed to load OF_L_ standard features: {e}")
-        of_data = None
-    # G) Per-patient R barplots
-    try:
-        per_patient_r_barplots(of_data, 'OF_L_', limited=False, binary=False)
-    except Exception as e:
-        print(f"[ERROR] G) Per-patient R barplots failed: {e}")
+        try:
+            per_patient_r_barplots(oga_data_limited, 'OGAUHSE_L_', internal_state, limited=True, binary=True)
+        except Exception as e:
+            print(f"[ERROR] F4) Per-patient AUC barplots (limited features, binary) failed for {internal_state}: {e}")
 
-    # # C) OF plots
-    # try:
-    #     group_level_barplot(of_data, 'OF_L_', limited=False, binary=False)
-    # except Exception as e:
-    #     print(f"[ERROR] C) Group-level R barplot (OF_L_) failed: {e}")
+        # --- C and G for OF_L_ --- #
+        print(f"Loading OF_L_ data (standard features) for {internal_state}...")
+        try:
+            of_data = load_patient_data('OF_L_', internal_state, limited=False)
+        except Exception as e:
+            print(f"[ERROR] Failed to load OF_L_ standard features for {internal_state}: {e}")
+            of_data = None
+        # G) Per-patient R barplots
+        try:
+            per_patient_r_barplots(of_data, 'OF_L_', internal_state, limited=False, binary=False)
+        except Exception as e:
+            print(f"[ERROR] G) Per-patient R barplots failed for {internal_state}: {e}")
 
-    # Optionally, add more for OF_L_ if needed (e.g., per-patient, binary, limited)
-    print("All paper-ready figures generated.")
+        # C) OF plots
+        try:
+            group_level_barplot(of_data, 'OF_L_', internal_state, limited=False, binary=False)
+        except Exception as e:
+            print(f"[ERROR] C) Group-level R barplot (OF_L_) failed for {internal_state}: {e}")
+
+    print("All paper-ready figures generated for all internal states.")
 
 if __name__ == "__main__":
     main()
