@@ -64,8 +64,9 @@ def main():
             print(f"Time window: {tw} min")
             print(f"  Patient with fewer features: {patient_few} ({feature_counts[(patient_few, tw)]} features)")
             print(f"  Patient with more features: {patient_more} ({feature_counts[(patient_more, tw)]} features)")
-            print(f"  Features in patient with more features:")
-            print(feature_names[(patient_more, tw)])
+            delta = feature_names[(patient_more, tw)] - feature_names[(patient_few, tw)]
+            print(f"  Features in patient with more features but NOT in patient with fewer features (delta):")
+            print(delta)
             break
     else:
         print("No time window found with at least two patients having data.")
