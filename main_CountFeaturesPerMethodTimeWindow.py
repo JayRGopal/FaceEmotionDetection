@@ -67,6 +67,8 @@ def main():
             delta = feature_names[(patient_more, tw)] - feature_names[(patient_few, tw)]
             print(f"  Features in patient with more features but NOT in patient with fewer features (delta):")
             print(delta)
+            is_subset = feature_names[(patient_few, tw)].issubset(feature_names[(patient_more, tw)])
+            print(f"  Are ALL features in the patient with fewer features also in the one with more? {'Yes' if is_subset else 'No'}")
             break
     else:
         print("No time window found with at least two patients having data.")
