@@ -26,6 +26,9 @@ import seaborn as sns
 import warnings
 warnings.filterwarnings("ignore")
 
+# Add tqdm for progress bars
+from tqdm import tqdm
+
 # --- CONFIGURATION --- #
 FEATURE_SAVE_FOLDER = '/home/jgopal/Desktop/FaceEmotionDetection/temp_outputs/'
 RESULTS_OUTPUT_PATH = '/home/jgopal/NAS/Analysis/AudioFacialEEG/Results_June_2025/MoodPrediction'
@@ -109,10 +112,9 @@ def inclusion_criteria(mood_scores):
 
 def load_patient_data(method, limited=False):
     all_patient_data = {}
-    for patient_folder in os.listdir(FEATURE_SAVE_FOLDER):
+    patient_folders = [pf for pf in os.listdir(FEATURE_SAVE_FOLDER) if os.path.isdir(os.path.join(FEATURE_SAVE_FOLDER, pf))]
+    for patient_folder in tqdm(patient_folders, desc=f"Loading data for method {method}{' (limited)' if limited else ''}"):
         patient_folder_path = os.path.join(FEATURE_SAVE_FOLDER, patient_folder)
-        if not os.path.isdir(patient_folder_path):
-            continue
         patient_id = patient_folder
         patient_data_loaded = False
         patient_meets_criteria = False
@@ -143,7 +145,7 @@ def permutation_test(X, y, model_type, alphas, binary, n_permutations=50, random
     """
     rng = np.random.RandomState(random_state)
     null_scores = []
-    for i in range(n_permutations):
+    for i in tqdm(range(n_permutations), desc="Permutation test", leave=False):
         y_perm = rng.permutation(y)
         loo = LeaveOneOut()
         preds, actuals = [], []
@@ -193,7 +195,7 @@ def permutation_test_lopo(X_train, y_train, X_test, y_test, model_type, alphas, 
     """
     rng = np.random.RandomState(random_state)
     null_scores = []
-    for i in range(n_permutations):
+    for i in tqdm(range(n_permutations), desc="Permutation test (LOPO)", leave=False):
         y_train_perm = rng.permutation(y_train)
         if binary:
             model = LogisticRegressionCV(Cs=1/np.array(alphas), cv=5, penalty='l1', solver='liblinear', random_state=random_state)
@@ -236,10 +238,10 @@ def compute_p_value(real_score, null_scores, tail='right'):
 
 def per_patient_r_barplots(all_patient_data, method, limited=False, binary=False, outdir=None, auc=False):
     # For each patient, plot time window (x) vs R (y) or AUC (y)
-    for patient_id, patient_data in all_patient_data.items():
+    for patient_id, patient_data in tqdm(all_patient_data.items(), desc=f"Per-patient barplots ({method}{' limited' if limited else ''}{' binary' if binary else ''})"):
         results = []
         pvals = []
-        for time_window in TIME_WINDOWS:
+        for time_window in tqdm(TIME_WINDOWS, desc=f"Patient {patient_id} time windows", leave=False):
             if time_window not in patient_data:
                 results.append(np.nan)
                 pvals.append(np.nan)
@@ -321,10 +323,10 @@ def group_level_barplot(all_patient_data, method, limited=False, binary=False, o
     # For each time window, average R (or AUC) across patients
     all_scores = []
     all_pvals = []
-    for patient_id, patient_data in all_patient_data.items():
+    for patient_id, patient_data in tqdm(all_patient_data.items(), desc=f"Group-level ({method}{' limited' if limited else ''}{' binary' if binary else ''})"):
         patient_scores = []
         patient_pvals = []
-        for time_window in TIME_WINDOWS:
+        for time_window in tqdm(TIME_WINDOWS, desc=f"Patient {patient_id} time windows", leave=False):
             if time_window not in patient_data:
                 patient_scores.append(np.nan)
                 patient_pvals.append(np.nan)
@@ -414,8 +416,8 @@ def leave_one_patient_out_decoding(all_patient_data, method, limited=False, bina
     lopo_results = {tw: [] for tw in TIME_WINDOWS}
     lopo_pvals = {tw: [] for tw in TIME_WINDOWS}
     patient_ids = list(all_patient_data.keys())
-    for test_patient in patient_ids:
-        for time_window in TIME_WINDOWS:
+    for test_patient in tqdm(patient_ids, desc=f"LOPO ({method}{' limited' if limited else ''}{' binary' if binary else ''})"):
+        for time_window in tqdm(TIME_WINDOWS, desc=f"Test patient {test_patient} time windows", leave=False):
             # Gather training data
             X_train, y_train, X_test, y_test = [], [], None, None
             for pid in patient_ids:
@@ -503,6 +505,7 @@ def leave_one_patient_out_decoding(all_patient_data, method, limited=False, bina
 def main():
     # --- A, B, D, E, F for OGAUHSE_L_ --- #
     # Standard features
+    print("Loading OGAUHSE_L_ data (standard features)...")
     oga_data = load_patient_data('OGAUHSE_L_', limited=False)
     # A) Per-patient R barplots
     per_patient_r_barplots(oga_data, 'OGAUHSE_L_', limited=False, binary=False)
@@ -513,12 +516,14 @@ def main():
     # E) Per-patient AUC barplots (binary decoding)
     per_patient_r_barplots(oga_data, 'OGAUHSE_L_', limited=False, binary=True)
     # F) Limited features
+    print("Loading OGAUHSE_L_ data (limited features)...")
     oga_data_limited = load_patient_data('OGAUHSE_L_', limited=True)
     per_patient_r_barplots(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=False)
     group_level_barplot(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=False)
     leave_one_patient_out_decoding(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=False)
     per_patient_r_barplots(oga_data_limited, 'OGAUHSE_L_', limited=True, binary=True)
     # --- C for OF_L_ --- #
+    print("Loading OF_L_ data (standard features)...")
     of_data = load_patient_data('OF_L_', limited=False)
     group_level_barplot(of_data, 'OF_L_', limited=False, binary=False)
     # Optionally, add more for OF_L_ if needed (e.g., per-patient, binary, limited)
