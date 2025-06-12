@@ -1,10 +1,7 @@
-﻿import os
-import re
-import pandas as pd
+﻿import pandas as pd
 
 # ------------------- CONFIGURATION ------------------- #
 OVERVIEW_EXCEL_PATH = "/home/jgopal/NAS/Analysis/AudioFacialEEG/Behavioral Labeling/Mood_Tracking_Overview.xlsx"
-OUTPUT_TXT_PATH = "included_patients.txt"  # Output file for included patients
 
 # ------------------- LOAD DATA ------------------- #
 try:
@@ -13,14 +10,13 @@ except Exception as e:
     raise RuntimeError(f"Failed to read overview Excel file: {e}")
 
 # ------------------- EXTRACT METRICS ------------------- #
-pattern_metric = re.compile(r"^Num_Self_Reports_(.+)$")
-metrics = sorted(
-    set(
-        match.group(1)
-        for col in df_overview.columns
-        if (match := pattern_metric.match(col))
-    )
-)
+# Find all moods by looking for columns that start with "Num_Self_Reports_"
+mood_prefix = "Num_Self_Reports_"
+metrics = sorted([
+    col[len(mood_prefix):]
+    for col in df_overview.columns
+    if col.startswith(mood_prefix)
+])
 if not metrics:
     raise ValueError("No metrics found in overview file.")
 
@@ -46,9 +42,9 @@ def inclusion_criteria(num_datapoints, score_range, num_unique):
 # For each metric, collect included patients
 all_included = dict()
 for metric in metrics:
-    col_num_datapoints = f"Num Datapoints - {metric}"
-    col_num_unique = f"Num Unique - {metric}"
-    col_range = f"Range - {metric}"
+    col_num_datapoints = f"Num_Self_Reports_{metric}"
+    col_num_unique = f"Num_Distinct_Scores_{metric}"
+    col_range = f"Range_Self_Reports_{metric}"
     # Try both possible column names for patient/sheet
     if "Sheet Name" in df_overview.columns:
         col_sheet_name = "Sheet Name"
