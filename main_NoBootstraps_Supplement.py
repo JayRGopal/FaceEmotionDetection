@@ -776,10 +776,10 @@ def main():
         except Exception as e:
             print(f"[ERROR] F2) Group-level R barplot (limited features) failed for {internal_state}: {e}")
 
-        try:
-            leave_one_patient_out_decoding(oga_data_limited, 'OGAUHSE_L_', internal_state, limited=True, binary=False)
-        except Exception as e:
-            print(f"[ERROR] F3) Leave-one-patient-out decoding (limited features) failed for {internal_state}: {e}")
+        # try:
+        #     leave_one_patient_out_decoding(oga_data_limited, 'OGAUHSE_L_', internal_state, limited=True, binary=False)
+        # except Exception as e:
+        #     print(f"[ERROR] F3) Leave-one-patient-out decoding (limited features) failed for {internal_state}: {e}")
 
         # try:
         #     per_patient_r_barplots(oga_data_limited, 'OGAUHSE_L_', internal_state, limited=True, binary=True)
@@ -809,11 +809,6 @@ def main():
             group_level_barplot(of_data, 'OF_L_', internal_state, limited=False, binary=False)
         except Exception as e:
             print(f"[ERROR] C) Group-level R barplot (OF_L_) failed for {internal_state}: {e}")
-
-        try:
-            group_level_barplot(of_data, 'OF_L_', internal_state, limited=False, binary=True)
-        except Exception as e:
-            print(f"[ERROR] C) Group-level AUC barplot (OF_L_) failed for {internal_state}: {e}")
          
 
     print("All paper-ready figures generated for all internal states.")
