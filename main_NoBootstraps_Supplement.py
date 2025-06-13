@@ -37,7 +37,7 @@ RESULTS_OUTPUT_PATH = '/home/jgopal/NAS/Analysis/AudioFacialEEG/Results_June_202
 ALPHAS = np.linspace(0.1, 10.0, 10)
 TIME_WINDOWS = list(range(30, 241, 30))
 METHODS = ['OGAUHSE_L_', 'OF_L_']
-INTERNAL_STATES = ['Mood', 'Anxiety', 'Depression']
+INTERNAL_STATES = ['Depression', 'Mood', 'Anxiety']
 LIMITED_FEATURES_SUBSTRINGS = ["AU10", "AU12", "AU25", "AU27", "AU6", "AU7"]
 N_PERMUTATIONS = 50  # Number of permutations for null distribution
 
