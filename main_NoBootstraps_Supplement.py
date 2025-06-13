@@ -729,31 +729,31 @@ def main():
 
         # # A) Per-patient R barplots
         # try:
-        #     per_patient_r_barplots(oga_data, 'OGAUHSE_L_', internal_state, limited=False, binary=False)
+        #     per_patient_r_barplots(oga_data, 'OGAUHSE_L_', internal_state, limited=False, binary=False, outdir = RESULTS_OUTPUT_PATH)
         # except Exception as e:
         #     print(f"[ERROR] A) Per-patient R barplots failed for {internal_state}: {e}")
 
         # B) Group-level R barplot
         try:
-            group_level_barplot(oga_data, 'OGAUHSE_L_', internal_state, limited=False, binary=False)
+            group_level_barplot(oga_data, 'OGAUHSE_L_', internal_state, limited=False, binary=False, outdir = RESULTS_OUTPUT_PATH)
         except Exception as e:
             print(f"[ERROR] B) Group-level R barplot failed for {internal_state}: {e}")
 
         # D) Leave-one-patient-out decoding (R)
         try:
-            leave_one_patient_out_decoding(oga_data, 'OGAUHSE_L_', internal_state, limited=False, binary=False)
+            leave_one_patient_out_decoding(oga_data, 'OGAUHSE_L_', internal_state, limited=False, binary=False, outdir = RESULTS_OUTPUT_PATH)
         except Exception as e:
             print(f"[ERROR] D) Leave-one-patient-out decoding failed for {internal_state}: {e}")
 
         # # E) Per-patient AUC barplots (binary decoding)
         # try:
-        #     per_patient_r_barplots(oga_data, 'OGAUHSE_L_', internal_state, limited=False, binary=True)
+        #     per_patient_r_barplots(oga_data, 'OGAUHSE_L_', internal_state, limited=False, binary=True, outdir = RESULTS_OUTPUT_PATH)
         # except Exception as e:
         #     print(f"[ERROR] E) Per-patient AUC barplots (binary decoding) failed for {internal_state}: {e}")
 
         # E) Group-level AUC barplot
         try:
-            group_level_barplot(oga_data, 'OGAUHSE_L_', internal_state, limited=False, binary=True)
+            group_level_barplot(oga_data, 'OGAUHSE_L_', internal_state, limited=False, binary=True, outdir = RESULTS_OUTPUT_PATH)
         except Exception as e:
             print(f"[ERROR] E) Group-level AUC barplot failed for {internal_state}: {e}")
 
@@ -767,27 +767,27 @@ def main():
             oga_data_limited = None
 
         # try:
-        #     per_patient_r_barplots(oga_data_limited, 'OGAUHSE_L_', internal_state, limited=True, binary=False)
+        #     per_patient_r_barplots(oga_data_limited, 'OGAUHSE_L_', internal_state, limited=True, binary=False, outdir = RESULTS_OUTPUT_PATH)
         # except Exception as e:
         #     print(f"[ERROR] F1) Per-patient R barplots (limited features) failed for {internal_state}: {e}")
 
         try:
-            group_level_barplot(oga_data_limited, 'OGAUHSE_L_', internal_state, limited=True, binary=False)
+            group_level_barplot(oga_data_limited, 'OGAUHSE_L_', internal_state, limited=True, binary=False, outdir = RESULTS_OUTPUT_PATH)
         except Exception as e:
             print(f"[ERROR] F2) Group-level R barplot (limited features) failed for {internal_state}: {e}")
 
         # try:
-        #     leave_one_patient_out_decoding(oga_data_limited, 'OGAUHSE_L_', internal_state, limited=True, binary=False)
+        #     leave_one_patient_out_decoding(oga_data_limited, 'OGAUHSE_L_', internal_state, limited=True, binary=False, outdir = RESULTS_OUTPUT_PATH)
         # except Exception as e:
         #     print(f"[ERROR] F3) Leave-one-patient-out decoding (limited features) failed for {internal_state}: {e}")
 
         # try:
-        #     per_patient_r_barplots(oga_data_limited, 'OGAUHSE_L_', internal_state, limited=True, binary=True)
+        #     per_patient_r_barplots(oga_data_limited, 'OGAUHSE_L_', internal_state, limited=True, binary=True, outdir = RESULTS_OUTPUT_PATH)
         # except Exception as e:
         #     print(f"[ERROR] F4) Per-patient AUC barplots (limited features, binary) failed for {internal_state}: {e}")
 
         try:
-            group_level_barplot(oga_data_limited, 'OGAUHSE_L_', internal_state, limited=True, binary=True)
+            group_level_barplot(oga_data_limited, 'OGAUHSE_L_', internal_state, limited=True, binary=True, outdir = RESULTS_OUTPUT_PATH)
         except Exception as e:
             print(f"[ERROR] F5) Group-level AUC barplot (limited features, binary) failed for {internal_state}: {e}")
 
@@ -800,13 +800,13 @@ def main():
             of_data = None
         # G) Per-patient R barplots
         # try:
-        #     per_patient_r_barplots(of_data, 'OF_L_', internal_state, limited=False, binary=False)
+        #     per_patient_r_barplots(of_data, 'OF_L_', internal_state, limited=False, binary=False, outdir = RESULTS_OUTPUT_PATH)
         # except Exception as e:
         #     print(f"[ERROR] G) Per-patient R barplots failed for {internal_state}: {e}")
 
         # C) OF plots
         try:
-            group_level_barplot(of_data, 'OF_L_', internal_state, limited=False, binary=False)
+            group_level_barplot(of_data, 'OF_L_', internal_state, limited=False, binary=False, outdir = RESULTS_OUTPUT_PATH)
         except Exception as e:
             print(f"[ERROR] C) Group-level R barplot (OF_L_) failed for {internal_state}: {e}")
          
