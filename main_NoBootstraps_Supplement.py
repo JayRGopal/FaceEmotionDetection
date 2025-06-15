@@ -687,6 +687,36 @@ def leave_one_patient_out_decoding(all_patient_data, method, internal_state, lim
                 pval = np.nan
             lopo_pvals[time_window].append(pval)
 
+    # Save LOPO results to CSV and plot
+    if outdir is None:
+        outdir = RESULTS_OUTPUT_PATH
+    os.makedirs(outdir, exist_ok=True)
+    # Prepare DataFrame: rows = patients, columns = time windows
+    lopo_scores_df = pd.DataFrame(lopo_results, index=patient_ids)
+    lopo_pvals_df = pd.DataFrame(lopo_pvals, index=patient_ids)
+    lopo_scores_df.index.name = "patient_id"
+    lopo_pvals_df.index.name = "patient_id"
+    suffix = ""
+    if limited: suffix += "_limited"
+    if binary: suffix += "_binary"
+    lopo_scores_df.to_csv(os.path.join(outdir, f"{method}{suffix}_lopo_scores.csv"))
+    lopo_pvals_df.to_csv(os.path.join(outdir, f"{method}{suffix}_lopo_pvals.csv"))
+
+    # Plot mean and SEM across patients for each time window
+    mean_scores = lopo_scores_df.mean(axis=0, skipna=True).values
+    sem_scores = lopo_scores_df.std(axis=0, skipna=True).values / np.sqrt(lopo_scores_df.notna().sum(axis=0).values)
+    mean_pvals = lopo_pvals_df.mean(axis=0, skipna=True).values
+
+    plt.figure(figsize=(8, 5))
+    bars = plt.bar([str(tw) for tw in TIME_WINDOWS], mean_scores, yerr=sem_scores, color=COLORS[1], capsize=5)
+    plt.xlabel("Time Window (min)")
+    plt.ylabel("AUC" if binary else "Pearson r")
+    plt.title(f"{METHOD_DISPLAY_MAP.get(method, method)} - {'Limited ' if limited else ''}{'Binary ' if binary else ''}LOPO | {internal_state}")
+    plt.ylim(-0.1, 1.0 if binary else 1.0)
+    plt.tight_layout()
+    plt.savefig(os.path.join(outdir, f"{method}{suffix}_lopo_barplot.png"), dpi=300)
+    plt.close()
+
 def main():
     # --- NEW: Load and print Mood, Anxiety, Depression scores for each patient --- #
     BEHAVIORAL_XLSX_PATH = os.path.expanduser('~/NAS/Analysis/AudioFacialEEG/Behavioral Labeling/Mood_Tracking.xlsx')
