@@ -707,10 +707,23 @@ def leave_one_patient_out_decoding(all_patient_data, method, internal_state, lim
                             print(f"[ERROR] {nan_reason}")
                             score = np.nan
                         elif len(y_test) > 1:
-                            score, _ = pearsonr(y_test, preds)
-                            if np.isnan(score):
-                                nan_reason = f"pearsonr returned NaN for test_patient {test_patient}, time_window {time_window}. y_test: {y_test}, preds: {preds}"
-                                print(f"[ERROR] {nan_reason}")
+                            # Check if predictions are constant
+                            if np.allclose(preds, preds[0]):
+                                nan_reason = (
+                                    f"Model predictions are constant ({preds[0]}) for test_patient {test_patient}, time_window {time_window}. "
+                                    f"This will cause Pearson r to be NaN. "
+                                    f"Possible causes: severe underfitting (model can't learn), or over-regularization (alpha too high), or not enough data/variance."
+                                )
+                                print(f"[WARN] {nan_reason}")
+                                print(f"[DEBUG] y_test: {y_test}")
+                                print(f"[DEBUG] preds: {preds}")
+                                print(f"[DEBUG] LassoCV best alpha: {getattr(model, 'alpha_', 'N/A')}")
+                                score = np.nan
+                            else:
+                                score, _ = pearsonr(y_test, preds)
+                                if np.isnan(score):
+                                    nan_reason = f"pearsonr returned NaN for test_patient {test_patient}, time_window {time_window}. y_test: {y_test}, preds: {preds}"
+                                    print(f"[ERROR] {nan_reason}")
                         else:
                             nan_reason = f"Not enough samples in y_test for test_patient {test_patient}, time window {time_window}"
                             print(f"[WARN] {nan_reason}")
