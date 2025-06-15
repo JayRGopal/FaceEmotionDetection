@@ -511,8 +511,11 @@ def group_level_barplot(all_patient_data, method, internal_state, limited=False,
             y = df.iloc[:, -1].values
             if np.isnan(X).any():
                 X = np.nan_to_num(X, nan=0.0)
-            scaler = StandardScaler()
-            X = scaler.fit_transform(X)
+            # Standardize both X and y
+            x_scaler = StandardScaler()
+            y_scaler = StandardScaler()
+            X = x_scaler.fit_transform(X)
+            y = y_scaler.fit_transform(y.reshape(-1, 1)).ravel()
             loo = LeaveOneOut()
             preds, actuals = [], []
             if binary:
@@ -598,15 +601,22 @@ def group_level_barplot(all_patient_data, method, internal_state, limited=False,
 def leave_one_patient_out_decoding(all_patient_data, method, internal_state, limited=False, binary=False, outdir=None):
     # Only consider included patients present in all_patient_data
     filtered_patient_ids = [pid for pid in INCLUDED_PATIENTS if pid in all_patient_data]
+    print(f"\nLOPO Debug for {method} - {internal_state}")
+    print(f"Number of patients with data: {len(filtered_patient_ids)}")
+    
     lopo_results = {tw: [] for tw in TIME_WINDOWS}
     lopo_pvals = {tw: [] for tw in TIME_WINDOWS}
     patient_ids = filtered_patient_ids
+    
     for test_patient in tqdm(patient_ids, desc=f"LOPO ({method}{' limited' if limited else ''}{' binary' if binary else ''}) | {internal_state}"):
+        print(f"\nProcessing test patient: {test_patient}")
         for time_window in tqdm(TIME_WINDOWS, desc=f"Test patient {test_patient} time windows", leave=False):
             # Gather training data
             X_train, y_train, X_test, y_test = [], [], None, None
+            n_train_patients = 0
             for pid in patient_ids:
                 if time_window not in all_patient_data[pid]:
+                    print(f"  Time window {time_window} missing for patient {pid}")
                     continue
                 df = all_patient_data[pid][time_window]
                 if limited:
@@ -614,6 +624,7 @@ def leave_one_patient_out_decoding(all_patient_data, method, internal_state, lim
                 if binary:
                     df_bin = binarize_mood(df)
                     if df_bin is None:
+                        print(f"  Binary conversion failed for patient {pid}, time window {time_window}")
                         continue
                     df = df_bin
                 X = df.iloc[:, :-1].values
@@ -622,28 +633,39 @@ def leave_one_patient_out_decoding(all_patient_data, method, internal_state, lim
                     X = np.nan_to_num(X, nan=0.0)
                 if pid == test_patient:
                     X_test, y_test = X, y
+                    print(f"  Test data shape: {X_test.shape}, {y_test.shape}")
                 else:
                     X_train.append(X)
                     y_train.append(y)
+                    n_train_patients += 1
+            
             if X_test is None or len(X_train) == 0:
+                print(f"  No valid data for time window {time_window}")
                 lopo_results[time_window].append(np.nan)
                 lopo_pvals[time_window].append(np.nan)
                 continue
+                
+            print(f"  Number of training patients: {n_train_patients}")
             X_train = np.vstack(X_train)
             y_train = np.concatenate(y_train)
+            print(f"  Training data shape: {X_train.shape}, {y_train.shape}")
+            
             scaler = StandardScaler()
             X_train = scaler.fit_transform(X_train)
             X_test = scaler.transform(X_test)
+            
             if binary:
                 model = LogisticRegressionCV(Cs=1/np.array(ALPHAS), cv=5, penalty='l1', solver='liblinear', random_state=42)
             else:
                 model = LassoCV(alphas=ALPHAS, cv=5, random_state=42)
+            
             try:
                 model.fit(X_train, y_train)
                 fit_error = False
             except Exception as e:
-                print(f"[ERROR] Model fitting failed for test_patient={test_patient}, time_window={time_window}: {e}")
+                print(f"  Model fitting failed: {e}")
                 fit_error = True
+                
             if fit_error:
                 score = np.nan
             else:
@@ -652,14 +674,19 @@ def leave_one_patient_out_decoding(all_patient_data, method, internal_state, lim
                     if len(np.unique(y_test)) > 1:
                         score = roc_auc_score(y_test, preds)
                     else:
+                        print(f"  Not enough unique classes in y_test")
                         score = np.nan
                 else:
                     preds = model.predict(X_test)
                     if len(y_test) > 1:
                         score, _ = pearsonr(y_test, preds)
+                        print(f"  R score: {score}")
                     else:
+                        print(f"  Not enough samples in y_test")
                         score = np.nan
+                        
             lopo_results[time_window].append(score)
+            
             # Permutation test for this LOPO split
             if not np.isnan(score) and not fit_error:
                 null_scores = permutation_test_lopo(X_train, y_train, X_test, y_test, model_type='logistic' if binary else 'lasso', alphas=ALPHAS, binary=binary, n_permutations=N_PERMUTATIONS, random_state=42)
@@ -667,6 +694,15 @@ def leave_one_patient_out_decoding(all_patient_data, method, internal_state, lim
             else:
                 pval = np.nan
             lopo_pvals[time_window].append(pval)
+            
+    # Print summary of results
+    print("\nResults summary:")
+    for tw in TIME_WINDOWS:
+        valid_scores = [s for s in lopo_results[tw] if not np.isnan(s)]
+        print(f"Time window {tw}: {len(valid_scores)} valid scores out of {len(lopo_results[tw])} patients")
+        if valid_scores:
+            print(f"  Mean R: {np.mean(valid_scores):.3f}")
+    
     # Plot: for each time window, bar of mean across patients
     mean_scores = [np.nanmean(lopo_results[tw]) for tw in TIME_WINDOWS]
     sem_scores = [np.nanstd(lopo_results[tw]) / np.sqrt(np.sum(~np.isnan(lopo_results[tw]))) for tw in TIME_WINDOWS]
@@ -813,5 +849,51 @@ def main():
 
     print("All paper-ready figures generated for all internal states.")
 
+def main2():
+    """Quick debugging function for LOPO and group level analyses"""
+    internal_state = 'Mood'
+    method = 'OGAUHSE_L_'
+    
+    print(f"\n===== Loading data for {internal_state} =====\n")
+    # Load data
+    try:
+        oga_data = load_patient_data('OGAUHSE_L_', internal_state, limited=False)
+    except Exception as e:
+        print(f"[ERROR] Failed to load data: {e}")
+        return
+        
+    print("\n===== Running LOPO Analysis =====\n")
+    # Run LOPO
+    try:
+        leave_one_patient_out_decoding(oga_data, method, internal_state, limited=False, binary=False)
+    except Exception as e:
+        print(f"[ERROR] LOPO failed: {e}")
+    
+    print("\n===== Running Group Level Analysis =====\n")
+    # Run group level for first two time windows
+    try:
+        # Create a copy of data with only first two time windows
+        debug_data = {}
+        for pid in oga_data:
+            debug_data[pid] = {tw: oga_data[pid][tw] for tw in TIME_WINDOWS[:2]}
+        
+        # Add debug prints for group level
+        print("\nGroup Level Debug:")
+        for pid in debug_data:
+            print(f"\nPatient {pid}:")
+            for tw in TIME_WINDOWS[:2]:
+                df = debug_data[pid][tw]
+                X = df.iloc[:, :-1].values
+                y = df.iloc[:, -1].values
+                print(f"  Time window {tw}:")
+                print(f"    X shape: {X.shape}")
+                print(f"    y shape: {y.shape}")
+                print(f"    y values: {y}")
+        
+        group_level_barplot(debug_data, method, internal_state, limited=False, binary=False)
+    except Exception as e:
+        print(f"[ERROR] Group level failed: {e}")
+
 if __name__ == "__main__":
-    main()
+    #main()
+    main2()  # Temporarily use main2 for debugging
