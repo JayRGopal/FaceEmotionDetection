@@ -682,28 +682,58 @@ def leave_one_patient_out_decoding(all_patient_data, method, internal_state, lim
                 fit_error = True
 
             score = np.nan
+            nan_reason = None
             if not fit_error:
                 try:
                     if binary:
                         preds = model.predict_proba(X_test)[:, 1] if hasattr(model, 'predict_proba') else model.predict(X_test)
-                        if len(np.unique(y_test)) > 1:
+                        if np.any(np.isnan(preds)):
+                            nan_reason = f"Model predicted NaN(s) in predictions for test_patient {test_patient}, time_window {time_window}"
+                            print(f"[ERROR] {nan_reason}")
+                            score = np.nan
+                        elif len(np.unique(y_test)) > 1:
                             score = roc_auc_score(y_test, preds)
+                            if np.isnan(score):
+                                nan_reason = f"roc_auc_score returned NaN for test_patient {test_patient}, time_window {time_window}. y_test: {y_test}, preds: {preds}"
+                                print(f"[ERROR] {nan_reason}")
                         else:
-                            print(f"[WARN] Not enough unique classes in y_test for test_patient {test_patient}, time window {time_window}")
+                            nan_reason = f"Not enough unique classes in y_test for test_patient {test_patient}, time window {time_window}"
+                            print(f"[WARN] {nan_reason}")
                             score = np.nan
                     else:
                         preds = model.predict(X_test)
-                        if len(y_test) > 1:
+                        if np.any(np.isnan(preds)):
+                            nan_reason = f"Model predicted NaN(s) in predictions for test_patient {test_patient}, time_window {time_window}"
+                            print(f"[ERROR] {nan_reason}")
+                            score = np.nan
+                        elif len(y_test) > 1:
                             score, _ = pearsonr(y_test, preds)
+                            if np.isnan(score):
+                                nan_reason = f"pearsonr returned NaN for test_patient {test_patient}, time_window {time_window}. y_test: {y_test}, preds: {preds}"
+                                print(f"[ERROR] {nan_reason}")
                         else:
-                            print(f"[WARN] Not enough samples in y_test for test_patient {test_patient}, time window {time_window}")
+                            nan_reason = f"Not enough samples in y_test for test_patient {test_patient}, time window {time_window}"
+                            print(f"[WARN] {nan_reason}")
                             score = np.nan
                 except Exception as e:
-                    print(f"[ERROR] Prediction/scoring failed for test_patient {test_patient}, time window {time_window}: {e}")
+                    nan_reason = f"Prediction/scoring failed for test_patient {test_patient}, time window {time_window}: {e}"
+                    print(f"[ERROR] {nan_reason}")
                     score = np.nan
 
+            # Additional checks: is model.coef_ or intercept_ nan?
+            if not fit_error:
+                try:
+                    if hasattr(model, "coef_") and np.any(np.isnan(model.coef_)):
+                        nan_reason = f"Model coef_ contains NaN for test_patient {test_patient}, time_window {time_window}"
+                        print(f"[ERROR] {nan_reason}")
+                    if hasattr(model, "intercept_") and np.any(np.isnan(model.intercept_)):
+                        nan_reason = f"Model intercept_ contains NaN for test_patient {test_patient}, time_window {time_window}"
+                        print(f"[ERROR] {nan_reason}")
+                except Exception as e:
+                    print(f"[ERROR] Exception when checking model coefficients/intercept for NaN: {e}")
+
             if np.isnan(score):
-                print(f"[INFO] NaN score for test_patient {test_patient}, time_window {time_window}")
+                print(f"[INFO] NaN score for test_patient {test_patient}, time_window {time_window}" + (f" | Reason: {nan_reason}" if nan_reason else ""))
 
             lopo_results[time_window].append(score)
 
