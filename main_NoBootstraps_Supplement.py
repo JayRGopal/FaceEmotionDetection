@@ -847,35 +847,13 @@ if __name__ == "__main__":
 
 ===== Loading data for Mood =====
 
-Loading data for method OGAUHSE_L_ | Mood: 100%|█| 11/11 [00:00<00:00, 34.82it/s
+Loading data for method OGAUHSE_L_ | Mood: 100%|█| 11/11 [00:00<00:00, 34.42it/s
 Patients included for OGAUHSE_L_ | Mood: ['S24_234', 'S23_174', 'S24_227', 'S23_212', 'S24_230', 'S24_231', 'S24_217', 'S24_219', 'S24_226', 'S23_214', 'S23_199']
 all OGAUHSE has 56 features. Confirmed!
 
 ===== Running LOPO Analysis =====
 
-LOPO (OGAUHSE_L_) | Mood:   0%|                          | 0/11 [00:00<?, ?it/s]
-Processing test patient: S23_174
-LOPO (OGAUHSE_L_) | Mood:   9%|█▋                | 1/11 [00:00<00:02,  3.36it/s]
-Processing test patient: S23_199                                                
-LOPO (OGAUHSE_L_) | Mood:  18%|███▎              | 2/11 [00:03<00:15,  1.77s/it]
-Processing test patient: S23_212                                                
-LOPO (OGAUHSE_L_) | Mood:  27%|████▉             | 3/11 [00:05<00:17,  2.22s/it]
-Processing test patient: S23_214                                                
-LOPO (OGAUHSE_L_) | Mood:  36%|██████▌           | 4/11 [00:06<00:10,  1.47s/it]
-Processing test patient: S24_217                                                
-LOPO (OGAUHSE_L_) | Mood:  45%|████████▏         | 5/11 [00:06<00:06,  1.03s/it]
-Processing test patient: S24_219                                                
-LOPO (OGAUHSE_L_) | Mood:  55%|█████████▊        | 6/11 [00:06<00:03,  1.29it/s]
-Processing test patient: S24_226                                                
-LOPO (OGAUHSE_L_) | Mood:  64%|███████████▍      | 7/11 [00:06<00:02,  1.63it/s]
-Processing test patient: S24_227                                                
-LOPO (OGAUHSE_L_) | Mood:  73%|█████████████     | 8/11 [00:10<00:04,  1.62s/it]
-Processing test patient: S24_230                                                
-LOPO (OGAUHSE_L_) | Mood:  82%|██████████████▋   | 9/11 [00:13<00:03,  1.82s/it]
-Processing test patient: S24_231                                                
-LOPO (OGAUHSE_L_) | Mood:  91%|███████████████▍ | 10/11 [00:22<00:04,  4.19s/it]
-Processing test patient: S24_234                                                
-LOPO (OGAUHSE_L_) | Mood: 100%|█████████████████| 11/11 [00:28<00:00,  2.59s/it]
+LOPO (OGAUHSE_L_) | Mood: 100%|█████████████████| 11/11 [00:28<00:00,  2.63s/it]
                                                                                 
 ===== Running Group Level Analysis =====                                        
 
