@@ -843,3 +843,187 @@ if __name__ == "__main__":
     #main()
     main2()  # Temporarily use main2 for debugging
 
+"""
+
+===== Loading data for Mood =====
+
+Loading data for method OGAUHSE_L_ | Mood: 100%|█| 11/11 [00:00<00:00, 34.82it/s
+Patients included for OGAUHSE_L_ | Mood: ['S24_234', 'S23_174', 'S24_227', 'S23_212', 'S24_230', 'S24_231', 'S24_217', 'S24_219', 'S24_226', 'S23_214', 'S23_199']
+all OGAUHSE has 56 features. Confirmed!
+
+===== Running LOPO Analysis =====
+
+LOPO (OGAUHSE_L_) | Mood:   0%|                          | 0/11 [00:00<?, ?it/s]
+Processing test patient: S23_174
+LOPO (OGAUHSE_L_) | Mood:   9%|█▋                | 1/11 [00:00<00:02,  3.36it/s]
+Processing test patient: S23_199                                                
+LOPO (OGAUHSE_L_) | Mood:  18%|███▎              | 2/11 [00:03<00:15,  1.77s/it]
+Processing test patient: S23_212                                                
+LOPO (OGAUHSE_L_) | Mood:  27%|████▉             | 3/11 [00:05<00:17,  2.22s/it]
+Processing test patient: S23_214                                                
+LOPO (OGAUHSE_L_) | Mood:  36%|██████▌           | 4/11 [00:06<00:10,  1.47s/it]
+Processing test patient: S24_217                                                
+LOPO (OGAUHSE_L_) | Mood:  45%|████████▏         | 5/11 [00:06<00:06,  1.03s/it]
+Processing test patient: S24_219                                                
+LOPO (OGAUHSE_L_) | Mood:  55%|█████████▊        | 6/11 [00:06<00:03,  1.29it/s]
+Processing test patient: S24_226                                                
+LOPO (OGAUHSE_L_) | Mood:  64%|███████████▍      | 7/11 [00:06<00:02,  1.63it/s]
+Processing test patient: S24_227                                                
+LOPO (OGAUHSE_L_) | Mood:  73%|█████████████     | 8/11 [00:10<00:04,  1.62s/it]
+Processing test patient: S24_230                                                
+LOPO (OGAUHSE_L_) | Mood:  82%|██████████████▋   | 9/11 [00:13<00:03,  1.82s/it]
+Processing test patient: S24_231                                                
+LOPO (OGAUHSE_L_) | Mood:  91%|███████████████▍ | 10/11 [00:22<00:04,  4.19s/it]
+Processing test patient: S24_234                                                
+LOPO (OGAUHSE_L_) | Mood: 100%|█████████████████| 11/11 [00:28<00:00,  2.59s/it]
+                                                                                
+===== Running Group Level Analysis =====                                        
+
+
+Group Level Debug:
+
+Patient S24_234:
+  Time window 30:
+    X shape: (16, 56)
+    y shape: (16,)
+    y values: [10.   7.5  5.   2.5  7.5 10.   5.   5.   5.   5.   5.   5.   0.   5.
+  5.   5. ]
+  Time window 60:
+    X shape: (16, 56)
+    y shape: (16,)
+    y values: [10.   7.5  5.   2.5  7.5 10.   5.   5.   5.   5.   5.   5.   0.   5.
+  5.   5. ]
+
+Patient S23_174:
+  Time window 30:
+    X shape: (13, 56)
+    y shape: (13,)
+    y values: [ 5.         10.          0.          0.          1.66666667  0.
+  3.33333333 10.          6.66666667  1.66666667  3.33333333  0.
+  0.        ]
+  Time window 60:
+    X shape: (13, 56)
+    y shape: (13,)
+    y values: [ 5.         10.          0.          0.          1.66666667  0.
+  3.33333333 10.          6.66666667  1.66666667  3.33333333  0.
+  0.        ]
+
+Patient S24_227:
+  Time window 30:
+    X shape: (18, 56)
+    y shape: (18,)
+    y values: [ 0.    0.    0.    0.    0.   10.   10.   10.   10.    6.25  8.75  8.75
+  3.75  6.25  6.25  7.5   8.75  5.  ]
+  Time window 60:
+    X shape: (18, 56)
+    y shape: (18,)
+    y values: [ 0.    0.    0.    0.    0.   10.   10.   10.   10.    6.25  8.75  8.75
+  3.75  6.25  6.25  7.5   8.75  5.  ]
+
+Patient S23_212:
+  Time window 30:
+    X shape: (21, 56)
+    y shape: (21,)
+    y values: [ 7.5  2.5  2.5  5.   5.   5.   5.   5.   5.   0.   5.   7.5  7.5  7.5
+  0.   5.  10.   5.   2.5  5.   5. ]
+  Time window 60:
+    X shape: (21, 56)
+    y shape: (21,)
+    y values: [ 7.5  2.5  2.5  5.   5.   5.   5.   5.   5.   0.   5.   7.5  7.5  7.5
+  0.   5.  10.   5.   2.5  5.   5. ]
+
+Patient S24_230:
+  Time window 30:
+    X shape: (13, 56)
+    y shape: (13,)
+    y values: [ 0.         10.          0.          5.71428571  8.57142857  8.57142857
+  8.57142857  8.57142857  8.57142857  8.57142857  8.57142857  5.71428571
+  8.57142857]
+  Time window 60:
+    X shape: (13, 56)
+    y shape: (13,)
+    y values: [ 0.         10.          0.          5.71428571  8.57142857  8.57142857
+  8.57142857  8.57142857  8.57142857  8.57142857  8.57142857  5.71428571
+  8.57142857]
+
+Patient S24_231:
+  Time window 30:
+    X shape: (50, 56)
+    y shape: (50,)
+    y values: [10.   0.  10.   0.   2.5  0.   0.   0.   0.   0.   0.   2.5  0.   5.
+  5.   0.   0.   2.5  0.   2.5  2.5  0.   0.   0.   0.   2.5  0.   0.
+  0.  10.  10.  10.   7.5  5.  10.   7.5 10.   7.5 10.   5.   7.5  5.
+ 10.   7.5  5.   7.5  7.5 10.  10.  10. ]
+  Time window 60:
+    X shape: (50, 56)
+    y shape: (50,)
+    y values: [10.   0.  10.   0.   2.5  0.   0.   0.   0.   0.   0.   2.5  0.   5.
+  5.   0.   0.   2.5  0.   2.5  2.5  0.   0.   0.   0.   2.5  0.   0.
+  0.  10.  10.  10.   7.5  5.  10.   7.5 10.   7.5 10.   5.   7.5  5.
+ 10.   7.5  5.   7.5  7.5 10.  10.  10. ]
+
+Patient S24_217:
+  Time window 30:
+    X shape: (15, 56)
+    y shape: (15,)
+    y values: [ 8.88888889  8.88888889  5.55555556  4.44444444  0.          8.88888889
+  8.88888889  7.77777778  7.77777778  5.55555556  5.55555556  6.66666667
+ 10.         10.          8.88888889]
+  Time window 60:
+    X shape: (15, 56)
+    y shape: (15,)
+    y values: [ 8.88888889  8.88888889  5.55555556  4.44444444  0.          8.88888889
+  8.88888889  7.77777778  7.77777778  5.55555556  5.55555556  6.66666667
+ 10.         10.          8.88888889]
+
+Patient S24_219:
+  Time window 30:
+    X shape: (14, 56)
+    y shape: (14,)
+    y values: [ 0.          0.          0.          0.          0.          3.33333333
+  0.          6.66666667  3.33333333  3.33333333  3.33333333  6.66666667
+  3.33333333 10.        ]
+  Time window 60:
+    X shape: (14, 56)
+    y shape: (14,)
+    y values: [ 0.          0.          0.          0.          0.          3.33333333
+  0.          6.66666667  3.33333333  3.33333333  3.33333333  6.66666667
+  3.33333333 10.        ]
+
+Patient S24_226:
+  Time window 30:
+    X shape: (19, 56)
+    y shape: (19,)
+    y values: [10. 10.  2.  0.  2.  2.  2.  0.  6.  6.  2.  6. 10.  6.  2.  8. 10. 10.
+  8.]
+  Time window 60:
+    X shape: (19, 56)
+    y shape: (19,)
+    y values: [10. 10.  2.  0.  2.  2.  2.  0.  6.  6.  2.  6. 10.  6.  2.  8. 10. 10.
+  8.]
+
+Patient S23_214:
+  Time window 30:
+    X shape: (12, 56)
+    y shape: (12,)
+    y values: [ 6.25  7.5   7.5  10.   10.   10.    7.5   5.    0.   10.    7.5  10.  ]
+  Time window 60:
+    X shape: (12, 56)
+    y shape: (12,)
+    y values: [ 6.25  7.5   7.5  10.   10.   10.    7.5   5.    0.   10.    7.5  10.  ]
+
+Patient S23_199:
+  Time window 30:
+    X shape: (18, 56)
+    y shape: (18,)
+    y values: [ 8.33333333  5.          6.66666667  5.          5.          6.66666667
+  6.66666667  5.          3.33333333  3.33333333 10.          3.33333333
+  3.33333333  5.          0.          0.          0.          0.        ]
+  Time window 60:
+    X shape: (18, 56)
+    y shape: (18,)
+    y values: [ 8.33333333  5.          6.66666667  5.          5.          6.66666667
+  6.66666667  5.          3.33333333  3.33333333 10.          3.33333333
+  3.33333333  5.          0.          0.          0.          0.        ]
+
+"""
