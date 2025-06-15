@@ -34,7 +34,7 @@ from tqdm import tqdm
 # --- CONFIGURATION --- #
 FEATURE_SAVE_FOLDER = '/home/jgopal/Desktop/FaceEmotionDetection/temp_outputs/'
 RESULTS_OUTPUT_PATH = '/home/jgopal/NAS/Analysis/AudioFacialEEG/Results_June_2025/MoodPrediction'
-ALPHAS = [0.1, 1, 10]
+ALPHAS = [0.001, 0.1, 1]
 TIME_WINDOWS = list(range(30, 241, 30))
 METHODS = ['OGAUHSE_L_', 'OF_L_']
 INTERNAL_STATES = ['Depression', 'Mood', 'Anxiety']
