@@ -668,31 +668,12 @@ def leave_one_patient_out_decoding(all_patient_data, method, internal_state, lim
                 lopo_results[time_window].append(np.nan)
                 lopo_pvals[time_window].append(np.nan)
                 continue
-
-            # --- EXPLANATION ---
-            # The reason LassoCV (and LogisticRegressionCV) may always choose the highest alpha is if the default cross-validation
-            # is not actually splitting the data (e.g., cv=None means "leave-one-out" only if n_samples > n_alphas, but with small data or
-            # with cv=None, it may just use the default, which can be problematic for small sample sizes).
-            # In LOPO, the training set is small, so LassoCV may not be able to do proper CV, and may default to the highest alpha.
-            # To avoid this, we should set cv to a small integer (e.g., 3 or 5) if possible, or use LeaveOneGroupOut or similar.
-            # For now, let's set cv=3 if there are at least 3 samples, otherwise cv=2 if possible, else cv=None (no CV).
-            # For LogisticRegressionCV, the same logic applies.
-
-            n_train_samples = X_train.shape[0]
-            if n_train_samples >= 5:
-                cv_val = 5
-            elif n_train_samples >= 3:
-                cv_val = 3
-            elif n_train_samples >= 2:
-                cv_val = 2
-            else:
-                cv_val = None
-
+            
             if binary:
                 # LogisticRegressionCV expects Cs, which are inverse of regularization strength
                 model = LogisticRegressionCV(
                     Cs=1/np.array(ALPHAS),
-                    cv=cv_val,
+                    cv=3,
                     penalty='l1',
                     solver='liblinear',
                     random_state=42,
@@ -701,7 +682,7 @@ def leave_one_patient_out_decoding(all_patient_data, method, internal_state, lim
             else:
                 model = LassoCV(
                     alphas=ALPHAS,
-                    cv=cv_val,
+                    cv=3,
                     random_state=42,
                     max_iter=10000
                 )
