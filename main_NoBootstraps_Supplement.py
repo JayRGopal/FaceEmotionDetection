@@ -604,7 +604,7 @@ def leave_one_patient_out_decoding(all_patient_data, method, internal_state, lim
     lopo_pvals = {tw: [] for tw in TIME_WINDOWS}
     patient_ids = filtered_patient_ids
     
-    for test_patient ixn tqdm(patient_ids, desc=f"LOPO ({method}{' limited' if limited else ''}{' binary' if binary else ''}) | {internal_state}"):
+    for test_patient in tqdm(patient_ids, desc=f"LOPO ({method}{' limited' if limited else ''}{' binary' if binary else ''}) | {internal_state}"):
         for time_window in tqdm(TIME_WINDOWS, desc=f"Test patient {test_patient} time windows", leave=False):
             # Gather training data
             X_train, y_train, X_test, y_test = [], [], None, None
