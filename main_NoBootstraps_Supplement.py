@@ -340,9 +340,9 @@ def permutation_test_lopo(X_train, y_train, X_test, y_test, model_type, alphas, 
     for i in tqdm(range(n_permutations), desc="Permutation test (LOPO)", leave=False):
         y_train_perm = rng.permutation(y_train)
         if binary:
-            model = LogisticRegressionCV(Cs=1/np.array(alphas), cv=LeaveOneOut(), penalty='l1', solver='liblinear', random_state=random_state)
+            model = LogisticRegressionCV(Cs=1/np.array(alphas), cv=None, penalty='l1', solver='liblinear', random_state=random_state)
         else:
-            model = LassoCV(alphas=alphas, cv=LeaveOneOut(), random_state=random_state)
+            model = LassoCV(alphas=alphas, cv=None, random_state=random_state)
         try:
             model.fit(X_train, y_train_perm)
             if binary:
@@ -648,9 +648,9 @@ def leave_one_patient_out_decoding(all_patient_data, method, internal_state, lim
             X_test = scaler.transform(X_test)
             
             if binary:
-                model = LogisticRegressionCV(Cs=1/np.array(ALPHAS), cv=LeaveOneOut(), penalty='l1', solver='liblinear', random_state=42)
+                model = LogisticRegressionCV(Cs=1/np.array(ALPHAS), cv=None, penalty='l1', solver='liblinear', random_state=42)
             else:
-                model = LassoCV(alphas=ALPHAS, cv=LeaveOneOut(), random_state=42)
+                model = LassoCV(alphas=ALPHAS, cv=None, random_state=42)
             
             try:
                 model.fit(X_train, y_train)
