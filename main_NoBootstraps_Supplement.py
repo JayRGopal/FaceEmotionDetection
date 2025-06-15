@@ -538,12 +538,7 @@ def group_level_barplot(all_patient_data, method, internal_state, limited=False,
                         score = np.nan
                 else:
                     if len(actuals) > 1:
-                        # Debug prints for correlation
-                        print(f"\nPatient {patient_id}, Time window {time_window}:")
-                        print(f"Actual values: {actuals}")
-                        print(f"Predictions: {preds}")
                         score, _ = pearsonr(actuals, preds)
-                        print(f"R score: {score}")
                     else:
                         score = np.nan
                 patient_scores.append(score)
@@ -604,8 +599,6 @@ def group_level_barplot(all_patient_data, method, internal_state, limited=False,
 def leave_one_patient_out_decoding(all_patient_data, method, internal_state, limited=False, binary=False, outdir=None):
     # Only consider included patients present in all_patient_data
     filtered_patient_ids = [pid for pid in INCLUDED_PATIENTS if pid in all_patient_data]
-    print(f"\nLOPO Debug for {method} - {internal_state}")
-    print(f"Number of patients with data: {len(filtered_patient_ids)}")
     
     lopo_results = {tw: [] for tw in TIME_WINDOWS}
     lopo_pvals = {tw: [] for tw in TIME_WINDOWS}
@@ -636,7 +629,6 @@ def leave_one_patient_out_decoding(all_patient_data, method, internal_state, lim
                     X = np.nan_to_num(X, nan=0.0)
                 if pid == test_patient:
                     X_test, y_test = X, y
-                    print(f"  Test data shape: {X_test.shape}, {y_test.shape}")
                 else:
                     X_train.append(X)
                     y_train.append(y)
@@ -648,10 +640,8 @@ def leave_one_patient_out_decoding(all_patient_data, method, internal_state, lim
                 lopo_pvals[time_window].append(np.nan)
                 continue
                 
-            print(f"  Number of training patients: {n_train_patients}")
             X_train = np.vstack(X_train)
             y_train = np.concatenate(y_train)
-            print(f"  Training data shape: {X_train.shape}, {y_train.shape}")
             
             # Only standardize X, not y
             scaler = StandardScaler()
@@ -683,11 +673,7 @@ def leave_one_patient_out_decoding(all_patient_data, method, internal_state, lim
                 else:
                     preds = model.predict(X_test)
                     if len(y_test) > 1:
-                        # Debug prints for correlation
-                        print(f"  Test y values: {y_test}")
-                        print(f"  Predictions: {preds}")
                         score, _ = pearsonr(y_test, preds)
-                        print(f"  R score: {score}")
                     else:
                         print(f"  Not enough samples in y_test")
                         score = np.nan
@@ -706,7 +692,7 @@ def main():
     # --- NEW: Load and print Mood, Anxiety, Depression scores for each patient --- #
     BEHAVIORAL_XLSX_PATH = os.path.expanduser('~/NAS/Analysis/AudioFacialEEG/Behavioral Labeling/Mood_Tracking.xlsx')
     patient_scores = load_behavioral_scores(BEHAVIORAL_XLSX_PATH, INCLUDED_PATIENTS)
-    print_behavioral_scores_table(patient_scores)
+    #print_behavioral_scores_table(patient_scores)
     # --- END NEW ---
 
     for internal_state in INTERNAL_STATES:
