@@ -34,7 +34,7 @@ from tqdm import tqdm
 # --- CONFIGURATION --- #
 FEATURE_SAVE_FOLDER = '/home/jgopal/Desktop/FaceEmotionDetection/temp_outputs/'
 RESULTS_OUTPUT_PATH = '/home/jgopal/NAS/Analysis/AudioFacialEEG/Results_June_2025/MoodPrediction'
-ALPHAS = np.logspace(-5, 2, 50)  # Log scale from 1e-5 to 100, 50 values
+ALPHAS = [0.1, 1, 10]
 TIME_WINDOWS = list(range(30, 241, 30))
 METHODS = ['OGAUHSE_L_', 'OF_L_']
 INTERNAL_STATES = ['Depression', 'Mood', 'Anxiety']
@@ -668,7 +668,7 @@ def leave_one_patient_out_decoding(all_patient_data, method, internal_state, lim
                 lopo_results[time_window].append(np.nan)
                 lopo_pvals[time_window].append(np.nan)
                 continue
-            
+
             if binary:
                 # LogisticRegressionCV expects Cs, which are inverse of regularization strength
                 model = LogisticRegressionCV(
