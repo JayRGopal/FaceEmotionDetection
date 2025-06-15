@@ -897,3 +897,556 @@ def main2():
 if __name__ == "__main__":
     #main()
     main2()  # Temporarily use main2 for debugging
+
+
+"""
+===== Loading data for Mood =====
+
+Loading data for method OGAUHSE_L_ | Mood: 100%|█| 11/11 [00:00<00:00, 34.85it/s
+Patients included for OGAUHSE_L_ | Mood: ['S24_234', 'S23_174', 'S24_227', 'S23_212', 'S24_230', 'S24_231', 'S24_217', 'S24_219', 'S24_226', 'S23_214', 'S23_199']
+all OGAUHSE has 56 features. Confirmed!
+
+===== Running LOPO Analysis =====
+
+
+LOPO Debug for OGAUHSE_L_ - Mood
+Number of patients with data: 11
+LOPO (OGAUHSE_L_) | Mood:   0%|                          | 0/11 [00:00<?, ?it/s]
+Processing test patient: S23_174
+                                                                                 Test data shape: (13, 56), (13,):   0%|                  | 0/8 [00:00<?, ?it/s]
+  Number of training patients: 10
+  Training data shape: (196, 56), (196,)
+  R score: nan
+  Test data shape: (13, 56), (13,)
+  Number of training patients: 10
+  Training data shape: (196, 56), (196,)
+  R score: nan
+  Test data shape: (13, 56), (13,)
+  Number of training patients: 10
+  Training data shape: (196, 56), (196,)
+  R score: nan
+  Test data shape: (13, 56), (13,)
+  Number of training patients: 10
+  Training data shape: (196, 56), (196,)
+  R score: nan
+  Test data shape: (13, 56), (13,)
+  Number of training patients: 10
+  Training data shape: (196, 56), (196,)
+  R score: nan
+  Test data shape: (13, 56), (13,)
+  Number of training patients: 10
+  Training data shape: (196, 56), (196,)
+  R score: nan
+  Test data shape: (13, 56), (13,)
+  Number of training patients: 10
+  Training data shape: (196, 56), (196,)
+  R score: nan
+  Test data shape: (13, 56), (13,)
+  Number of training patients: 10
+  Training data shape: (196, 56), (196,)
+  R score: nan
+
+Processing test patient: S23_199                                                
+                                                                                 Test data shape: (18, 56), (18,):   0%|                  | 0/8 [00:00<?, ?it/s]
+  Number of training patients: 10
+  Training data shape: (191, 56), (191,)
+  R score: nan
+  Test data shape: (18, 56), (18,)
+  Number of training patients: 10
+  Training data shape: (191, 56), (191,)
+  R score: nan
+  Test data shape: (18, 56), (18,)
+  Number of training patients: 10
+  Training data shape: (191, 56), (191,)
+  R score: nan
+  Test data shape: (18, 56), (18,)
+  Number of training patients: 10
+  Training data shape: (191, 56), (191,)
+  R score: nan
+  Test data shape: (18, 56), (18,)
+  Number of training patients: 10
+  Training data shape: (191, 56), (191,)
+  R score: nan
+  Test data shape: (18, 56), (18,)
+  Number of training patients: 10
+  Training data shape: (191, 56), (191,)
+  R score: nan
+  Test data shape: (18, 56), (18,)
+  Number of training patients: 10
+  Training data shape: (191, 56), (191,)
+  R score: nan
+  Test data shape: (18, 56), (18,)
+  Number of training patients: 10
+  Training data shape: (191, 56), (191,)
+  R score: nan
+LOPO (OGAUHSE_L_) | Mood:  18%|███▎              | 2/11 [00:00<00:00, 13.19it/s]
+Processing test patient: S23_212                                                
+                                                                                 Test data shape: (21, 56), (21,):   0%|                  | 0/8 [00:00<?, ?it/s]
+  Number of training patients: 10
+  Training data shape: (188, 56), (188,)
+  R score: nan
+  Test data shape: (21, 56), (21,)
+  Number of training patients: 10
+  Training data shape: (188, 56), (188,)
+  R score: nan
+  Test data shape: (21, 56), (21,)
+  Number of training patients: 10
+  Training data shape: (188, 56), (188,)
+  R score: nan
+  Test data shape: (21, 56), (21,)
+  Number of training patients: 10
+  Training data shape: (188, 56), (188,)
+  R score: nan
+  Test data shape: (21, 56), (21,)
+  Number of training patients: 10
+  Training data shape: (188, 56), (188,)
+  R score: nan
+  Test data shape: (21, 56), (21,)
+  Number of training patients: 10
+  Training data shape: (188, 56), (188,)
+  R score: nan
+  Test data shape: (21, 56), (21,)
+  Number of training patients: 10
+  Training data shape: (188, 56), (188,)
+  R score: nan
+  Test data shape: (21, 56), (21,)
+  Number of training patients: 10
+  Training data shape: (188, 56), (188,)
+  R score: nan
+
+Processing test patient: S23_214                                                
+                                                                                 Test data shape: (12, 56), (12,):   0%|                  | 0/8 [00:00<?, ?it/s]
+  Number of training patients: 10
+  Training data shape: (197, 56), (197,)
+  R score: nan
+  Test data shape: (12, 56), (12,)
+  Number of training patients: 10
+  Training data shape: (197, 56), (197,)
+  R score: nan
+  Test data shape: (12, 56), (12,)
+  Number of training patients: 10
+  Training data shape: (197, 56), (197,)
+  R score: nan
+  Test data shape: (12, 56), (12,)
+  Number of training patients: 10
+  Training data shape: (197, 56), (197,)
+  R score: nan
+  Test data shape: (12, 56), (12,)
+  Number of training patients: 10
+  Training data shape: (197, 56), (197,)
+  R score: nan
+  Test data shape: (12, 56), (12,)
+  Number of training patients: 10
+  Training data shape: (197, 56), (197,)
+  R score: nan
+  Test data shape: (12, 56), (12,)
+  Number of training patients: 10
+  Training data shape: (197, 56), (197,)
+  R score: nan
+  Test data shape: (12, 56), (12,)
+  Number of training patients: 10
+  Training data shape: (197, 56), (197,)
+  R score: nan
+LOPO (OGAUHSE_L_) | Mood:  36%|██████▌           | 4/11 [00:00<00:00, 13.27it/s]
+Processing test patient: S24_217                                                
+                                                                                 Test data shape: (15, 56), (15,):   0%|                  | 0/8 [00:00<?, ?it/s]
+  Number of training patients: 10
+  Training data shape: (194, 56), (194,)
+  R score: nan
+  Test data shape: (15, 56), (15,)
+  Number of training patients: 10
+  Training data shape: (194, 56), (194,)
+  R score: nan
+  Test data shape: (15, 56), (15,)
+  Number of training patients: 10
+  Training data shape: (194, 56), (194,)
+  R score: nan
+  Test data shape: (15, 56), (15,)
+  Number of training patients: 10
+  Training data shape: (194, 56), (194,)
+  R score: nan
+  Test data shape: (15, 56), (15,)
+  Number of training patients: 10
+  Training data shape: (194, 56), (194,)
+  R score: nan
+  Test data shape: (15, 56), (15,)
+  Number of training patients: 10
+  Training data shape: (194, 56), (194,)
+  R score: nan
+  Test data shape: (15, 56), (15,)
+  Number of training patients: 10
+  Training data shape: (194, 56), (194,)
+  R score: nan
+  Test data shape: (15, 56), (15,)
+  Number of training patients: 10
+  Training data shape: (194, 56), (194,)
+  R score: nan
+
+Processing test patient: S24_219                                                
+                                                                                 Test data shape: (14, 56), (14,):   0%|                  | 0/8 [00:00<?, ?it/s]
+  Number of training patients: 10
+  Training data shape: (195, 56), (195,)
+  R score: nan
+  Test data shape: (14, 56), (14,)
+  Number of training patients: 10
+  Training data shape: (195, 56), (195,)
+  R score: nan
+  Test data shape: (14, 56), (14,)
+  Number of training patients: 10
+  Training data shape: (195, 56), (195,)
+  R score: nan
+  Test data shape: (14, 56), (14,)
+  Number of training patients: 10
+  Training data shape: (195, 56), (195,)
+  R score: nan
+  Test data shape: (14, 56), (14,)
+  Number of training patients: 10
+  Training data shape: (195, 56), (195,)
+  R score: nan
+  Test data shape: (14, 56), (14,)
+  Number of training patients: 10
+  Training data shape: (195, 56), (195,)
+  R score: nan
+  Test data shape: (14, 56), (14,)
+  Number of training patients: 10
+  Training data shape: (195, 56), (195,)
+  R score: nan
+  Test data shape: (14, 56), (14,)
+  Number of training patients: 10
+  Training data shape: (195, 56), (195,)
+  R score: nan
+LOPO (OGAUHSE_L_) | Mood:  55%|█████████▊        | 6/11 [00:00<00:00, 13.35it/s]
+Processing test patient: S24_226                                                
+                                                                                 Test data shape: (19, 56), (19,):   0%|                  | 0/8 [00:00<?, ?it/s]
+  Number of training patients: 10
+  Training data shape: (190, 56), (190,)
+  R score: nan
+  Test data shape: (19, 56), (19,)
+  Number of training patients: 10
+  Training data shape: (190, 56), (190,)
+  R score: nan
+  Test data shape: (19, 56), (19,)
+  Number of training patients: 10
+  Training data shape: (190, 56), (190,)
+  R score: nan
+  Test data shape: (19, 56), (19,)
+  Number of training patients: 10
+  Training data shape: (190, 56), (190,)
+  R score: nan
+  Test data shape: (19, 56), (19,)
+  Number of training patients: 10
+  Training data shape: (190, 56), (190,)
+  R score: nan
+  Test data shape: (19, 56), (19,)
+  Number of training patients: 10
+  Training data shape: (190, 56), (190,)
+  R score: nan
+  Test data shape: (19, 56), (19,)
+  Number of training patients: 10
+  Training data shape: (190, 56), (190,)
+  R score: nan
+  Test data shape: (19, 56), (19,)
+  Number of training patients: 10
+  Training data shape: (190, 56), (190,)
+  R score: nan
+
+Processing test patient: S24_227                                                
+                                                                                 Test data shape: (18, 56), (18,):   0%|                  | 0/8 [00:00<?, ?it/s]
+  Number of training patients: 10
+  Training data shape: (191, 56), (191,)
+  R score: nan
+  Test data shape: (18, 56), (18,)
+  Number of training patients: 10
+  Training data shape: (191, 56), (191,)
+  R score: nan
+  Test data shape: (18, 56), (18,)
+  Number of training patients: 10
+  Training data shape: (191, 56), (191,)
+  R score: nan
+  Test data shape: (18, 56), (18,)
+  Number of training patients: 10
+  Training data shape: (191, 56), (191,)
+  R score: nan
+  Test data shape: (18, 56), (18,)
+  Number of training patients: 10
+  Training data shape: (191, 56), (191,)
+  R score: nan
+  Test data shape: (18, 56), (18,)
+  Number of training patients: 10
+  Training data shape: (191, 56), (191,)
+  R score: nan
+  Test data shape: (18, 56), (18,)
+  Number of training patients: 10
+  Training data shape: (191, 56), (191,)
+  R score: nan
+  Test data shape: (18, 56), (18,)
+  Number of training patients: 10
+  Training data shape: (191, 56), (191,)
+  R score: nan
+LOPO (OGAUHSE_L_) | Mood:  73%|█████████████     | 8/11 [00:00<00:00, 13.35it/s]
+Processing test patient: S24_230                                                
+                                                                                 Test data shape: (13, 56), (13,):   0%|                  | 0/8 [00:00<?, ?it/s]
+  Number of training patients: 10
+  Training data shape: (196, 56), (196,)
+  R score: nan
+  Test data shape: (13, 56), (13,)
+  Number of training patients: 10
+  Training data shape: (196, 56), (196,)
+  R score: nan
+  Test data shape: (13, 56), (13,)
+  Number of training patients: 10
+  Training data shape: (196, 56), (196,)
+  R score: nan
+  Test data shape: (13, 56), (13,)
+  Number of training patients: 10
+  Training data shape: (196, 56), (196,)
+  R score: nan
+  Test data shape: (13, 56), (13,)
+  Number of training patients: 10
+  Training data shape: (196, 56), (196,)
+  R score: nan
+  Test data shape: (13, 56), (13,)
+  Number of training patients: 10
+  Training data shape: (196, 56), (196,)
+  R score: nan
+  Test data shape: (13, 56), (13,)
+  Number of training patients: 10
+  Training data shape: (196, 56), (196,)
+  R score: nan
+  Test data shape: (13, 56), (13,)
+  Number of training patients: 10
+  Training data shape: (196, 56), (196,)
+  R score: nan
+
+Processing test patient: S24_231                                                
+                                                                                 Test data shape: (50, 56), (50,):   0%|                  | 0/8 [00:00<?, ?it/s]
+  Number of training patients: 10
+  Training data shape: (159, 56), (159,)
+  R score: nan
+  Test data shape: (50, 56), (50,)
+  Number of training patients: 10
+  Training data shape: (159, 56), (159,)
+  R score: nan
+  Test data shape: (50, 56), (50,)
+  Number of training patients: 10
+  Training data shape: (159, 56), (159,)
+  R score: nan
+  Test data shape: (50, 56), (50,)
+  Number of training patients: 10
+  Training data shape: (159, 56), (159,)
+  R score: nan
+  Test data shape: (50, 56), (50,)
+  Number of training patients: 10
+  Training data shape: (159, 56), (159,)
+  R score: nan
+  Test data shape: (50, 56), (50,)
+  Number of training patients: 10
+  Training data shape: (159, 56), (159,)
+  R score: nan
+  Test data shape: (50, 56), (50,)
+  Number of training patients: 10
+  Training data shape: (159, 56), (159,)
+  R score: nan
+  Test data shape: (50, 56), (50,)
+  Number of training patients: 10
+  Training data shape: (159, 56), (159,)
+  R score: nan
+LOPO (OGAUHSE_L_) | Mood:  91%|███████████████▍ | 10/11 [00:00<00:00, 13.34it/s]
+Processing test patient: S24_234                                                
+                                                                                 Test data shape: (16, 56), (16,):   0%|                  | 0/8 [00:00<?, ?it/s]
+  Number of training patients: 10
+  Training data shape: (193, 56), (193,)
+  R score: nan
+  Test data shape: (16, 56), (16,)
+  Number of training patients: 10
+  Training data shape: (193, 56), (193,)
+  R score: nan
+  Test data shape: (16, 56), (16,)
+  Number of training patients: 10
+  Training data shape: (193, 56), (193,)
+  R score: nan
+  Test data shape: (16, 56), (16,)
+  Number of training patients: 10
+  Training data shape: (193, 56), (193,)
+  R score: nan
+  Test data shape: (16, 56), (16,)
+  Number of training patients: 10
+  Training data shape: (193, 56), (193,)
+  R score: nan
+  Test data shape: (16, 56), (16,)
+  Number of training patients: 10
+  Training data shape: (193, 56), (193,)
+  R score: nan
+  Test data shape: (16, 56), (16,)
+  Number of training patients: 10
+  Training data shape: (193, 56), (193,)
+  R score: nan
+  Test data shape: (16, 56), (16,)
+  Number of training patients: 10
+  Training data shape: (193, 56), (193,)
+  R score: nan
+LOPO (OGAUHSE_L_) | Mood: 100%|█████████████████| 11/11 [00:00<00:00, 13.32it/s]
+                                                                                
+Results summary:
+Time window 30: 0 valid scores out of 11 patients
+Time window 60: 0 valid scores out of 11 patients
+Time window 90: 0 valid scores out of 11 patients
+Time window 120: 0 valid scores out of 11 patients
+Time window 150: 0 valid scores out of 11 patients
+Time window 180: 0 valid scores out of 11 patients
+Time window 210: 0 valid scores out of 11 patients
+Time window 240: 0 valid scores out of 11 patients
+
+===== Running Group Level Analysis =====
+
+
+Group Level Debug:
+
+Patient S24_234:
+  Time window 30:
+    X shape: (16, 56)
+    y shape: (16,)
+    y values: [10.   7.5  5.   2.5  7.5 10.   5.   5.   5.   5.   5.   5.   0.   5.
+  5.   5. ]
+  Time window 60:
+    X shape: (16, 56)
+    y shape: (16,)
+    y values: [10.   7.5  5.   2.5  7.5 10.   5.   5.   5.   5.   5.   5.   0.   5.
+  5.   5. ]
+
+Patient S23_174:
+  Time window 30:
+    X shape: (13, 56)
+    y shape: (13,)
+    y values: [ 5.         10.          0.          0.          1.66666667  0.
+  3.33333333 10.          6.66666667  1.66666667  3.33333333  0.
+  0.        ]
+  Time window 60:
+    X shape: (13, 56)
+    y shape: (13,)
+    y values: [ 5.         10.          0.          0.          1.66666667  0.
+  3.33333333 10.          6.66666667  1.66666667  3.33333333  0.
+  0.        ]
+
+Patient S24_227:
+  Time window 30:
+    X shape: (18, 56)
+    y shape: (18,)
+    y values: [ 0.    0.    0.    0.    0.   10.   10.   10.   10.    6.25  8.75  8.75
+  3.75  6.25  6.25  7.5   8.75  5.  ]
+  Time window 60:
+    X shape: (18, 56)
+    y shape: (18,)
+    y values: [ 0.    0.    0.    0.    0.   10.   10.   10.   10.    6.25  8.75  8.75
+  3.75  6.25  6.25  7.5   8.75  5.  ]
+
+Patient S23_212:
+  Time window 30:
+    X shape: (21, 56)
+    y shape: (21,)
+    y values: [ 7.5  2.5  2.5  5.   5.   5.   5.   5.   5.   0.   5.   7.5  7.5  7.5
+  0.   5.  10.   5.   2.5  5.   5. ]
+  Time window 60:
+    X shape: (21, 56)
+    y shape: (21,)
+    y values: [ 7.5  2.5  2.5  5.   5.   5.   5.   5.   5.   0.   5.   7.5  7.5  7.5
+  0.   5.  10.   5.   2.5  5.   5. ]
+
+Patient S24_230:
+  Time window 30:
+    X shape: (13, 56)
+    y shape: (13,)
+    y values: [ 0.         10.          0.          5.71428571  8.57142857  8.57142857
+  8.57142857  8.57142857  8.57142857  8.57142857  8.57142857  5.71428571
+  8.57142857]
+  Time window 60:
+    X shape: (13, 56)
+    y shape: (13,)
+    y values: [ 0.         10.          0.          5.71428571  8.57142857  8.57142857
+  8.57142857  8.57142857  8.57142857  8.57142857  8.57142857  5.71428571
+  8.57142857]
+
+Patient S24_231:
+  Time window 30:
+    X shape: (50, 56)
+    y shape: (50,)
+    y values: [10.   0.  10.   0.   2.5  0.   0.   0.   0.   0.   0.   2.5  0.   5.
+  5.   0.   0.   2.5  0.   2.5  2.5  0.   0.   0.   0.   2.5  0.   0.
+  0.  10.  10.  10.   7.5  5.  10.   7.5 10.   7.5 10.   5.   7.5  5.
+ 10.   7.5  5.   7.5  7.5 10.  10.  10. ]
+  Time window 60:
+    X shape: (50, 56)
+    y shape: (50,)
+    y values: [10.   0.  10.   0.   2.5  0.   0.   0.   0.   0.   0.   2.5  0.   5.
+  5.   0.   0.   2.5  0.   2.5  2.5  0.   0.   0.   0.   2.5  0.   0.
+  0.  10.  10.  10.   7.5  5.  10.   7.5 10.   7.5 10.   5.   7.5  5.
+ 10.   7.5  5.   7.5  7.5 10.  10.  10. ]
+
+Patient S24_217:
+  Time window 30:
+    X shape: (15, 56)
+    y shape: (15,)
+    y values: [ 8.88888889  8.88888889  5.55555556  4.44444444  0.          8.88888889
+  8.88888889  7.77777778  7.77777778  5.55555556  5.55555556  6.66666667
+ 10.         10.          8.88888889]
+  Time window 60:
+    X shape: (15, 56)
+    y shape: (15,)
+    y values: [ 8.88888889  8.88888889  5.55555556  4.44444444  0.          8.88888889
+  8.88888889  7.77777778  7.77777778  5.55555556  5.55555556  6.66666667
+ 10.         10.          8.88888889]
+
+Patient S24_219:
+  Time window 30:
+    X shape: (14, 56)
+    y shape: (14,)
+    y values: [ 0.          0.          0.          0.          0.          3.33333333
+  0.          6.66666667  3.33333333  3.33333333  3.33333333  6.66666667
+  3.33333333 10.        ]
+  Time window 60:
+    X shape: (14, 56)
+    y shape: (14,)
+    y values: [ 0.          0.          0.          0.          0.          3.33333333
+  0.          6.66666667  3.33333333  3.33333333  3.33333333  6.66666667
+  3.33333333 10.        ]
+
+Patient S24_226:
+  Time window 30:
+    X shape: (19, 56)
+    y shape: (19,)
+    y values: [10. 10.  2.  0.  2.  2.  2.  0.  6.  6.  2.  6. 10.  6.  2.  8. 10. 10.
+  8.]
+  Time window 60:
+    X shape: (19, 56)
+    y shape: (19,)
+    y values: [10. 10.  2.  0.  2.  2.  2.  0.  6.  6.  2.  6. 10.  6.  2.  8. 10. 10.
+  8.]
+
+Patient S23_214:
+  Time window 30:
+    X shape: (12, 56)
+    y shape: (12,)
+    y values: [ 6.25  7.5   7.5  10.   10.   10.    7.5   5.    0.   10.    7.5  10.  ]
+  Time window 60:
+    X shape: (12, 56)
+    y shape: (12,)
+    y values: [ 6.25  7.5   7.5  10.   10.   10.    7.5   5.    0.   10.    7.5  10.  ]
+
+Patient S23_199:
+  Time window 30:
+    X shape: (18, 56)
+    y shape: (18,)
+    y values: [ 8.33333333  5.          6.66666667  5.          5.          6.66666667
+  6.66666667  5.          3.33333333  3.33333333 10.          3.33333333
+  3.33333333  5.          0.          0.          0.          0.        ]
+  Time window 60:
+    X shape: (18, 56)
+    y shape: (18,)
+    y values: [ 8.33333333  5.          6.66666667  5.          5.          6.66666667
+  6.66666667  5.          3.33333333  3.33333333 10.          3.33333333
+  3.33333333  5.          0.          0.          0.          0.        ]
+Group-level (OGAUHSE_L_) | Mood: 100%|██████████| 11/11 [06:16<00:00, 34.18s/it]
+(cvquant) jgopal@klab-lambda-vector:~/Desktop/FaceEmotionDetection$  
+
+
+"""
