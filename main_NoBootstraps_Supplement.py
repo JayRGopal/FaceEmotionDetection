@@ -599,11 +599,11 @@ def group_level_barplot(all_patient_data, method, internal_state, limited=False,
 def leave_one_patient_out_decoding(all_patient_data, method, internal_state, limited=False, binary=False, outdir=None):
     # Only consider included patients present in all_patient_data
     filtered_patient_ids = [pid for pid in INCLUDED_PATIENTS if pid in all_patient_data]
-    
+
     lopo_results = {tw: [] for tw in TIME_WINDOWS}
     lopo_pvals = {tw: [] for tw in TIME_WINDOWS}
     patient_ids = filtered_patient_ids
-    
+
     for test_patient in tqdm(patient_ids, desc=f"LOPO ({method}{' limited' if limited else ''}{' binary' if binary else ''}) | {internal_state}"):
         for time_window in tqdm(TIME_WINDOWS, desc=f"Test patient {test_patient} time windows", leave=False):
             # Gather training data
@@ -611,7 +611,7 @@ def leave_one_patient_out_decoding(all_patient_data, method, internal_state, lim
             n_train_patients = 0
             for pid in patient_ids:
                 if time_window not in all_patient_data[pid]:
-                    print(f"  Time window {time_window} missing for patient {pid}")
+                    print(f"[WARN] Time window {time_window} missing for patient {pid}")
                     continue
                 df = all_patient_data[pid][time_window]
                 if limited:
@@ -619,72 +619,111 @@ def leave_one_patient_out_decoding(all_patient_data, method, internal_state, lim
                 if binary:
                     df_bin = binarize_mood(df)
                     if df_bin is None:
-                        print(f"  Binary conversion failed for patient {pid}, time window {time_window}")
+                        print(f"[WARN] Binary conversion failed for patient {pid}, time window {time_window}")
                         continue
                     df = df_bin
+                if df.shape[0] == 0 or df.shape[1] < 2:
+                    print(f"[WARN] DataFrame empty or too few columns for patient {pid}, time window {time_window}")
+                    continue
                 X = df.iloc[:, :-1].values
                 y = df.iloc[:, -1].values
                 if np.isnan(X).any():
+                    print(f"[WARN] NaNs found in X for patient {pid}, time window {time_window}. Replacing with 0.")
                     X = np.nan_to_num(X, nan=0.0)
+                if np.isnan(y).any():
+                    print(f"[WARN] NaNs found in y for patient {pid}, time window {time_window}. Skipping.")
+                    continue
+                if len(y) == 0 or len(X) == 0:
+                    print(f"[WARN] Empty X or y for patient {pid}, time window {time_window}")
+                    continue
                 if pid == test_patient:
                     X_test, y_test = X, y
                 else:
                     X_train.append(X)
                     y_train.append(y)
                     n_train_patients += 1
-            
+
             if X_test is None or len(X_train) == 0:
-                print(f"  No valid data for time window {time_window}")
+                print(f"[WARN] No valid data for test_patient {test_patient}, time window {time_window}")
                 lopo_results[time_window].append(np.nan)
                 lopo_pvals[time_window].append(np.nan)
                 continue
-                
-            X_train = np.vstack(X_train)
-            y_train = np.concatenate(y_train)
-            
+
+            try:
+                X_train = np.vstack(X_train)
+                y_train = np.concatenate(y_train)
+            except Exception as e:
+                print(f"[ERROR] Could not stack training data for test_patient {test_patient}, time window {time_window}: {e}")
+                lopo_results[time_window].append(np.nan)
+                lopo_pvals[time_window].append(np.nan)
+                continue
+
             # Only standardize X, not y
-            scaler = StandardScaler()
-            X_train = scaler.fit_transform(X_train)
-            X_test = scaler.transform(X_test)
-            
+            try:
+                scaler = StandardScaler()
+                X_train = scaler.fit_transform(X_train)
+                X_test = scaler.transform(X_test)
+            except Exception as e:
+                print(f"[ERROR] Standardization failed for test_patient {test_patient}, time window {time_window}: {e}")
+                lopo_results[time_window].append(np.nan)
+                lopo_pvals[time_window].append(np.nan)
+                continue
+
             if binary:
                 model = LogisticRegressionCV(Cs=1/np.array(ALPHAS), cv=None, penalty='l1', solver='liblinear', random_state=42)
             else:
                 model = LassoCV(alphas=ALPHAS, cv=None, random_state=42)
-            
+
+            fit_error = False
             try:
                 model.fit(X_train, y_train)
-                fit_error = False
             except Exception as e:
-                print(f"  Model fitting failed: {e}")
+                print(f"[ERROR] Model fitting failed for test_patient {test_patient}, time window {time_window}: {e}")
                 fit_error = True
-                
-            if fit_error:
-                score = np.nan
-            else:
-                if binary:
-                    preds = model.predict_proba(X_test)[:, 1] if hasattr(model, 'predict_proba') else model.predict(X_test)
-                    if len(np.unique(y_test)) > 1:
-                        score = roc_auc_score(y_test, preds)
+
+            score = np.nan
+            if not fit_error:
+                try:
+                    if binary:
+                        preds = model.predict_proba(X_test)[:, 1] if hasattr(model, 'predict_proba') else model.predict(X_test)
+                        if len(np.unique(y_test)) > 1:
+                            score = roc_auc_score(y_test, preds)
+                        else:
+                            print(f"[WARN] Not enough unique classes in y_test for test_patient {test_patient}, time window {time_window}")
+                            score = np.nan
                     else:
-                        print(f"  Not enough unique classes in y_test")
-                        score = np.nan
-                else:
-                    preds = model.predict(X_test)
-                    if len(y_test) > 1:
-                        score, _ = pearsonr(y_test, preds)
-                    else:
-                        print(f"  Not enough samples in y_test")
-                        score = np.nan
-                        
+                        preds = model.predict(X_test)
+                        if len(y_test) > 1:
+                            score, _ = pearsonr(y_test, preds)
+                        else:
+                            print(f"[WARN] Not enough samples in y_test for test_patient {test_patient}, time window {time_window}")
+                            score = np.nan
+                except Exception as e:
+                    print(f"[ERROR] Prediction/scoring failed for test_patient {test_patient}, time window {time_window}: {e}")
+                    score = np.nan
+
+            if np.isnan(score):
+                print(f"[INFO] NaN score for test_patient {test_patient}, time_window {time_window}")
+
             lopo_results[time_window].append(score)
-            
+
             # Permutation test for this LOPO split
             if not np.isnan(score) and not fit_error:
-                null_scores = permutation_test_lopo(X_train, y_train, X_test, y_test, model_type='logistic' if binary else 'lasso', alphas=ALPHAS, binary=binary, n_permutations=N_PERMUTATIONS, random_state=42)
-                pval = compute_p_value(score, null_scores, tail='right')
+                try:
+                    null_scores = permutation_test_lopo(
+                        X_train, y_train, X_test, y_test,
+                        model_type='logistic' if binary else 'lasso',
+                        alphas=ALPHAS, binary=binary,
+                        n_permutations=N_PERMUTATIONS, random_state=42
+                    )
+                    pval = compute_p_value(score, null_scores, tail='right')
+                except Exception as e:
+                    print(f"[ERROR] Permutation test failed for test_patient {test_patient}, time window {time_window}: {e}")
+                    pval = np.nan
             else:
                 pval = np.nan
+            if np.isnan(pval):
+                print(f"[INFO] NaN p-value for test_patient {test_patient}, time_window {time_window}")
             lopo_pvals[time_window].append(pval)
 
     # Save LOPO results to CSV and plot
@@ -699,6 +738,13 @@ def leave_one_patient_out_decoding(all_patient_data, method, internal_state, lim
     suffix = ""
     if limited: suffix += "_limited"
     if binary: suffix += "_binary"
+
+    # Print summary of NaNs in the results
+    print("\n[SUMMARY] NaN counts in LOPO scores table:")
+    print(lopo_scores_df.isna().sum())
+    print("[SUMMARY] NaN counts in LOPO pvals table:")
+    print(lopo_pvals_df.isna().sum())
+
     lopo_scores_df.to_csv(os.path.join(outdir, f"{method}{suffix}_lopo_scores.csv"))
     lopo_pvals_df.to_csv(os.path.join(outdir, f"{method}{suffix}_lopo_pvals.csv"))
 
