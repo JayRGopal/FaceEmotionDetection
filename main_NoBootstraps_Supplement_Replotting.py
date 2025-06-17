@@ -178,8 +178,33 @@ def process_csv_file(file_path, colors, output_path, pred_type):
 
 def process_lopo_csv_file(file_path, colors, output_path, pred_type):
     """Process a single LOPO CSV file and create the replotted figure"""
-    # Read the data
-    data = pd.read_csv(file_path)
+    # Read the LOPO scores data (matrix format: rows=patients, columns=time_windows)
+    scores_data = pd.read_csv(file_path, index_col='patient_id')
+    
+    # Read the corresponding p-values file
+    pvals_file_path = file_path.replace('_scores.csv', '_pvals.csv')
+    if os.path.exists(pvals_file_path):
+        pvals_data = pd.read_csv(pvals_file_path, index_col='patient_id')
+    else:
+        print(f"Warning: P-values file not found: {pvals_file_path}")
+        pvals_data = None
+    
+    # Calculate means and standard errors across patients for each time window
+    mean_scores = scores_data.mean(axis=0, skipna=True)
+    sem_scores = scores_data.std(axis=0, skipna=True) / np.sqrt(scores_data.notna().sum(axis=0))
+    
+    # Calculate mean p-values across patients for each time window
+    if pvals_data is not None:
+        mean_pvals = pvals_data.mean(axis=0, skipna=True)
+    else:
+        mean_pvals = pd.Series([np.nan] * len(TIME_WINDOWS), index=TIME_WINDOWS)
+    
+    # Create the data structure expected by plot_bar_with_significance
+    plot_data = pd.DataFrame({
+        'mean_score': mean_scores.values,
+        'sem_score': sem_scores.values,
+        'mean_pval': mean_pvals.values
+    })
     
     # Create figure
     fig, ax = plt.subplots(figsize=(8, 5))
@@ -192,7 +217,7 @@ def process_lopo_csv_file(file_path, colors, output_path, pred_type):
     title = get_lopo_plot_title(file_path, pred_type)
     
     # Plot the data and get number of significant bars
-    significant_bars = plot_bar_with_significance(ax, data, TIME_WINDOWS, colors, title, ylabel)
+    significant_bars = plot_bar_with_significance(ax, plot_data, TIME_WINDOWS, colors, title, ylabel)
     
     plt.tight_layout()
     
