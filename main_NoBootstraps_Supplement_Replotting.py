@@ -123,6 +123,33 @@ def get_plot_title(file_path, pred_type):
     
     return " - ".join(title_parts)
 
+def get_lopo_plot_title(file_path, pred_type):
+    """Generate title for LOPO plots: method, state, and 'Leave One Patient Out'"""
+    filename = os.path.basename(file_path).replace('_scores.csv', '').replace('_lopo', '')
+    is_binary = 'binary' in filename
+    is_limited = 'limited' in filename
+
+    # Get the method name
+    method = None
+    for m in METHOD_DISPLAY_NAMES:
+        if m in filename:
+            method = METHOD_DISPLAY_NAMES[m]
+            break
+
+    # Get the state from the prediction type folder
+    state = pred_type.replace('Prediction', '')
+
+    title_parts = []
+    if method:
+        title_parts.append(method)
+    title_parts.append(state)
+    if is_binary:
+        title_parts.append("Binary")
+    if is_limited:
+        title_parts.append("Smile Features")
+    title_parts.append("Leave One Patient Out")
+    return " - ".join(title_parts)
+
 def process_csv_file(file_path, colors, output_path, pred_type):
     """Process a single CSV file and create the replotted figure"""
     # Read the data
@@ -137,6 +164,32 @@ def process_csv_file(file_path, colors, output_path, pred_type):
     
     # Get the title
     title = get_plot_title(file_path, pred_type)
+    
+    # Plot the data and get number of significant bars
+    significant_bars = plot_bar_with_significance(ax, data, TIME_WINDOWS, colors, title, ylabel)
+    
+    plt.tight_layout()
+    
+    # Save the figure
+    fig.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.close(fig)
+    
+    return significant_bars
+
+def process_lopo_csv_file(file_path, colors, output_path, pred_type):
+    """Process a single LOPO CSV file and create the replotted figure"""
+    # Read the data
+    data = pd.read_csv(file_path)
+    
+    # Create figure
+    fig, ax = plt.subplots(figsize=(8, 5))
+    
+    # Determine if this is a binary (AUC) or continuous (R) plot
+    is_binary = 'binary' in file_path
+    ylabel = "AUC" if is_binary else "Pearson r"
+    
+    # Get the title
+    title = get_lopo_plot_title(file_path, pred_type)
     
     # Plot the data and get number of significant bars
     significant_bars = plot_bar_with_significance(ax, data, TIME_WINDOWS, colors, title, ylabel)
@@ -186,5 +239,38 @@ def main():
     
     print(f"\nTotal number of significant bars (p < 0.05) across all plots: {total_significant_bars}")
 
+def main_lopo():
+    # Create output directory structure for LOPO plots
+    os.makedirs(OUTPUT_BASE_PATH, exist_ok=True)
+    for pred_type in PREDICTION_TYPES:
+        os.makedirs(os.path.join(OUTPUT_BASE_PATH, pred_type), exist_ok=True)
+    
+    # Create color mapping for time windows
+    time_window_colors = create_time_window_colors()
+    
+    # Track total significant bars
+    total_significant_bars = 0
+
+    # Process each prediction type
+    for pred_type in PREDICTION_TYPES:
+        input_path = os.path.join(INPUT_BASE_PATH, pred_type)
+        output_path = os.path.join(OUTPUT_BASE_PATH, pred_type)
+        
+        # Find all LOPO CSV files
+        csv_files = [f for f in os.listdir(input_path) 
+                    if f.endswith('_scores.csv') and 'lopo' in f.lower()]
+        
+        for csv_file in csv_files:
+            input_file_path = os.path.join(input_path, csv_file)
+            output_file_path = os.path.join(output_path, f'replotted_{csv_file.replace(".csv", ".png")}')
+            
+            # Process and save the figure, track significant bars
+            significant_bars = process_lopo_csv_file(input_file_path, time_window_colors, output_file_path, pred_type)
+            total_significant_bars += significant_bars
+            print(f"Processed LOPO: {csv_file}")
+    
+    print(f"\nTotal number of significant bars (p < 0.05) across all LOPO plots: {total_significant_bars}")
+
 if __name__ == "__main__":
-    main() 
+    #main() 
+    main_lopo()
